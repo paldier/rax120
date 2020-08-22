@@ -1,0 +1,697 @@
+<% http_header("style/form.css", "/funcs.js", "/bas_ether.js") %>
+<% body_header("_BAS_ether", "BAS_update.htm", "ether") %>
+<div id="black_over_lay" class="black_overlay">
+</div>
+<div class="page_title">$int_setup</div>
+<script>
+<% save_timestamp("ether", "edit_devname") %>
+var ts = "<% cfg_get("edit_devname") %>";
+var ed_action= "/apply.cgi?/BAS_ether.htm timestamp="+ts;
+var run_test="<% cfg_get("run_test") %>";
+var in_hijack=( "<% cfg_get("dns_hijack") %>" == "1" && "<% cfg_get("hijack_process") %>" != "3" );
+<% cfg_set("run_test", "no") %>
+<% commit() %>
+var lan_ip="<% cfg_get("lan_ipaddr") %>";
+var lan_subnet="<% cfg_get("lan_netmask") %>";
+var old_wan_type="<% cfg_get("wan_proto") %>";
+var old_wan_ip="<% bas_ether_ip() %>";
+var ether_get_subnet="<% bas_ether_netmask() %>";
+var ether_get_gateway="<% bas_ether_gateway() %>";
+var vpn_enable = "<% cfg_get("vpn_enable") %>";
+var old_endis_ddns="<% cfg_get("endis_ddns") %>";
+var old_wan_assign="<% cfg_get("wan_ether_wan_assign")%>";
+var wan_factory_mac="<% cfg_get("wan_factory_mac"); %>";
+var wan_remote_mac="<% cfg_get("wan_remote_mac") %>";
+var ether_get_this_mac="<% cfg_get("wan_ether_this_mac") %>";
+var gui_region="<% cfg_get("GUI_Region") %>";
+var vpn_flag="<% cfg_get("vpn_detect_ip_change_flag")%>";
+var netgear_region=(getTop(window).netgear_region == "") ? "WW" : getTop(window).netgear_region;
+var dns_third_flag=getTop(window).dns_third_flag;
+var wanproto_type="dhcp";
+var wan_mtu_now='<% wan_mtu() %>';
+if (ether_get_this_mac == "")
+	ether_get_this_mac="<% wan_mac() %>";
+
+
+var select_basic="<% cfg_get("internet_type") %>";
+var select_type="<% cfg_get("internet_ppp_type") %>";
+var jp_multiPPPoE="<% cfg_get("jp_multiPPPoE") %>";
+var have_l2tp = (getTop(window).l2tp_flag == 1) ? 1 : 0;
+var consolidate_device_name = parent.consolidate_device_name;
+
+var wan_internet_cable = "<% cat_file("/tmp/WAN_status") %>".trim();
+var wan_sfp_cable = "<% cat_file("/tmp/SFP_status") %>".trim();
+var wan_valid_ip_address = "<% detwan_valid() %>";
+var wan_preference = "<% cfg_get("wan_preference") %>";
+var sfp_module = "<% cfg_get("sfp_module") %>";
+var enable_ds = "<% cfg_get("enable_ds") %>";
+var enable_nd = "<% cfg_get("enable_nd") %>";
+var aftr_ipv6 = "<% cfg_get("aftr_ipv6") %>";
+var aftr_ipv6_addr = "<% cfg_get("manual_aftr_ipv6") %>";
+<% get_wan_aggre() %>
+var qos_endis_on="<% cfg_get("qos_endis_on") %>";
+var aggre_option="<% cfg_get("link_aggregation_sta") %>";
+var wan_agg_port = parent.wan_agg_port;
+<% vlan_items_xss() %>
+var bri_lan_tag1="<% cfg_get("wan_bri_lan1") %>";
+var have_dhcp_option = getTop(window).have_dhcp_option;
+var support_singapore_isp = getTop(window).support_singapore_isp_flag;
+var support_malaysia_isp  = getTop(window).support_malaysia_isp_flag;
+var support_spain_isp = getTop(window).support_spain_isp_flag;
+var ipv6_type = "<% cfg_get("ipv6_type") %>";
+var is_jp_version=(((netgear_region.toUpperCase() == "WW" || netgear_region == "") && gui_region == "Japanese" ) || netgear_region.toUpperCase() == "JP") ? 1 : 0;
+var wan_agg_port = parent.wan_agg_port;
+
+function change_web_format()
+{
+        if( dns_third_flag == 1 )
+                document.getElementById("third_dns").style.display="";
+        else
+                document.getElementById("third_dns").style.display="none";
+	
+}
+
+function change_dslite_web_display_format(cf)
+{
+	var i;
+	if(cf.enable_ds_lite.checked == true)
+	{
+		setIP(cf);
+		setDNS(cf);
+		for(i=1; i<6; i++)
+			document.getElementById("internet_ip_tr"+i).className = "gray_td";
+		for(i=1; i<5; i++)
+			document.getElementById("internet_dns_tr"+i).className = "gray_td";
+		if( dns_third_flag == 1 )
+			document.getElementById("third_dns").className = "gray_td";
+		document.getElementById("loginreq_tr1").className = "gray_td";
+		document.getElementById("loginreq_tr2").className = "gray_td";
+		setDisabled(true,cf.loginreq[0],cf.loginreq[1]);
+		var b_tag=document.getElementsByTagName("B");
+		for(i=1; i<b_tag.length; i++)
+		{
+			if(b_tag[i].innerText == "$basic_top_info" || b_tag[i].innerText == "$basic_int_intip" || b_tag[i].innerText == "$basic_int_dns")
+				b_tag[i].className = "gray_td";
+		}
+		setDisabled(true,cf.WANAssign[0],cf.WANAssign[1],cf.WPethr1,cf.WPethr2,cf.WPethr3,cf.WPethr4,cf.WMask1,cf.WMask2,cf.WMask3,cf.WMask4,cf.WGateway1,cf.WGateway2,cf.WGateway3,cf.WGateway4);
+		setDisabled(true,cf.DNSAssign[0],cf.DNSAssign[1],cf.DAddr1,cf.DAddr2,cf.DAddr3,cf.DAddr4,cf.PDAddr1,cf.PDAddr2,cf.PDAddr3,cf.PDAddr4);
+		if( dns_third_flag == 1 )
+			setDisabled(true,cf.TDAddr1,cf.TDAddr2,cf.TDAddr3,cf.TDAddr4);
+		for(i=3; i<7; i++)
+			document.getElementById("ds_lite_tr"+i).className = "";
+		setDisabled(false,cf.aftr_ipv6[0], cf.aftr_ipv6[1], cf.enable_nd_proxy, cf.aftr_ipv6_addr);
+		if(have_dhcp_option == 1)
+		{
+			document.getElementById("option_title").className = "gray_td";
+			document.getElementById("option60").className = "gray_td";
+			document.getElementById("option61").className = "gray_td";
+			setDisabled(true,cf.option_60,cf.option_61);
+		}
+	}
+	else
+	{
+		for(i=1; i<6; i++)
+			document.getElementById("internet_ip_tr"+i).className = "";
+		for(i=1; i<5; i++)
+			document.getElementById("internet_dns_tr"+i).className = "";
+		if( dns_third_flag == 1 )
+			document.getElementById("third_dns").className = "";
+		document.getElementById("loginreq_tr1").className = "";
+		document.getElementById("loginreq_tr2").className = "";
+		setDisabled(false,cf.loginreq[0],cf.loginreq[1]);
+		var b_tag=document.getElementsByTagName("B");
+		for(i=1; i<b_tag.length; i++)
+		{
+			if(b_tag[i].innerText == "$basic_top_info" || b_tag[i].innerText == "$basic_int_intip" || b_tag[i].innerText == "$basic_int_dns")
+				b_tag[i].className = "";
+		}
+		setDisabled(false,cf.WANAssign[0],cf.WANAssign[1],cf.WPethr1,cf.WPethr2,cf.WPethr3,cf.WPethr4,cf.WMask1,cf.WMask2,cf.WMask3,cf.WMask4,cf.WGateway1,cf.WGateway2,cf.WGateway3,cf.WGateway4);
+		setDisabled(false,cf.DNSAssign[0],cf.DNSAssign[1],cf.DAddr1,cf.DAddr2,cf.DAddr3,cf.DAddr4,cf.PDAddr1,cf.PDAddr2,cf.PDAddr3,cf.PDAddr4);
+		if( dns_third_flag == 1 )
+			setDisabled(false,cf.TDAddr1,cf.TDAddr2,cf.TDAddr3,cf.TDAddr4);
+		setIP(cf);
+		setDNS(cf);
+		for(i=3; i<7; i++)
+			document.getElementById("ds_lite_tr"+i).className = "gray_td";
+		setDisabled(true,cf.aftr_ipv6[0], cf.aftr_ipv6[1], cf.enable_nd_proxy, cf.aftr_ipv6_addr);
+		if(have_dhcp_option == 1)
+		{
+			document.getElementById("option_title").className = "";
+			document.getElementById("option60").className = "";
+			document.getElementById("option61").className = "";
+			setDisabled(false,cf.option_60,cf.option_61);
+		}
+	}
+}
+
+function change_dslite_web_format(form)
+{
+	if(form.enable_ds_lite.checked == true)
+	{
+	form.WANAssign[0].checked = true;
+	setIP(form);
+	var ether_get_ip=old_wan_ip;
+	if (ether_get_ip!="")
+	{
+		var ip_array=ether_get_ip.split('.');
+		form.WPethr1.value=ip_array[0];
+		form.WPethr2.value=ip_array[1];
+		form.WPethr3.value=ip_array[2];
+		form.WPethr4.value=ip_array[3];
+	}
+	if (ether_get_subnet!="")
+	{
+		var mask_array=ether_get_subnet.split('.');
+		form.WMask1.value=mask_array[0];
+		form.WMask2.value=mask_array[1];
+		form.WMask3.value=mask_array[2];
+		form.WMask4.value=mask_array[3];
+	}
+	if (ether_get_gateway!="")
+	{
+		var gtw_array=ether_get_gateway.split('.');
+		form.WGateway1.value=gtw_array[0];
+		form.WGateway2.value=gtw_array[1];
+		form.WGateway3.value=gtw_array[2];
+		form.WGateway4.value=gtw_array[3];
+	}
+	form.DNSAssign[0].checked = true;
+	setDNS(form);
+	var ether_get_dns1="<% bas_ether_dns() %>";
+	if (ether_get_dns1!="" && ether_get_dns1.indexOf(":")==-1)
+	{
+		var dns1_array=ether_get_dns1.split('.');
+		form.DAddr1.value=dns1_array[0];
+		form.DAddr2.value=dns1_array[1];
+		form.DAddr3.value=dns1_array[2];
+		form.DAddr4.value=dns1_array[3];
+	}
+	var ether_get_dns2="<% bas_ether_dns("1") %>";
+	if (ether_get_dns2!="" && ether_get_dns2.indexOf(":")==-1)
+	{
+		var dns2_array=ether_get_dns2.split('.');
+		form.PDAddr1.value=dns2_array[0];
+		form.PDAddr2.value=dns2_array[1];
+		form.PDAddr3.value=dns2_array[2];
+		form.PDAddr4.value=dns2_array[3];
+	}
+	if( dns_third_flag == 1 && '<% cfg_get("ParentalControl") %>'!='1')
+	{
+	        var ether_get_dns3="<% bas_ether_dns("2") %>";
+	        if (ether_get_dns3!="" && ether_get_dns3.indexOf(":")==-1)
+	        {
+	                var dns3_array=ether_get_dns3.split('.');
+	                form.TDAddr1.value=dns3_array[0];
+	                form.TDAddr2.value=dns3_array[1];
+	                form.TDAddr3.value=dns3_array[2];
+	                form.TDAddr4.value=dns3_array[3];
+	        }
+	}
+	}
+	change_dslite_web_display_format(form);
+}
+
+function loadvalue()
+{
+	change_web_format();
+	var form=document.forms[0];
+	if(consolidate_device_name == "1")
+		document.getElementById("edit_devname_bt").style.display="";
+	
+	if(vpn_flag == "1" && parent.ether_post_flag == 1){
+		parent.ether_post_flag = 0;
+		alert("$warn_change_static_ip");
+	}
+
+	if (old_wan_assign == '0')
+		form.WANAssign[0].checked = true;
+	else
+		form.WANAssign[1].checked = true;
+	setIP(form);		
+	var ether_get_ip=old_wan_ip;
+	if (ether_get_ip!="")
+	{
+		var ip_array=ether_get_ip.split('.');
+		form.WPethr1.value=ip_array[0];
+		form.WPethr2.value=ip_array[1];
+		form.WPethr3.value=ip_array[2];
+		form.WPethr4.value=ip_array[3];
+	}
+	if (ether_get_subnet!="")
+	{
+		var mask_array=ether_get_subnet.split('.');
+		form.WMask1.value=mask_array[0];
+		form.WMask2.value=mask_array[1];	
+		form.WMask3.value=mask_array[2];
+		form.WMask4.value=mask_array[3]; 
+	}
+	if (ether_get_gateway!="")
+	{
+		var gtw_array=ether_get_gateway.split('.');
+		form.WGateway1.value=gtw_array[0];
+		form.WGateway2.value=gtw_array[1];
+		form.WGateway3.value=gtw_array[2];
+		form.WGateway4.value=gtw_array[3];	
+	}
+	var ether_get_dns_assign='<% cfg_get("wan_ether_dns_assign") %>';
+	if (ether_get_dns_assign == '0')
+		form.DNSAssign[0].checked = true;
+	else
+		form.DNSAssign[1].checked = true;
+	setDNS(form);	
+	var ether_get_dns1="<% bas_ether_dns() %>";
+	if (ether_get_dns1!="" && ether_get_dns1.indexOf(":")==-1)
+	{
+		var dns1_array=ether_get_dns1.split('.');
+		form.DAddr1.value=dns1_array[0];
+		form.DAddr2.value=dns1_array[1];
+		form.DAddr3.value=dns1_array[2];
+		form.DAddr4.value=dns1_array[3];
+	}
+	var ether_get_dns2="<% bas_ether_dns("1") %>";
+	if (ether_get_dns2!="" && ether_get_dns2.indexOf(":")==-1)
+	{
+		var dns2_array=ether_get_dns2.split('.');
+		form.PDAddr1.value=dns2_array[0];
+		form.PDAddr2.value=dns2_array[1];
+		form.PDAddr3.value=dns2_array[2];
+		form.PDAddr4.value=dns2_array[3];
+	}
+	if( dns_third_flag == 1 && '<% cfg_get("ParentalControl") %>'!='1')
+	{
+	        var ether_get_dns3="<% bas_ether_dns("2") %>";
+	        if (ether_get_dns3!="" && ether_get_dns3.indexOf(":")==-1)
+	        {
+	                var dns3_array=ether_get_dns3.split('.');
+	                form.TDAddr1.value=dns3_array[0];
+	                form.TDAddr2.value=dns3_array[1];
+	                form.TDAddr3.value=dns3_array[2];
+	                form.TDAddr4.value=dns3_array[3];
+	        }
+	}
+	var ether_get_mac_assign='<% cfg_get("wan_ether_mac_assign") %>';
+	if (ether_get_mac_assign == '0')
+	{
+		form.MACAssign[0].checked = true;
+		setMAC(form,wan_factory_mac);
+	}
+	else if (ether_get_mac_assign == '1')
+	{
+		form.MACAssign[1].checked = true;
+		setMAC(form,wan_remote_mac);
+	}
+	else
+	{
+		form.MACAssign[2].checked = true;
+		setMAC(form,ether_get_this_mac);
+	}
+	goTestApply();
+
+	if(getTop(window).use_orbi_style_flag == "1"){
+		if(wan_preference === "1") {
+			form.wan_preference[4].checked = true;
+			form.hid_wan_preference.value = "1";
+		}
+		else if(wan_preference === "2") {
+			form.wan_preference[5].checked = true;
+			form.hid_wan_preference.value = "2";
+		}
+		else {
+			form.wan_preference[3].checked = true;
+			form.hid_wan_preference.value = "0";
+		}
+	}
+	else
+	{
+	if(wan_preference === "1") {
+		form.wan_preference[1].checked = true;
+		form.hid_wan_preference.value = "1";
+	}
+	else if(wan_preference === "2") {
+		form.wan_preference[2].checked = true;
+		form.hid_wan_preference.value = "2";
+	}
+	else {
+		form.wan_preference[0].checked = true;
+		form.hid_wan_preference.value = "0";
+	}
+	}
+	if(sfp_module === "1")
+		form.sfp_module.options[1].selected = true;
+	else
+		form.sfp_module.options[0].selected = true;
+	<% ajax_ping_start() %>
+	have_wan_preference(parent.support_wan_preference);
+	if(getTop(window).support_ds_lite_flag === 1 && is_jp_version)
+	{
+		document.getElementById("ds_lite_tr1").style.display = "";
+		document.getElementById("ds_lite_tr2").style.display = "";
+		document.getElementById("ds_lite_tr3").style.display = "";
+		document.getElementById("ds_lite_tr4").style.display = "";
+		document.getElementById("ds_lite_tr5").style.display = "";
+		document.getElementById("ds_lite_tr6").style.display = "";
+		document.getElementById("ds_lite_bluebar").style.display = "";
+		if( enable_ds == 1 )
+			form.enable_ds_lite.checked = true;
+		else
+			form.enable_ds_lite.checked = false;
+		if( enable_nd == 1 )
+			form.enable_nd_proxy.checked = true;
+		else
+			form.enable_nd_proxy.checked = false;
+		change_dslite_web_format(form);
+
+		if(aftr_ipv6 === "1") {
+			form.aftr_ipv6[1].checked = true;
+			form.hid_aftr_ipv6.value = "1";
+		}else{
+			form.aftr_ipv6[0].checked = true;
+			form.hid_aftr_ipv6.value = "0";
+			form.aftr_ipv6_addr.disabled = true;
+		}
+		form.aftr_ipv6_addr.value = aftr_ipv6_addr;
+	}
+	if(have_dhcp_option == "1")
+	{
+		document.getElementById("option_title").style.display = "";
+		document.getElementById("option60").style.display = "";
+		document.getElementById("option61").style.display = "";
+		document.getElementById("option61_bluebar").style.display = "";
+	}
+	if(support_singapore_isp == "1" ||  support_malaysia_isp== "1" || support_spain_isp == "1")
+		document.getElementById("other_dhcp_pppoe").style.display = "";	
+}
+</script>
+
+<input type="hidden" name="conflict_wanlan">
+<input type="hidden" name="change_wan_type">
+<input type="hidden" name="run_test" value="">
+<input type="hidden" name="ether_ipaddr">
+<input type="hidden" name="ether_subnet">
+<input type="hidden" name="ether_gateway">
+<input type="hidden" name="ether_dnsaddr1">
+<input type="hidden" name="ether_dnsaddr2">
+<input type="hidden" name="ether_dnsaddr3">
+<input type="hidden" name="hid_mtu_value">
+<input type="hidden" name="hid_vpn_detect_flag">
+<input type="hidden" name="hid_enable_vpn" value="1">
+<input type="hidden" name="hid_wan_preference" value="0">
+<input type="hidden" name="hid_sfp_module" value="0">
+<input type="hidden" name="hid_enable_ds" value="0">
+<input type="hidden" name="hid_aftr_ipv6" value="0">
+<input type="hidden" name="hid_enable_nd" value="0">
+<div class="fix_button">
+<TABLE width=100% border=0 cellpadding=0 cellspacing=2>
+<script>
+var master="<% cfg_get("http_loginname") %>";
+
+if( master =="admin" ){
+document.write('<TR><TD nowrap colspan=2 align=center><input class="common_bt" type="button" name="Test" id="test" value="$test_mark" onClick="return check_ether(document.forms[0],1)">&nbsp;&nbsp;');
+document.write('<input class="cancel_bt" type="button" name="Cancel" id="cancel" value="$cancel_mark" onClick="location.href=\'BAS_ether.htm\';">&nbsp;&nbsp;');
+document.write('<input class="apply_bt" type="button" name="Apply" id="apply" value="$apply_mark" onClick="return check_ether(document.forms[0],0)"></TD></TR>');
+}
+else
+document.write('<TR><TD nowrap colspan=2 align=center><input class="common1_bt" type="button" name="Test" id="test" value="$test_mark" disabled>&nbsp;&nbsp;<input class="cancel1_bt" type="button" name="Cancel" id="cancel" value="$cancel_mark" disabled>&nbsp;&nbsp;<input class="apply1_bt" type="button" name="Apply" id="apply" value="$apply_mark" disabled></TD></TR>');
+</script>
+</TABLE>
+</div><!--button-->
+<div id="bas_top">
+<TABLE cellspacing=5 cellPadding=0 width=100% border=0>
+<TR id="wan_preference_tr1" style="display:none"><TD nowrap>
+<script>if(getTop(window).use_orbi_style_flag != "1") document.write("<B>$wan_preference</B>");else document.write("<A tabindex=-1 class=\"disabled\"><B>$wan_preference1</B></A>");</script>
+</TD></TR>
+<TR id="wan_preference_tr2" style="display:none">
+        <TD nowrap>
+        <input onclick='document.forms[0].hid_wan_preference.value="0"'  type="radio" name="wan_preference" id="internet_port" value="0"><label for="internet_port">$wan_port</label>
+        </TD>
+</TR>
+<TR id="wan_preference_tr3" style="display:none">
+        <TD nowrap>
+		<input onclick='document.forms[0].hid_wan_preference.value="1"' type="radio" name="wan_preference" id="sfp_port" value="1" checked="true"><label for="sfp_port">
+		<script>if(getTop(window).use_orbi_style_flag != "1") document.write("$wan_lan_spf"); else document.write("$wan_aggregation (1 Gbps + 1 Gbps)");</script></label>
+		<span id='wan-port-status' style="margin-left: 70px; color: red"></span>
+		</TD>
+</TR>
+<TR id="wan_preference_tr4" style="display:none">
+        <TD nowrap>
+        <input onclick='document.forms[0].hid_wan_preference.value="2"'  type="radio" name="wan_preference" id="5g_port" value="2"><label for="5g_port">5G Ethernet port</label>
+        </TD>
+</TR>
+<TR id="sfp_module_tr1" style="display:none">
+	<TD nowrap colspan=2><B>$wan_spf_module:</B></A></TD>
+</TR>
+<TR id="sfp_module_tr2" style="display:none">
+	<TD nowrap colspan=2>
+	<select name="sfp_module" id="sfp_module">
+		<option value="0">$auto_mark</option>
+		<option value="1">$wan_detect</option>
+	</select>
+	</TD>
+</TR>
+<TR id="wan_preference_hr" style="display:none"><TD colspan=2><img src=/liteblue.gif width=100% height=12></TD></TR>
+<TR><TD nowrap>
+<A tabindex=-1 class="disabled" href="javascript:loadhelp('_BAS_ether','question')"><B>$basic_top_info</B></A>
+</TD></TR>
+<TR id="loginreq_tr1">
+        <TD nowrap>
+	<input onclick='goto_basic_login_page();'  type="radio" name="loginreq" id="loginreq" value="pppoe"><label for="loginreq">$yes_mark</label>
+        </TD>
+</TR>
+<TR id="loginreq_tr2">
+        <TD nowrap>
+	<input onclick='' type="radio" name="loginreq" id="no_loginreq" value="dhcp" checked="true"><label for="no_loginreq">$no_mark</label>
+        </TD>
+</TR>
+$bluebar
+</TABLE>
+</div><!--bas_top -->
+<div id="main" class="main_bas" style="top: 260px;">
+<% pop_help_button() %>
+
+<div id="wan_preference_div">
+<TABLE cellspacing=5 cellPadding=0 width=100% border=0>
+<TR id="wan_preference_tr5" style="display:none"><TD nowrap>
+<A tabindex=-1 class="disabled"><B>$wan_preference1</B></A>
+</TD></TR>
+<TR id="wan_preference_tr6" style="display:none">
+        <TD nowrap>
+        <input onclick='document.forms[0].hid_wan_preference.value="0"'  type="radio" name="wan_preference" id="internet_port1" value="0"><label for="internet_port1">$wan_port</label>
+        </TD>
+</TR>
+<TR id="wan_preference_tr7" style="display:none">
+        <TD nowrap>
+		<input onclick='document.forms[0].hid_wan_preference.value="1"' type="radio" name="wan_preference" id="sfp_port1" value="1" checked="true"><label for="sfp_port1">
+			<script>
+				if(wan_agg_port == 4)
+					document.write("Multi-Gig Internet (1 Gbps + 1 Gbps)");
+				else
+					document.write("$wan_aggregation (1 Gbps + 1 Gbps)");
+			</script>
+		</label>
+		<span id='wan-port-status1' style="margin-left: 70px; color: red"></span>
+		</TD>
+</TR>
+<TR id="wan_preference_tr8" style="display:none">
+        <TD nowrap>
+        <input onclick='document.forms[0].hid_wan_preference.value="2"'  type="radio" name="wan_preference" id="5g_port1" value="2"><label for="5g_port1">5G Ethernet port</label>
+        </TD>
+</TR>
+<TR id="wan_preference_hr1" style="display:none"><TD colspan=2><img src=/liteblue.gif width=100% height=12></TD></TR>
+</TABLE>
+</div>
+<TABLE cellspacing=5 cellPadding=0 width=100% border=0>
+
+<TR>
+	<TD nowrap><A tabindex=-1 class="disabled" href="javascript:loadhelp('_BAS_ether','acname')">$basic_int_acname:</A></TD>
+	<TD nowrap class="tdright">
+	<script>
+	var old_name="<% cfg_sed_xss("wan_hostname") %>";
+	var dev_name="<% cfg_sed_xss("Device_name") %>";
+	if(old_name != "")
+		dev_name = old_name;
+	if(consolidate_device_name == "1"){
+		document.write(dev_name);
+		document.write("&nbsp;&nbsp;&nbsp;");
+	}else
+		document.write('<input type="text" name="system_name" id="system_name" size="20" maxlength="60" value="<% cfg_sed_xss("wan_hostname"); %>" onKeyPress="return getkey(\'apname\',event)">');
+	</script>
+	<input class="short_edit_bt" id="edit_devname_bt" type="button" name="edit" value="$edit_mark" onClick="edit_devicename(dev_name)" style="display:none">
+	</TD>
+</TR>
+<TR>
+	<TD nowrap class="label-td"><A tabindex=-1 class="disabled" href="javascript:loadhelp('_BAS_ether','doname')">$basic_int_doname:</A></TD>
+	<TD nowrap class="tdright">
+	<input type="text" class="input1" name="domain_name" id="domain_name" size="20" maxlength="60" value="<% cfg_sed_xss("wan_domain"); %>" onKeyPress="return getkey( 'ddns_hostname',event)">
+	</TD>
+</TR>
+$bluebar
+<TR>
+	<TD nowrap colspan=2 class="label-td">
+	<A tabindex=-1 class="disabled" href="javascript:loadhelp('_BAS_ether','InternetIP')"><B>$basic_int_intip</B></A>
+	</TD>
+</TR>
+<TR id="internet_ip_tr1">
+	<TD nowrap colspan=2 class="label-td">
+	<input type="radio" name="WANAssign" id="wan_assign_dhcp" value="dhcp" onClick="setIP(document.forms[0])"><label for="wan_assign_dhcp">$basic_int_autoip</label>
+	</TD>
+</TR>
+<TR id="internet_ip_tr2">
+	<TD nowrap colspan=2 class="">
+	<input type="radio" name="WANAssign" id="wan_assign_static" value="static" onClick="setIP(document.forms[0])"><label for="wan_assign_static">$basic_int_static_ip</label>
+	</TD>
+</TR>
+<TR id="internet_ip_tr3">
+	<TD nowrap class="ip-label-td">$lan_mark_ip:</TD>
+	<TD nowrap class="tdright ip-input-row">
+	<input type="text" name="WPethr1" id="wpethr1" size="3" autocomplete="off" maxlength="3" onFocus="this.select();" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);" >.
+	<input type="text" name="WPethr2" id="wpethr2" size="3" autocomplete="off" maxlength="3" onFocus="this.select();" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">.
+	<input type="text" name="WPethr3" id="wpethr3" size="3" autocomplete="off" maxlength="3" onFocus="this.select();" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">.
+	<input type="text" name="WPethr4" id="wpethr4" size="3" autocomplete="off" maxlength="3" onFocus="this.select();" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">
+	</TD>
+</TR>
+<TR id="internet_ip_tr4">
+	<TD nowrap class="ip-label-td">$lan_mark_subnet:</TD>
+	<TD nowrap class="tdright ip-input-row">
+	<input type="text" name="WMask1" id="wmask1" size="3" autocomplete="off" maxlength="3" onFocus="this.select();" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);" >.
+	<input type="text" name="WMask2" id="wmask2" size="3" autocomplete="off" maxlength="3" onFocus="this.select();" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">.
+	<input type="text" name="WMask3" id="wmask3" size="3" autocomplete="off" maxlength="3" onFocus="this.select();" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">.
+	<input type="text" name="WMask4" id="wmask4" size="3" autocomplete="off" maxlength="3" onFocus="this.select();" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">
+	</TD> 
+</TR>
+<TR id="internet_ip_tr5">
+	<TD nowrap class="ip-label-td">$lan_mark_gateway:</TD>
+	<TD nowrap class="tdright ip-input-row">
+	<input type="text" name="WGateway1" id="wgateway1" size="3" autocomplete="off" maxlength="3" onFocus="this.select();" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);" >.
+	<input type="text" name="WGateway2" id="wgateway2" size="3" autocomplete="off" maxlength="3" onFocus="this.select();" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">.
+	<input type="text" name="WGateway3" id="wgateway3" size="3" autocomplete="off" maxlength="3" onFocus="this.select();" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">.
+	<input type="text" name="WGateway4" id="wgateway4" size="3" autocomplete="off" maxlength="3" onFocus="this.select();" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">
+	</TD>
+</TR>
+$bluebar
+<TR>
+	<TD nowrap colspan=2 class="label-td">
+	<A tabindex=-1 class="disabled" href="javascript:loadhelp('_BAS_ether','DNSaddress')"><B>$basic_int_dns</B></A>
+	</TD>
+</TR>
+<TR id="internet_dns_tr1">
+	<TD nowrap colspan=2 class="label-td">
+	<input type="radio" name="DNSAssign" id="dns_assign_auto" value="0" onClick="setDNS(document.forms[0])"><label for="dns_assign_auto">$basic_int_autodns</label>
+	</TD>
+</TR>
+<TR id="internet_dns_tr2">
+	<TD nowrap colspan=2>
+	<input type="radio" name="DNSAssign" id="dns_assign_static" value="1" onClick="setDNS(document.forms[0])"><label for="dns_assign_static">$basic_int_these</label>
+	</TD>
+</TR>
+<TR id="internet_dns_tr3">
+	<TD nowrap class="ip-label-td">$basic_int_primary_dns:</TD>
+	<TD nowrap class="tdright ip-input-row">
+	<input type="text" name="DAddr1" id="daddr1" size="3" autocomplete="off" maxlength="3" onFocus="this.select();" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);" >.
+	<input type="text" name="DAddr2" id="daddr2" size="3" autocomplete="off" maxlength="3" onFocus="this.select();" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">.
+	<input type="text" name="DAddr3" id="daddr3" size="3" autocomplete="off" maxlength="3" onFocus="this.select();" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">.
+	<input type="text" name="DAddr4" id="daddr4" size="3" autocomplete="off" maxlength="3" onFocus="this.select();" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">
+	</TD>
+</TR>
+<TR id="internet_dns_tr4">
+	<TD nowrap class="ip-label-td">$basic_int_second_dns:</TD>
+	<TD nowrap class="tdright ip-input-row">
+	<input type="text" name="PDAddr1" id="pdaddr1" size="3" autocomplete="off" maxlength="3" onFocus="this.select();" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);" >.
+	<input type="text" name="PDAddr2" id="pdaddr2" size="3" autocomplete="off" maxlength="3" onFocus="this.select();" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">.
+	<input type="text" name="PDAddr3" id="pdaddr3" size="3" autocomplete="off" maxlength="3" onFocus="this.select();" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">.
+	<input type="text" name="PDAddr4" id="pdaddr4" size="3" autocomplete="off" maxlength="3" onFocus="this.select();" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">	
+	</TD>
+</TR>
+<TR id=third_dns style="display:none">
+        <TD nowrap class="ip-label-td">$basic_int_third_dns:</TD>
+        <TD nowrap class="tdright ip-input-row">
+        <input type="text" name="TDAddr1" id="tdaddr1" size="3" autocomplete="off" maxlength="3" onFocus="this.select();" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);" >.
+        <input type="text" name="TDAddr2" id="tdaddr2" size="3" autocomplete="off" maxlength="3" onFocus="this.select();" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">.
+        <input type="text" name="TDAddr3" id="tdaddr3" size="3" autocomplete="off" maxlength="3" onFocus="this.select();" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">.
+        <input type="text" name="TDAddr4" id="tdaddr4" size="3" autocomplete="off" maxlength="3" onFocus="this.select();" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">
+        </TD>
+</TR>
+$bluebar
+<TR>
+	<TD nowrap colspan=2 class="label-td">
+	<A tabindex=-1 class="disabled" href="javascript:loadhelp('_BAS_ether','localaddress')"><B>$basic_int_mac</B></A>
+	</TD>
+</TR>
+<TR>
+	<TD nowrap colspan=2 class="label-td">
+	<input type="radio" name="MACAssign" id="mac_assign_default" value="0" onClick="setMAC(document.forms[0], wan_factory_mac)"><label for="mac_assign_default">$basic_int_default_mac</label>
+	</TD>
+</TR>
+<TR>
+	<TD nowrap colspan=2 class="label-td">
+	<input type="radio" name="MACAssign" id="mac_assign_computer" value="1" onClick="setMAC(document.forms[0], wan_remote_mac)"><label for="mac_assign_computer">$basic_int_computer_mac</label>
+	</TD>
+</TR>
+<TR>
+	<TD nowrap>
+	<input type="radio" name="MACAssign" id="mac_assign_define" value="2" onClick="setMAC(document.forms[0], ether_get_this_mac)"><label for="mac_assign_define">$basic_int_this_mac:</label>
+	</TD>
+	<TD nowrap class="tdright ip-input-row">
+	<input type="text" value="" class="input1" name="Spoofmac" id="spoof_mac" maxlength="17" size="20" onKeyPress="return getkey('mac',event)">
+	</TD>
+</TR>
+$bluebar
+<TR id=option_title style="display:none">
+<TD nowrap colspan=2 class="label-td"><B>DHCP Option</B></TD>
+</TR>
+<TR id="option60" style="display:none">
+	<TD nowrap class="label-td">$option_60:</TD>
+	<TD nowrap class="tdright">
+	<input type="text" class="input1" name="option_60" id="option_60" size="20" maxlength="60" value="<% cfg_sed_xss("dhcp_option60"); %>" onKeyPress="return getkey( 'ddns_hostname',event)">
+	</TD>
+</TR>
+<TR id="option61" style="display:none">
+	<TD nowrap class="label-td">$option_61:</TD>
+	<TD nowrap class="tdright">
+	<input type="text" class="input1" name="option_61" id="option_61" size="20" maxlength="60" value="<% cfg_sed_xss("dhcp_option61"); %>" onKeyPress="return getkey( 'ddns_hostname',event)">
+	</TD>
+</TR>
+<TR id="option61_bluebar" style="display:none"><td colspan=2><img src=/liteblue.gif width=100% height=12></td></TR>
+
+<tbody id="other_dhcp_pppoe" style="display:none">
+<TR id=vlanlink_title>
+	<TD nowrap colspan=2 class="label-td"><B>$vlan_link_title</B></TD>
+</TR>
+<TR>
+	<TD nowrap colspan=2 class="label-td">
+	<a class="linktype" style="cursor:pointer" onclick="vlanlink_click()">$vlanlink_click</a>
+	</TD>
+</TR>
+$bluebar
+</tbody>
+<TR id="ds_lite_tr1" style="display:none"><TD nowrap><B>$ds_lite</B></TD></TR>
+<TR id="ds_lite_tr2" style="display:none">
+	<TD nowrap>
+	<input type="checkbox" name="enable_ds_lite" id="enable_ds_lite" onClick="change_dslite_web_format(document.forms[0])"><label for="enable_ds_lite">$enable_ds_lite</label>
+	</TD>
+</TR>
+<TR id="ds_lite_tr6" style="display:none">
+	<TD nowrap>
+	<input type="checkbox" name="enable_nd_proxy" id="enable_nd_proxy"><label for="enable_nd_proxy">Enable ND-proxy</label>
+	</TD>
+</TR>
+<TR id="ds_lite_tr3" style="display:none"><TD nowrap>$aftr_ipv6</TD></TR>
+<TR id="ds_lite_tr4" style="display:none">
+        <TD nowrap>
+        <input onclick='document.forms[0].hid_aftr_ipv6.value="0"; document.forms[0].aftr_ipv6_addr.disabled = true'  type="radio" name="aftr_ipv6" id="auto_aftr_ipv6" value="0" checked="true"><label for="auto_aftr_ipv6">$ipv6_auto_config</label>
+        </TD>
+</TR>
+<TR id="ds_lite_tr5" style="display:none">
+        <TD nowrap>
+        <input onclick='document.forms[0].hid_aftr_ipv6.value="1"; document.forms[0].aftr_ipv6_addr.disabled = false' type="radio" name="aftr_ipv6" id="manual_aftr_ipv6" value="1"><label for="manual_aftr_ipv6">$manual_config</label>
+	</TD>
+	<TD nowrap class="tdright">
+	<input type="text" name="aftr_ipv6_addr" size="25" maxlength="128">
+	</TD>
+</TR>
+<TR id="ds_lite_bluebar" style="display:none"><td colspan=2><img src=/liteblue.gif width=100% height=12></td></TR>
+</TABLE>
+</div> <!-- main -->
+<% help_box("0","_BAS_ether") %>
+</FORM>
+</BODY>
+</HTML>

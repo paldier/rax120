@@ -1,0 +1,565 @@
+<% http_header("style/form2.css", "style/attach_device.css","/funcs.js", "/jquery-1.7.2.min.js", "/streamboost.js") %>
+<% body_header("_new_attach_device", "QOS_edit_devices.htm", "select_qos_edit") %>
+<div id="black_over_lay" class="black_overlay">
+</div>
+<style type="text/css">
+.eth, .wifi, .contype{ position: relative; top:20px; left: 20px;}
+.even_line_new td{padding: 0px;}
+.even_line_new img{max-height: 120%;}
+.devinfo_tbl tr td{
+	border:0px;
+	padding:1px;
+}
+.device_td a{TEXT-DECORATION: underline; color:#00ADE6;}
+</style>
+<script language="javascript" type="text/javascript">
+back_reload_page("QOS_device.htm");
+var ts='<% cfg_get("select_qos_edit") %>';
+var enable_block_device="<% cfg_get("enable_block_device") %>";
+
+var wl_ssid="<% cfg_get_ssid_html("wl_ssid") %>";
+var wlg1_ssid="<% cfg_get_ssid_html("wlg1_ssid") %>";
+var wla_ssid="<% cfg_get_ssid_html("wla_ssid") %>";
+var wla1_ssid="<% cfg_get_ssid_html("wla1_ssid") %>";
+var wig_ssid="<% cfg_get_ssid_html("wig_ssid") %>";
+
+var mac_addr=new Array();
+var ip_addr=new Array();
+var name_addr=new Array();
+var prio_addr=new Array();
+var enable_bridge_flag="<% cfg_get("bridge_mode") %>";
+var enable_ap_mode_flag="<% cfg_get("ap_mode") %>";
+
+var devList=[];
+var listBySort=1;
+var mouseon=false;
+var attach_device_num=0;
+var dev_info = new Array();
+var vpn_devList=[];
+var vpn_dev_info = new Array();
+var refresh_timer;
+var conn_time = new Array();
+
+
+function goto_url()
+{
+	location.href="access_control.htm";
+}
+
+function show_wlan_ssid(name)
+{
+	var wlan_ssid="";
+	if(name=="wired")
+		wlan_ssid="";
+	else if(name=="primary")
+		wlan_ssid=" $wlan_guest_ssid: "+wl_ssid;
+	else if(name=="guest")
+		wlan_ssid=" $wlan_guest_ssid: "+wlg1_ssid;
+	else if(name=="gre")
+		wlan_ssid=" $wlan_guest_ssid: "+wlg1_ssid;
+	else if(name=="primary_an")
+		wlan_ssid=" $wlan_guest_ssid: "+wla_ssid;
+	else if(name=="guest_an")
+		wlan_ssid=" $wlan_guest_ssid: "+wla1_ssid;
+	else if(name=="gre_an")
+		wlan_ssid=" $wlan_guest_ssid: "+wla1_ssid;
+	else if(name=="primary_ad")
+		wlan_ssid=" $wlan_guest_ssid: "+wig_ssid;
+	else
+		wlan_ssid="";
+	return wlan_ssid;
+}
+
+function show_conn_type(name)
+{
+	var wlan_ssid=show_wlan_ssid(name);
+	if(wlan_ssid != "")
+		return wlan_ssid.replace( /^\s/, '');
+	else
+		return "";
+}
+
+function change_time_type(time)
+{
+	var sec = time;
+	var sec = parseInt(sec);
+
+	var minute_sec = sec%3600;
+	if(minute_sec != sec)
+		var day_hour = (sec - minute_sec)/3600;
+	else
+		var day_hour = 0;
+
+	var hour = day_hour%24;
+
+	var sec_sec = minute_sec%60;
+	if(sec_sec != minute_sec)
+		var minute = (minute_sec - sec_sec)/60;
+	else
+		var minute = 0;
+
+	hour = hour.toString();
+	minute = minute.toString();
+	sec_sec = sec_sec.toString();
+
+	if(sec_sec < 10)
+		sec_sec = "0"+sec_sec;
+	if(minute < 10)
+		minute = "0"+minute;
+	if(hour < 10)
+		hour = "0"+hour;
+	if(isNaN(sec))
+		var new_time="N/A";
+	else
+		var new_time=hour+":"+minute+":"+sec_sec;
+	return new_time;
+}
+
+function update_device_info(json)
+{
+	eval(json)
+	dev_info=[];
+	var device=json.device;
+	
+	for(var i=0, len = json.device.length; i<len;i++)
+	{
+		var obj = {};
+
+		obj['ip']=device[i]['ip'];
+		obj['mac']=device[i]['mac'];
+		obj['contype']=device[i]['contype'];
+		obj['devtype']=device[i]['devtype'];
+		obj['devtype_name']=device[i]['devtype_name'];
+		obj['priority']=device[i]['priority'];
+		obj['name']=device[i]['name'];
+		if(getTop(window).support_new_ntgrtype == "1")
+		obj['model']=device[i]['model'];
+		obj['access_control']=device[i]['access_control'];
+		obj['remote_ip']=device[i]['remote_ip'];
+		obj['connection_time']=device[i]['connection_time'];
+		if(device[i]['contype'] != "vpn")
+			dev_info.push(obj);
+	}
+}
+
+function updateDevice(jobj)
+{
+	if(jobj.device.length < 2)
+	{
+		if(getTop(window).use_orbi_style_flag != "1")
+			return;
+		else
+		{
+			clearTimeout(refresh_timer);
+			refresh_timer = setTimeout("getDevices()", 6000);
+		}
+	}
+
+	devList = jobj.device;
+	devList.pop(); //delete the last blank item
+	show_all();
+	if(getTop(window).use_orbi_style_flag == "1")
+	{
+		update_device_info(jobj);
+		show_vpn();
+	}
+}
+
+function check_edit()
+{
+	var count=0;
+	var select_num, select_mac;
+	var cf = document.forms[0];
+
+	if(attach_device_num==0)
+	{
+		alert("$port_edit");
+		return false;
+	}
+
+	for(i=1;i<=attach_device_num;i++)
+	{
+		var listName="checkbox_index"+i;
+		if(document.getElementById(listName).checked==true)
+		{
+			select_mac=document.getElementById(listName).value;
+			select_num=i-1;
+			count++;
+		}
+	}
+	if(count==0||count!=1)
+	{
+		alert("$port_edit");
+		return false;
+	}
+	else{
+		for(j=0;j<dev_info.length;j++)
+		{
+			if(dev_info[j]['mac'] == select_mac)
+			{
+				select_num=j;
+				if(getTop(window).support_new_ntgrtype == "1")
+					edit_select_device_fing(dev_info[select_num]['mac'],dev_info[select_num]['ip'],dev_info[select_num]['name'].replace(/\\\\/g,"\\").replace(/&nbsp;/g, " ").replace(/&#39;/g,"\&#39;"), dev_info[select_num]['priority'], dev_info[select_num]['devtype'], dev_info[select_num]['devtype_name'], dev_info[select_num]['model'], dev_info[select_num]['contype']);
+				else
+					edit_select_device(dev_info[select_num]['mac'],dev_info[select_num]['ip'],dev_info[select_num]['name'].replace(/\\\\/g,"\\").replace(/&nbsp;/g, " ").replace(/&#39;/g,"\&#39;"), dev_info[select_num]['priority'], dev_info[select_num]['devtype'],dev_info[select_num]['contype']);
+				return true;
+			}
+		}
+		return false;
+	}
+}
+
+function toggle_edit()
+{
+	var num = 0;
+	var cf = document.forms[0];
+	if(attach_device_num > 0) {
+		for(var i=1;i<=attach_device_num;i++) {
+			var listName = "checkbox_index"+i;
+			if(document.getElementById(listName).checked == true) {
+				num++;
+			}
+		}
+	}
+	if(num >0) {
+		cf.edit_attached.disabled = false;
+	} else {
+		cf.edit_attached.disabled = true;
+	}
+}
+
+function show_all()
+{
+	$$('#main').empty();
+	if(getTop(window).use_orbi_style_flag == "1")
+	{
+		var msg1 = '<table width="100%" border="0" cellpadding="0" cellspacing="3">'
+			+'<TR><TD align=left colspan="2">'
+			+'<div class="btn-inline-group">'
+			+'<input class="common_bt" type="button" name="Edit" id="edit_attached" value="$edit_mark" onclick="return check_edit();" disabled>'
+			+'<input class="common_bt" type="button" name="refresh" id="refresh" value="$refresh_mark" onclick="location.href=\'QOS_device.htm\';">'
+			+'</div></TD></TR>'
+			+'<TABLE class="tables table1" border=0 cellpadding=2 cellspacing=0 width=100% id="device_table" style="width:98%">'
+			+'<TR class=table_header>'
+			+'<TD nowrap align=center><span class="subhead"></span></TD>';
+		if(enable_block_device == 0)
+			msg1 += '<TD nowrap align=center width=10%><span class="subhead"># </span></TD>';
+		else
+			msg1 += '<TD nowrap align=center width=10% class="subhead_acc_control">$stalist_Status</TD>';
+		msg1 =msg1 +'<TD nowrap align=center width=20% class="subhead_acc_control" colspan="1">$trigger_contype</TD>';
+		if(getTop(window).support_new_ntgrtype == "1")
+			msg1 =msg1 +'<TD nowrap align=center width=35% class="subhead_acc_control" colspan="2">$adva_wlan_devicename</TD>';
+		else
+			msg1 =msg1 +'<TD nowrap align=center width=35% class="subhead_acc_control">$adva_wlan_devicename</TD>';
+			msg1 =msg1 +'<TD nowrap align=center width=15% class="subhead_acc_control">$block_ser_setup_ip_jp</TD>'
+			+'<TD nowrap align=center width=15% class="subhead_acc_control">$info_mark_mac</TD>'
+			+'</TR>';
+		var d_num=0;
+		for( var i in devList )
+		{
+			var dev = devList[i];
+			//dev.name = dev.name.replace(/[ ]/g, "&nbsp;").replace(/&harr;/g, " ").replace(/&#92;/g, "\\").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&#40;/g,"(").replace(/&#41;/g,")").replace(/&#34;/g,'\"').replace(/&#39;/g,"'").replace(/&#35;/g,"#").replace(/&#38;/g,"&");
+			if(dev.contype != "vpn"){
+				msg1 += '<tr class="even_line_new">';
+				msg1 += '<td nowrap align=center><input type="checkbox" name="checkbox_index'+(d_num+1)+'"  id="checkbox_index'+(d_num+1)+'" value='+dev.mac+' onClick="toggle_edit();"><label for="checkbox_index'+(d_num+1)+'"></label></td>';
+				if(enable_block_device == 0)
+					msg1 += '<td rowspan=1 align=center>'+(d_num+1)+'</td>';
+				else
+				{
+					if(dev.access_control=="Allowed")
+						msg1 += '<td rowspan=1 align=center><font color=green>$acc_allow</font></td>';
+					else if(dev.access_control=="Blocked")
+						msg1 += '<td rowspan=1 align=center><font color=red>$acc_block</font></td>';
+					else
+						msg1 += '<td rowspan=1 align=center><font color=red>$acc_block</font></td>';
+				}
+				//Connection Type
+				if(dev.contype == "primary" || dev.contype == "2.4G")
+					msg1 += '<td rowspan=1 class="device_td2" align=left width=45px>2.4G</td>';
+				else if(dev.contype == "guest" || dev.contype == "gre" || dev.contype == "2.4G-Guest")
+					msg1 += '<td rowspan=1 class="device_td2" align=left width=45px>2.4G Guest</td>';
+				else if(dev.contype == "primary_an" || dev.contype == "5G")
+					msg1 += '<td rowspan=1 class="device_td2" align=left width=45px>5G</td>';
+				else if(dev.contype == "guest_an" || dev.contype == "gre_an" || dev.contype == "5G-Guest")
+					msg1 += '<td rowspan=1 class="device_td2" align=left width=45px>5G Guest</td>';
+				else if(dev.contype == "primary_ad")
+					msg1 += '<td rowspan=1 class="device_td2" align=left width=45px>60G</td>';
+				else if(dev.contype == "Unknown")
+					msg1 += '<td rowspan=1 class="device_td2" align=left width=45px>Unknown</td>';
+				else if(dev.contype == "wired"){
+					msg1 += '<td rowspan=1 class="device_td2" align=left width=45px>$acc_wired</td>';}
+				else{
+					msg1 += '<td rowspan=1 class="device_td2" align=left width=45px>$acc_wired</td>';}
+				if(getTop(window).support_new_ntgrtype == "1")
+					msg1 += '<td rowspan=1 align=left rowspan=1><div title="$qos_mac: '+dev.mac+'&#10;$device_type: '+dev.devtype_name+'&#10;'+show_conn_type(dev.contype)+'"><img width=50px height=50px src=image/streamboost/'+dev.devtype_name.replace(/\s/g, '_')+'.png /></div></td>';
+
+				//Device info td
+				msg1 += '<td class="device_td" align=right height="100%"><table class="devinfo_tbl" width=100% height=100%>';
+				if(getTop(window).support_new_ntgrtype == "1")
+				{
+					msg1 += '<tr><td style="text-align: right;">'+dev.model.replace(/\\\\/g,"\\")+'</td></tr>';
+					msg1 += '<tr><td class="device_td" style="text-align: right;">'+dev.name.replace(/\\\\/g,"\\")+'</td></tr>';
+				}
+				else
+				msg1 += '<tr><td class="device_td" align=right>'+dev.name.replace(/\\\\/g,"\\")+'</td></tr>';
+				msg1 += '</table></td>';//end Device info td
+
+				msg1 += '<td rowspan=1 align=center>'+dev.ip+'</td>';//IP Address
+				msg1 += '<td rowspan=1 align=center>'+dev.mac+'</td>';//MAC Address
+				msg1 += '</tr>';
+				d_num++;
+				attach_device_num = d_num;
+			}
+		}
+		msg1 += '</table></table>';
+		$$('#main').append(msg1);
+	}
+	else{
+
+	if( listBySort == 2)
+		var sort_function = sort_con;
+	else
+		var sort_function =sort_alp;
+	
+	
+	devList.sort(sort_function);
+
+	var lineitem=0;
+	for( var i in devList )
+	{
+		var dev = devList[i];
+		var linehtml = "";
+
+		//dev.name = dev.name.replace(/[ ]/g, "&nbsp;").replace(/&harr;/g, " ").replace(/&#92;/g, "\\").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&#40;/g,"(").replace(/&#41;/g,")").replace(/&#34;/g,'\"').replace(/&#39;/g,"'").replace(/&#35;/g,"#").replace(/&#38;/g,"&");
+		if( listBySort == 2)
+		{
+			if( i == 0 || dev.contype != devList[i-1].contype || lineitem == 2 )
+			{
+				if( i> 0)
+					linehtml=linehtml+'<div class="spliteline"></div>';
+				linehtml=linehtml+'<div class="devType">'+show_type(dev.contype)+'</div>';
+				lineitem=0;
+			}
+
+			linehtml=linehtml+'<div class="byCon"  >';
+			if(getTop(window).support_new_ntgrtype == "1")
+				linehtml=linehtml+'<div class="devIcon big-corner-all" title="$qos_mac: '+dev.mac+'&#13$device_type: '+dev.devtype_name+show_wlan_ssid(dev.contype)+'"    onclick="edit_select_device_fing(\''+dev.mac+'\',\''+dev.ip+'\',\''+dev.name.replace(/\\/g,"\\\\").replace(/&#39;/g,"\\&#39;")+'\', \''+dev.priority+'\', \''+dev.devtype+'\',\''+dev.devtype_name+'\',\''+dev.contype+'\' );">';
+			else
+				linehtml=linehtml+'<div class="devIcon big-corner-all" title="$qos_mac: '+dev.mac+'&#13$device_type: '+show_icon_name(dev.devtype)+show_wlan_ssid(dev.contype)+'"    onclick="edit_select_device(\''+dev.mac+'\',\''+dev.ip+'\',\''+dev.name.replace(/\\/g,"\\\\").replace(/&#39;/g,"\\&#39;")+'\', \''+dev.priority+'\', \''+dev.devtype+'\',\''+dev.contype+'\' );">';
+
+			linehtml=linehtml+device_icon(dev.devtype);
+			linehtml=linehtml+'</div>';
+			if(enable_block_device == "1")			
+				linehtml=linehtml+'<div class="devName"><b>'+dev.name+'</b><br/><br/>'+dev.ip+'<br/>'+show_bora(dev.access_control)+'</div>';
+			else
+				linehtml=linehtml+'<div class="devName"><b>'+dev.name+'</b><br/><br/>'+dev.ip+'</div>';
+			linehtml=linehtml+'</div>';	
+			lineitem++;
+
+		}
+		else
+		{
+			if( i> 0 && i%2 == 0 )
+				linehtml=linehtml+'<div class="spliteline"></div>';
+				
+			linehtml=linehtml+'<div class="byAlp"  >';
+			linehtml=linehtml+'<div class="devName"><b>'+dev.name+'</b></div>';
+
+			if(getTop(window).support_new_ntgrtype == "1")
+				linehtml=linehtml+'<div class="devIcon big-corner-all" title="$qos_mac: '+dev.mac+'&#13$device_type: '+dev.devtype_name+show_wlan_ssid(dev.contype)+'"    onclick="edit_select_device_fing(\''+dev.mac+'\',\''+dev.ip+'\',\''+dev.name.replace(/\\/g,"\\\\").replace(/&#39;/g,"\\&#39;")+'\', \''+dev.priority+'\', \''+dev.devtype+'\',\''+dev.devtype_name+'\',\''+dev.contype+'\' );">';
+			else
+				linehtml=linehtml+'<div class="devIcon big-corner-all" title="$qos_mac: '+dev.mac+'&#13$device_type: '+show_icon_name(dev.devtype)+show_wlan_ssid(dev.contype)+'"    onclick="edit_select_device(\''+dev.mac+'\',\''+dev.ip+'\',\''+dev.name.replace(/\\/g,"\\\\").replace(/&#39;/g,"\\&#39;")+'\', \''+dev.priority+'\', \''+dev.devtype+'\',\''+dev.contype+'\' );">';
+
+			linehtml=linehtml+device_icon(dev.devtype);
+			linehtml=linehtml+'</div>';
+			linehtml=linehtml+'<div class="devType">';
+			linehtml=linehtml+show_type(dev.contype);
+			linehtml=linehtml+'</div>';
+			linehtml=linehtml+'<div class="devIp">'+dev.ip+'</div>';
+			if(enable_block_device == "1")
+				linehtml=linehtml+'<div class="devAccess">'+show_bora(dev.access_control)+'</div>';
+			linehtml=linehtml+'</div>';		  
+		}
+
+		$$('#main').append(linehtml);
+	}
+	}
+}
+function getDevices()
+{
+	xmlHttp = createXMLHttpRequest();
+	
+	xmlHttp.onreadystatechange = function()
+	{
+		if(xmlHttp.readyState == 4 && xmlHttp.status == 200)
+		{
+			var jobj = eval('('+xmlHttp.responseText+')');
+			updateDevice(jobj);
+		}
+	}
+
+	var url = "QOS_device_info.htm?ts=" + new Date().getTime();
+	xmlHttp.open("GET",url,true);
+	xmlHttp.send(null);
+	if(getTop(window).use_orbi_style_flag != "1")
+	setTimeout("getDevices()", 6000);
+}
+
+function show_vpn()
+{
+	if(getTop(window).use_orbi_style_flag == "1")
+	{
+		$$('#vpn').empty();
+		var msg2 = '<table width="100%" border="0" cellpadding="0" cellspacing="3">'
+			+'<TR><TD align=left colspan="2">'
+			+'<B>VPN Client Devices</B>'
+			+'</TD></TR>'
+			+'<TABLE class="tables table1" border=0 cellpadding=2 cellspacing=0 width=100% id="vpn_device_table">'
+			+'<TR class=table_header>';
+		if(getTop(window).support_new_ntgrtype == "1")
+		msg2 =msg2 +'<TD nowrap align=center width=40% class="subhead_acc_control" colspan="2">$adva_wlan_devicename</TD>';
+		else
+		msg2 =msg2 +'<TD nowrap align=center width=40% class="subhead_acc_control">$adva_wlan_devicename</TD>';
+			msg2 =msg2 +'<TD nowrap align=center width=20% class="subhead_acc_control">Remote $block_ser_setup_ip_jp</TD>'
+			+'<TD nowrap align=center width=20% class="subhead_acc_control">Local $block_ser_setup_ip_jp</TD>'
+			+'<TD nowrap align=center width=20% class="subhead_acc_control">$traffic_connect_time</TD>'
+			+'</TR>';
+		var v_num=0;
+		for( var i in devList )
+		{
+			var dev = devList[i];
+			//dev.name = dev.name.replace(/[ ]/g, "&nbsp;").replace(/&harr;/g, " ").replace(/&#92;/g, "\\").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&#40;/g,"(").replace(/&#41;/g,")").replace(/&#34;/g,'\"').replace(/&#39;/g,"'").replace(/&#35;/g,"#").replace(/&#38;/g,"&");
+			if(dev.contype == "vpn"){
+				if(getTop(window).support_new_ntgrtype == "1")
+					msg2 += '<td rowspan=1 align=left rowspan=1><div title="$qos_mac: '+dev.mac+'&#10;$device_type: '+dev.devtype_name+'&#10;'+show_conn_type(dev.contype)+'"><img width=50px height=50px src=image/streamboost/'+dev.devtype_name.replace(/\s/g, '_')+'.png /></div></td>';
+				//Device info td
+				msg2 += '<td class="device_td" align=right height="100%"><table class="devinfo_tbl" width=100% height=100%>';
+				if(getTop(window).support_new_ntgrtype == "1")
+				{
+					msg2 += '<tr><td style="text-align: right;">'+dev.model.replace(/\\\\/g,"\\")+'</td></tr>';
+					msg2 += '<tr><td class="device_td" style="text-align: right;">'+dev.name+'</td></tr>';
+				}
+				else
+				msg2 += '<tr><td class="device_td" align=right>'+dev.name+'</td></tr>';
+				msg2 += '</table></td>';//end Device info td
+
+				msg2 += '<td rowspan=1 align=center>'+dev.remote_ip+'</td>';//Remote IP Address
+				msg2 += '<td rowspan=1 align=center>'+dev.ip+'</td>';//Local IP Address
+				msg2 += '<td rowspan=1 align=center id="conntime'+(v_num+1)+'">'+change_time_type(dev.connection_time)+'</td>';//Connection time
+				msg2 += '</tr>';
+				conn_time[v_num] = dev.connection_time;
+				v_num++;
+			}
+		}
+		msg2 += '</table></table>';
+		$$('#vpn').append(msg2);
+	}
+	setInterval("refresh_connection_time();",1000);
+}
+
+function refresh_connection_time()
+{
+	for(i=0;i<conn_time.length;i++)
+	{
+		document.getElementById("conntime"+(i+1)).innerHTML=change_time_type(parseInt(conn_time[i])+1);
+		conn_time[i] = parseInt(conn_time[i])+1;
+	}
+}
+
+function change_sort_type(type)
+{
+	if( listBySort != type)
+	{
+		listBySort = type;
+
+		if( type == 1 )
+		{
+			$$("#sortAp").closest(".btc1").children(".btopen").removeClass("btopen").addClass("btclose");
+			$$("#sortAp").removeClass("btclose").addClass("btopen");
+		}
+		else
+		{
+			$$("#sortCon").closest(".btc1").children(".btopen").removeClass("btopen").addClass("btclose");
+			$$("#sortCon").removeClass("btclose").addClass("btopen");
+		}
+		show_all();
+	}
+}
+
+function loadvalue()
+{
+	getDevices(); //debug hidden
+}
+</script>
+<input type="hidden" name="hid_edit_mac">
+<script>
+if(getTop(window).use_orbi_style_flag == "1")
+{
+	if( get_browser() == "IE" )
+	{
+		document.write('<div class="page_title headstyle1" style="position:relative;margin-top:-18px;">$attach_device</div>');
+		document.write('<div class="access" style="position:relative; float:right; margin-top:-24px; margin-right:13px">$access_control_url1');
+	}else{
+	document.write('<div class="page_title headstyle1" style="position:unset; margin-top:18px; margin-left:28px;">$attach_device</div>');
+	document.write('<div class="access" style="position:unset; float:right; margin-top:-24px; margin-right:13px">$access_control_url1');
+	}
+}
+else
+{
+	document.write('<div class="page_title headstyle1">$attach_device</div>');
+	document.write('<div class="access">$access_control_url1');
+}
+	if(enable_bridge_flag == "1")
+		document.write("<a name='Access Control' href=# id='hylink_ac' class=\"ui-corner-all\" style=\"background-color:grey;\">&nbsp; $access_control_url2 &nbsp;</a>&nbsp;");
+	else
+		document.write("<a name='Access Control' href=# id='hylink_ac' onclick=\"goto_url(); return false;\" class=\"ui-corner-all\">&nbsp; $access_control_url2 &nbsp;</a>&nbsp;");
+
+	document.write('$access_control_url3<br/>');
+
+	var new_device_statue_by_default="<% cfg_get("new_device_statue_by_default") %>";
+
+	if( enable_block_device == "0" )
+	{
+		document.write("$acc_control: <b>$acc_turned_off</b>");
+	}
+	else
+	{
+		document.write("$acc_control: <b>$acc_turned_on</b>");
+		document.write("<br/>");
+		if( new_device_statue_by_default == "Block" )
+			document.write("$acc_general_rule: $block_connect");
+		else
+			document.write("$acc_general_rule: $allow_connect");
+	}
+</script>
+</div>
+<script>
+if(getTop(window).use_orbi_style_flag != "1")
+{
+	document.write('<div class="bt_contain" >');
+	document.write('<div class="btc1 ui-corner-all">');
+	document.write('$sort_by <div id="sortAp" class="btopen ui-corner-all" onclick="change_sort_type(1);">$alp_ord</div>&nbsp;&nbsp;<div id="sortCon" class="btclose ui-corner-all" onclick="change_sort_type(2);">$con_tp</div>');
+	document.write('</div>');
+	document.write('</div>');
+}
+</script>
+</div>
+<script>
+if(getTop(window).use_orbi_style_flag == "1")
+{
+	document.write('<div id="main" class="main_top_button" style="position:relative;top:-18px;"></div>');
+	document.write('<div id="vpn" style="margin-left:20px; width:97%; position:unset;margin-bottom:10%;"></div>');
+}
+else{
+	document.write('<div class="page-line"><img src=image/topline.gif width=100%></div>');
+	document.write('<div id="main" class="main">');
+}
+</script>
+<% pop_help_button() %>
+
+</div>
+<% help_box("1","_new_attach_device") %>
+</form>
+</body>
+</html>
+

@@ -1,0 +1,2 @@
+#!/bin/sh
+mknod /dev/atherosgpio c 240 0

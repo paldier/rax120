@@ -1,0 +1,64 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+
+<head>
+<% new_hijack_flow_head() %>
+<% hijack_language() %>
+
+<script language="javascript" type="text/javascript">
+var ip_addr = "<% cfg_get("lan_ipaddr") %>";
+var toppic = "<% cfg_get("toppic") %>";
+</script>
+</head>
+
+<script>
+function isIE()
+{
+	var browser = new Object();
+	browser.version = parseInt(navigator.appVersion);
+	browser.isNs = false;
+	browser.isIe = false;
+	if(navigator.appName.indexOf("Microsoft") != -1 || navigator.userAgent.indexOf("Trident") != -1)
+		browser.isIe = true;
+	else if(navigator.appName.indexOf("Netscape") != -1 )
+		browser.isNs = true;
+	if(browser.isNs)
+		return false;
+	else if (browser.isIe)
+		return true;
+	else
+		return false;
+}
+
+</script>
+<body>
+<form action="/apply.cgi?/continue.htm timestamp=<% hijack_get_timestamp("conflict") %>" method="post">
+<input type="hidden" name="submit_flag" value="conflict">
+
+<div id="container">
+	<div class="dialog-content">
+		<!-- Important Update -->
+		<div id="card-important-udpate" class="install-card clearfix">
+			<div class="logos">
+				<img class="netgear-logo" src="images/svg/netgear.svg">
+				<% hijack_logo_title() %>
+			</div>
+		    <div class="content">
+			<div class="desc-title"><script>document.write(bh_important);</script></div>
+			<div class="desc-text">
+				<script>document.write(bh_orbi_important_msg_1+"<b>"+ip_addr+"</b>"+bh_orbi_important_msg_2);</script>
+			</div>
+		    </div>
+		    <div class="buttons">
+			<button id="continue" class="waves-effect waves-light btn button-nav btn-icon icon-right" onclick="if(isIE()){this.disabled=true; return true;}else{document.forms[0].submit(); this.disabled=true;}">
+				<span><script>document.write(bh_orbi_continue_mark);</script></span><i class="material-icons">navigate_next</i>
+			</button>
+		     </div>
+		</div>
+	</div>
+</div>
+
+</form>
+</body>
+
+</html>

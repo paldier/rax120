@@ -1,0 +1,13 @@
+#!/bin/sh /etc/rc.common
+
+START=62
+
+boot() {
+#  由lan dhcp 启动前调用，这里不再调用
+#	module_name=`cat module_name`
+
+#	[ "x$module_name" == "xRAX120" ] && {
+#		/data/funjsq/bin/funjsq.sh init &
+#	}
+
+}

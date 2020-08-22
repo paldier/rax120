@@ -1,0 +1,321 @@
+From 7472880445c267156921280de57393f15b3c910d Mon Sep 17 00:00:00 2001
+From: defeng.liu <defeng.liu@dniserver.dnish.net>
+Date: Tue, 10 Oct 2017 13:38:02 +0800
+Subject: [PATCH] lighttpd to support firmware checking each power cycle and auto upgrade
+
+Signed-off-by: defeng.liu <defeng.liu@dniserver.dnish.net>
+---
+ configure.ac |    2 +
+ src/base.h   |   15 ++++
+ src/server.c |  245 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 262 insertions(+), 0 deletions(-)
+
+diff --git a/configure.ac b/configure.ac
+index 1970ec8..a053531 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -394,6 +394,8 @@ AC_ARG_WITH(openssl-libs,
+     [ use_openssl=yes LDFLAGS="$LDFLAGS -L$withval" ]
+ )
+ 
++LDFLAGS="$LDFLAGS -lconfig"
++
+ if test "x$use_openssl" = "xyes"; then
+     if test "x$use_krb5" = "xyes"; then
+         AC_DEFINE([USE_OPENSSL_KERBEROS], [1], [with kerberos])
+diff --git a/src/base.h b/src/base.h
+index 134fc41..7f2b29f 100644
+--- a/src/base.h
++++ b/src/base.h
+@@ -692,3 +692,18 @@ typedef struct server {
+ 
+ 
+ #endif
++
++/************************** libconfig.so **************************/
++extern void init_libconfig(void); /* NOTE: when successfully `fork()', calling this to re-initialized the lib-config. */
++extern void config_set(char *name, char *value);
++extern void config_unset(char *name);
++extern void config_default(void);
++extern void config_commit(void);
++extern void config_uncommit(void);
++extern char *config_get(char *name);
++extern int config_backup(char *ofile); /* 0 : success; 1 : fail. */
++extern int config_restore(char * ifile); /* 0 : success; 1 : file error; 2 : csum err; 3 : unknown. */
++extern int config_match(char *name, char *match);
++extern int config_invmatch(char *name, char *match);
++extern int config_coremgr(char *name);
++
+diff --git a/src/server.c b/src/server.c
+index f27b003..5e92a4e 100644
+--- a/src/server.c
++++ b/src/server.c
+@@ -79,6 +79,9 @@ static int l_issetugid(void) {
+ # endif
+ #endif
+ 
++#define NETGEAR_DOMAIN "www.netgear.com"
++#define FWC_PING "/tmp/fwcheck_ping"
++
+ static int oneshot_fd = 0;
+ static volatile sig_atomic_t srv_shutdown = 0;
+ static volatile sig_atomic_t graceful_shutdown = 0;
+@@ -727,6 +730,245 @@ static void show_help (void) {
+ 	write_all(STDOUT_FILENO, b, strlen(b));
+ }
+ 
++int network_up()
++{
++	char cable_st[512],ppp_st[512];
++	char *pro=config_get("wan_proto");
++	if((strcmp(pro,"dhcp")==0) || (strcmp(pro,"static")==0))
++	{
++		FILE *cable_fp=fopen("/tmp/port_status","r");
++		if( cable_fp !=NULL )
++		{
++			fgets(cable_st,sizeof(cable_st),cable_fp);
++			fclose(cable_fp);
++			if(strcmp(cable_st,"1")==0)
++				return 1;
++			else
++				return 0;
++		}
++		else {
++			return 0;
++		}
++	}
++	if((strcmp(pro,"pptp")==0)||(strcmp(pro,"pppoe")==0)||(strcmp(pro,"l2tp")==0))
++	{
++		FILE *cable_fp=fopen("/tmp/port_status","r");
++		FILE *ppp_fp=fopen("/tmp/ppp/ppp0-status","r");
++		if(cable_fp !=NULL && ppp_fp != NULL)
++		{
++			fgets(cable_st,sizeof(cable_st),cable_fp);
++			fgets(ppp_st,sizeof(ppp_st),ppp_fp);
++			fclose(ppp_fp);
++			fclose(cable_fp);
++			if((strcmp(cable_st,"1")==0)&& (strcmp(ppp_st,"1")==0))
++				return 1;
++			else
++				return 0;
++		}
++		else {
++			return 0;
++		}
++	}
++}
++
++//if internet_ping return 0 mean network have issue,return 1 mean network is ok
++int internet_check()
++{
++	char line[128];
++	char cmd[128];
++	int result=0;
++	FILE *fp;
++	sprintf(cmd, "ping -c 4 " NETGEAR_DOMAIN " > " FWC_PING);
++	system(cmd);
++	fp = fopen(FWC_PING, "r");
++	if(fp == NULL)  return 0;
++	while(fgets(line,sizeof(line),fp)){
++		/*If string "ttl" is not exist in file  means ping fail return 0*/
++		if( strstr(line,"ttl") != NULL){
++			result = 1;
++			break;
++		}
++	}
++	fclose(fp);
++	unlink(FWC_PING);
++	if(result==1)
++		fprintf(stderr, "[lighttpd log] AUTO FW CHECK: network is ok\n");
++	else
++		fprintf(stderr, "[lighttpd log] AUTO FW CHECK: network is fail and please check you network\n");
++	return result;
++}
++
++//FW checking
++void fw_checking()
++{
++	#define TMP_SN_FILE	"/tmp/tmp-uhttpd-sn"
++
++	FILE *fp;
++	char buf[64];
++	int rand_num=0;
++	long sn=0;
++	long sleep_seconds;
++	long expect_time = 0, important_time = 0;
++	long current_time = 0;
++	long diff_time = 0;
++	int important_check = 0;
++
++	time_t now;
++	struct tm *tm;
++	char *p;
++	char save_time[64];
++
++	enum weekday{sunday, monday, tuesday, wednesday, thursday, friday, saturday};
++	enum weekday week_day;
++
++	if( fork() != 0)
++	{
++		return;
++	}
++
++	/*1. Check after each power cycle */
++	for(int chf=0;chf<9;chf++) //for bug58012 Auto upgrade detect when DUT boot up did not work 
++	{
++		FILE *fw_fp=fopen("/tmp/fwcheck_status","r");
++		if((fw_fp!= NULL )&& network_up())
++		{
++			if(strcmp(config_get("dns_hijack"),"1")==0)
++			{
++				fprintf(stderr, "[lighttpd log] AUTO FW CHECK: power cycle\n");
++				system("restful-cgi -c");
++				fclose(fw_fp);
++				unlink("/tmp/fwcheck_status");
++				break;
++			}
++			else{
++				int net_c=internet_check();
++				if(net_c==1)
++				{
++					fprintf(stderr, "[lighttpd log] AUTO FW CHECK: power cycle\n");
++					system("restful-cgi -c");
++					fclose(fw_fp);
++					unlink("/tmp/fwcheck_status");
++					break;
++				}
++			}
++		}
++		//else
++		sleep(15);
++	}
++
++
++	/* 2 if continuing to be powered on, check once every week at 10:00 pm +
++	   a random number of minutes between 0~59 on the week day determined
++	   by the last digit of S/N */
++
++	// get week day
++	buf[0]='\0';
++	system("restful-cgi -s > " TMP_SN_FILE);
++	fp = fopen(TMP_SN_FILE, "r");
++	if(fp != NULL)
++	{
++		fgets(buf, sizeof(buf)-1, fp);
++		fclose(fp);
++		//unlink(TMP_SN_FILE);
++		#undef TMP_SN_FILE
++
++		int i;
++		for(i = strlen(buf)-1; i>=0; i--)
++		{//get the last digit
++			if( buf[i] >= '0' && buf[i] <= '9')
++			{
++				sn=buf[i]-48;
++				break;
++			}
++			else if( buf[i] >= 'A' && buf[i] <= 'F')
++			{
++				sn=buf[i]-55;
++				break;
++			}
++			else if( buf[i] >= 'a' && buf[i] <= 'f')
++			{
++				sn=buf[i]-87;
++				break;
++			}
++		}
++	}
++
++	switch(sn){
++		case 0:
++		case 1:
++		case 2: week_day=monday; break;
++		case 3:
++		case 4: week_day=tuesday; break;
++		case 5:
++		case 6: week_day=wednesday; break;
++		case 7:
++		case 8: week_day=thursday; break;
++		case 9:
++		case 10: week_day=friday; break;
++		case 11:
++		case 12: week_day=saturday; break;
++		case 13:
++		case 14:
++		case 15:
++		default:week_day=sunday;
++	}
++	fprintf(stderr, "[lighttpd log] week_day == %d\n", week_day);
++	//expect time is 10:00(pm) + random number between 0-59
++	srand((int)time(0));
++
++	while(1)
++	{/* check current time every half hour. */
++		#define HALF_HOUR	30*60
++		#define TWO_HOUR	120*60
++		sleep(HALF_HOUR);
++
++		p = config_get("time_zone");
++		time(&now);
++		setenv("TZ", p, 1);
++		tm = localtime(&now);
++		//fprintf(stderr, "tm->tm_wday == %d\n", tm->tm_wday);
++		if(tm->tm_wday == week_day)
++		{
++			//fprintf(stderr, "tm_wday == week_day\n");
++			current_time = (long)tm->tm_hour*60*60+(long)tm->tm_min*60+(long)tm->tm_sec;
++			expect_time = 22*60*60+ (rand()%60)*60;
++			important_time = 1*60*60 + (rand()%60)*180;
++
++			sprintf(save_time, "%ld", expect_time);
++			config_set("fw_weekly_check_time", save_time);
++			sprintf(save_time, "%ld", important_time);
++			config_set("fw_weekly_important_time", save_time);
++
++			if((expect_time - current_time) < (important_time - current_time)) {
++				diff_time = expect_time - current_time;
++				important_check = 0;
++			}
++			else {
++				diff_time = important_time - current_time;
++				important_check = 1;
++			}//printf(stedrr, "diff_time ==%ld\n", diff_time);
++			if(diff_time == 0)
++			{
++				fprintf(stderr, "[lighttpd log] AUTO FW checking: once a week\n");
++				if(important_check == 1)
++					system("restful-cgi -i");
++				else
++					system("restful-cgi -c");
++			}
++			else if(diff_time < TWO_HOUR && diff_time > 0 )
++			{
++				fprintf(stderr, "[lighttpd log] AUTO FW will check after %ld seconds\n", diff_time);
++				sleep(diff_time);
++				fprintf(stderr, "[lighttpd log] AUTO FW checking: once a week\n");
++				if(important_check == 1)
++					system("restful-cgi -i");
++				else
++					system("restful-cgi -c");
++			}
++		}
++	}
++}
++
+ int main (int argc, char **argv) {
+ 	server *srv = NULL;
+ 	int print_config = 0;
+@@ -776,6 +1018,9 @@ int main (int argc, char **argv) {
+ 	srv->srvconf.dont_daemonize = 0;
+ 	srv->srvconf.preflight_check = 0;
+ 
++	// FW checking each power cycle
++	fw_checking();
++
+ 	while(-1 != (o = getopt(argc, argv, "f:m:i:hvVD1pt"))) {
+ 		switch(o) {
+ 		case 'f':
+-- 
+1.7.0.4
+

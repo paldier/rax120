@@ -1,0 +1,838 @@
+<% http_header("style/form.css", "/funcs.js") %>
+<!--<META http-equiv="refresh" content="10; url=RST_conn_status.htm">-->
+
+<% nohelp_header("RST_conn_status.htm", "connect_status") %>
+<div class="page_title page_title-2">$constatus_head</div>
+<div id="main" class="main inner-main">
+
+<input type="hidden" name="endis_connect">
+<script>
+var connection_status=<% conn_status() %>;
+
+var info_get_wanproto="<% cfg_get("wan_proto") %>";
+var monthly_limit_reached="<% cfg_get("trafficmeter_monthly_limit_reached") %>";
+
+var internet_type="<% cfg_get("internet_type") %>";
+var netgear_region="<% get_firmware_region() %>";
+var gui_region="<% cfg_get("GUI_Region") %>";
+var is_jp_version=(((netgear_region.toUpperCase() == "WW" || netgear_region == "") && gui_region == "Japanese" ) || netgear_region.toUpperCase() == "JP") ? 1 : 0;
+ 
+<% web_flag() %>//fix bug 25223
+
+var ap_mode_on = "<% cfg_get("ap_mode") %>"; // for bug 31815.i add the var.and changed the below run condition. now it is when in router mode. the internet pot info is the same with RST_conn_status.htm.when in ap mode. the RST_conn_status.htm show no info all the time. i change it to when ap mode .RST_conn_status.htm is the same with lan port info.
+var ap_ip_mode = "<% cfg_get("ap_ether_ip_assign") %>";
+//var wan_dhcp_server="<% cfg_sed_xss("wan_dhcp_server") %>";  //bug 31815,when it is ap mode, can use it. so move it here.
+
+/*from here to the line if(ap_mode_on == 1) was in dhcp loop, but we need this var in ap_mode_on == 1 loop too, so move thenm here*/
+//var dhcpc_lease_obtain="<% cfg_get("dhcpc_lease_obtain") %>";
+//var dhcpc_lease_time="<% cfg_get("dhcpc_lease_time") %>";
+var extender_mode_on="<% cfg_get("extender_mode") %>"; 
+var extender_ether_ip_assign="<% cfg_get("extender_ether_ip_assign") %>"; 
+var mb_conn_type = "<% cfg_get("mobile_conn_type") %>"
+var same_info = "<% cfg_get("ipv6_sameinfo") %>";
+var ipv6_type = "<% cfg_get("ipv6_type") %>";
+var enable_ds = "<% cfg_get("enable_ds") %>";
+var dsl_wan_preference="<% cfg_get("dsl_wan_preference") %>";
+if(dsl_enable_flag == 0)
+		{
+			var dhcpc_wan_status="<% cat_file("/tmp/WAN_status") %>";
+			
+		}else if(dsl_enable_flag == 1) //d7800
+		{ 
+			if(dsl_wan_preference == "1")//dsl
+			{
+				var dhcpc_wan_status="<% cat_file("/tmp/dsl_port_status") %>";
+			
+			}
+			else if(dsl_wan_preference == "1")//eth
+			{
+				var dhcpc_wan_status="<% cat_file("/tmp/WAN_status") %>";
+
+			}
+		}
+	
+	function loadvalue(){
+	var cf=document.forms[0];	
+	if(!IsGameRouter())
+		document.getElementById("close_tab").style.display = "";
+	show_status(connection_status);
+	setTimeout("ajaxCheckStatus()",10000);
+	
+}
+function show_status(connection_status){
+	if(!(getTop(window).support_ds_lite_flag === 1 && is_jp_version && enable_ds == "1")){
+	if( connection_status.dhcpc_lease_time == "" || connection_status.dhcpc_lease_time == "infinity lease" )
+			connection_status.dhcpc_lease_time = "infinity lease" ;
+	else
+		connection_status.dhcpc_lease_time = parseInt(connection_status.dhcpc_lease_time);
+	
+	if( connection_status.dhcpc_lease_obtain == "" )
+		connection_status.dhcpc_lease_obtain = "0";
+
+	connection_status.dhcpc_lease_obtain = parseInt(connection_status.dhcpc_lease_obtain);
+	
+		if( connection_status.dhcpc_lease_time == "infinity lease" ){
+		var obtian_time="infinity lease";
+		var lease_time="infinity lease";
+	}
+	else{
+		var obtian_time=change_time_type(connection_status.dhcpc_lease_time);
+	
+		var now_time=<% show_uptime() %>;
+		if( (connection_status.now_time - connection_status.dhcpc_lease_obtain) > connection_status.dhcpc_lease_time )
+			var lease_sec = 0;
+		else
+			var lease_sec=connection_status.dhcpc_lease_time - connection_status.now_time + connection_status.dhcpc_lease_obtain;
+		var lease_time=change_time_type(lease_sec);
+	}
+		
+	if(extender_mode_on==1){
+		document.getElementById("info_mark_ip_ex").style.display="";
+		document.getElementById("info_mark_mask_ex").style.display="";
+		document.getElementById("constatus_defgtw_ex").style.display="";
+	
+		if(extender_ether_ip_assign==1)
+	{
+		//ap
+
+		if(connection_status.ap_dhcp_ipaddr.indexOf("169") != -1 )  // 33572 Auto ip 
+			connection_status.ap_dhcp_gateway = "0.0.0.0";
+
+		document.getElementById("constatus_dhcpser_ex").style.display="";
+		document.getElementById("constatus_dnsser_ex").style.display="";
+		document.getElementById("info_extender_ip_1").innerHTML=connection_status.ap_dhcp_ipaddr;
+		document.getElementById("info_extender_mask_1").innerHTML=connection_status.ap_dhcp_netmask;
+		document.getElementById("info_extender_gateway_1").innerHTML=connection_status.ap_dhcp_gateway;
+		document.getElementById("dns_1").innerHTML=connection_status.info_get_dns1;
+		document.getElementById("dns_1").innerHTML+=connection_status.info_get_dns2;
+		document.getElementById("info_extender_server_1").innerHTML=connection_status.info_extender_server;
+			}
+	else
+	{
+		//extender
+		
+		document.getElementById("constatus_dhcpser_ex_wan").style.display="";
+		document.getElementById("constatus_dnsser_ex").style.display="";
+		document.getElementById("info_extender_ip_1").innerHTML=connection_status.info_extender_ip;
+		document.getElementById("info_extender_mask_1").innerHTML=connection_status.info_extender_mask;
+		document.getElementById("info_extender_gateway_1").innerHTML=connection_status.info_extender_gateway;
+		document.getElementById("dns_1").innerHTML=connection_status.info_get_dns1;
+		document.getElementById("dns_1").innerHTML+=connection_status.info_get_dns2;
+		document.getElementById("wan_dhcp_server_1").innerHTML=connection_status.wan_dhcp_server;
+
+		}
+				
+		if(connection_status.dhcpc_lease_obtain != "0"){	
+			
+			document.getElementById("constatus_obt_ex").style.display="";
+			document.getElementById("constatus_exp_ex").style.display="";
+			document.getElementById("obtian_time_1").innerHTML=obtian_time;
+			document.getElementById("lease_time_1").innerHTML=lease_time;
+
+			document.getElementById("constatus_obt_ex_no").style.display="none";
+			document.getElementById("constatus_exp_ex_no").style.display="none";
+		}
+		else{
+			document.getElementById("constatus_obt_ex_no").style.display="";
+			document.getElementById("constatus_exp_ex_no").style.display="";
+
+			document.getElementById("constatus_obt_ex").style.display="none";
+			document.getElementById("constatus_exp_ex").style.display="none";
+		}
+			
+	}
+	else if(ap_mode_on == 1){
+		document.getElementById("info_mark_ip_ap").style.display="";
+		document.getElementById("info_mark_mask_ap").style.display="";
+		document.getElementById("constatus_defgtw_ap").style.display="";
+		document.getElementById("constatus_dhcpser_ap").style.display="";
+		document.getElementById("constatus_dnsser_ap").style.display="";
+		if (ap_ip_mode == 1)
+               {
+				if(connection_status.ap_dhcp_ipaddr.indexOf("169") != -1 )  // 33572 Auto ip 
+						connection_status.ap_dhcp_gateway = "0.0.0.0";
+				document.getElementById("info_get_apip_1").innerHTML=connection_status.ap_dhcp_ipaddr;
+				document.getElementById("info_get_apmask_1").innerHTML=connection_status.ap_dhcp_netmask;
+				document.getElementById("info_get_apgateway_1").innerHTML=connection_status.ap_dhcp_gateway;
+				document.getElementById("wan_dhcp_server_2").innerHTML=connection_status.wan_dhcp_server;
+				document.getElementById("dns_2").innerHTML=connection_status.info_get_dns1;
+				document.getElementById("dns_2").innerHTML+=connection_status.info_get_dns2;
+               }
+               else
+               {
+					document.getElementById("info_get_apip_1").innerHTML=connection_status.info_get_apip;
+					document.getElementById("info_get_apmask_1").innerHTML=connection_status.info_get_apmask;
+					document.getElementById("info_get_apgateway_1").innerHTML=connection_status.info_get_apgateway;
+					document.getElementById("wan_dhcp_server_2").innerHTML=connection_status.wan_dhcp_server;
+					document.getElementById("dns_2").innerHTML=connection_status.info_get_dns1;
+					document.getElementById("dns_2").innerHTML+=connection_status.info_get_dns2;
+               }
+	
+		
+		if(connection_status.dhcpc_lease_obtain != "0"){
+			document.getElementById("constatus_obt_ap").style.display="";
+			document.getElementById("constatus_exp_ap").style.display="";
+			document.getElementById("obtian_time_2").innerHTML=obtian_time;
+			document.getElementById("lease_time_2").innerHTML=lease_time;
+
+			document.getElementById("constatus_obt_ap_no").style.display="none";
+			document.getElementById("constatus_exp_ap_no").style.display="none";
+			}
+		else
+			{
+			document.getElementById("constatus_obt_ap_no").style.display="";
+			document.getElementById("constatus_exp_ap_no").style.display="";
+
+			document.getElementById("constatus_obt_ap").style.display="none";
+			document.getElementById("constatus_exp_ap").style.display="none";
+			}
+	}
+	else if(info_get_wanproto == "dhcp"){
+
+		if(dsl_enable_flag == 0)
+		{
+			dhcpc_wan_status = connection_status.info_get_wandhcp_status	//wan status should be captured in real time
+			if ( dhcpc_wan_status == "Link down" || dhcpc_wan_status == "" )
+				connection_status.info_get_wanip="0.0.0.0";
+		}else if(dsl_enable_flag == 1) //d7800
+		{ 
+			if(dsl_wan_preference == "1")//dsl
+			{
+				
+				if ( dhcpc_wan_status == "0")
+				connection_status.info_get_wanip="0.0.0.0";
+			}
+			else if(dsl_wan_preference == "1")//eth
+			{
+				
+
+				if ( dhcpc_wan_status == "Link down" || dhcpc_wan_status == "" )
+					connection_status.info_get_wanip="0.0.0.0";
+			}
+		}
+		if(connection_status.info_get_wanip != "0.0.0.0"){
+			document.getElementById("info_mark_ip_dhcp").style.display="";
+			document.getElementById("info_mark_mask_dhcp").style.display="";
+			document.getElementById("constatus_defgtw_dhcp").style.display="";
+			document.getElementById("constatus_dhcpser_dhcp").style.display="";
+			document.getElementById("constatus_dnsser_dhcp").style.display="";
+			document.getElementById("constatus_obt_dhcp").style.display="";
+			document.getElementById("constatus_exp_dhcp").style.display="";
+			
+			document.getElementById("info_get_wanip_1").innerHTML=connection_status.info_get_wanip;
+			document.getElementById("info_get_wanmask_1").innerHTML=connection_status.info_get_wanmask;
+			document.getElementById("info_get_gateway_1").innerHTML=connection_status.info_get_gateway;
+			document.getElementById("wan_dhcp_server_3").innerHTML=connection_status.wan_dhcp_server;
+			document.getElementById("dns_3").innerHTML=connection_status.info_get_dns1;
+			document.getElementById("dns_3").innerHTML+=connection_status.info_get_dns2;
+			if(dns_third_flag == 1 && internet_type == "1" )
+				document.getElementById("dns_3").innerHTML+=connection_status.info_get_dns3;
+			document.getElementById("obtian_time_3").innerHTML=obtian_time;
+			document.getElementById("lease_time_3").innerHTML=lease_time;
+
+			var objs_dhcp_no = document.getElementsByName("dhcp_no_mark");
+			for( i=0; i< objs_dhcp_no.length; i++ )
+				objs_dhcp_no[i].style.display="none";
+		}else{
+			document.getElementById("info_mark_ip_dbcp_no").style.display="";
+			document.getElementById("info_mark_mask_dhcp_no").style.display="";
+			document.getElementById("constatus_defgtw_dhcp_no").style.display="";
+			document.getElementById("constatus_dhcpser_dhcp_no").style.display="";
+			document.getElementById("constatus_dnsser_dhcp_no").style.display="";
+			document.getElementById("constatus_obt_dhcp_no").style.display="";
+			document.getElementById("constatus_exp_dhcp_no").style.display="";
+			//document.getElementById("info_mark_ip_dbcp_1").style.display="";
+
+			var objs_dhcp_yes = document.getElementsByName("dhcp_yes_mark");
+			for( i=0; i< objs_dhcp_yes.length; i++ )
+				objs_dhcp_yes[i].style.display="none";
+		
+	}	}
+	else if (info_get_wanproto == "pppoe" || info_get_wanproto == "pppoa"){
+		if (connection_status.info_get_wanip !="0.0.0.0"){
+			var new_time=change_sec_to_time(connection_status.ppp_uptime);
+			document.getElementById("ppp_uptime_1").innerHTML=new_time;
+			document.getElementById("info_get_wanip_2").innerHTML=connection_status.info_get_wanip;
+			document.getElementById("info_get_wanmask_2").innerHTML=connection_status.info_get_wanmask;
+			document.getElementById("traffic_connect_time_pppoe").style.display="";
+			document.getElementById("constatus_head_pppoe").style.display="";
+			document.getElementById("constatus_neg_pppoe").style.display="";
+			document.getElementById("constatus_auth_pppoe").style.display="";
+			document.getElementById("info_mark_ip_pppoe").style.display="";
+			document.getElementById("info_mark_mask_pppoe").style.display="";
+			var objs_ppp_no = document.getElementsByName("ppp_no_mark");
+			for( i=0; i< objs_ppp_no.length; i++ )
+				objs_ppp_no[i].style.display="none";
+			}
+		else
+			{
+			document.getElementById("traffic_connect_time_pppoe_no").style.display="";
+			document.getElementById("constatus_head_pppoe_no").style.display="";
+			document.getElementById("constatus_neg_pppoe_no").style.display="";
+			document.getElementById("constatus_auth_pppoe_no").style.display="";
+			document.getElementById("info_mark_ip_pppoe_no").style.display="";
+			document.getElementById("info_mark_mask_pppoe_no").style.display="";
+			var objs_ppp_yes = document.getElementsByName("ppp_yes_mark");
+			for( i=0; i< objs_ppp_yes.length; i++ )
+				objs_ppp_yes[i].style.display="none";
+			}
+	}
+	else if(info_get_wanproto=="pptp" || info_get_wanproto=="l2tp"){
+		if (connection_status.info_get_wanip !="0.0.0.0" ){
+			document.getElementById("info_get_wanip_3").innerHTML=connection_status.info_get_wanip;
+			document.getElementById("info_get_wanmask_3").innerHTML=connection_status.info_get_wanmask;
+			document.getElementById("constatus_head_pptp").style.display="";
+			document.getElementById("info_mark_ip_pptp").style.display="";
+			document.getElementById("info_mark_mask_pptp").style.display="";
+			var objs_pptpl2tp_no = document.getElementsByName("pptpl2tp_no_mark");
+			for( i=0; i< objs_pptpl2tp_no.length; i++ )
+				objs_pptpl2tp_no[i].style.display="none";
+			}
+		else
+			{
+			document.getElementById("constatus_head_pptp_no").style.display="";
+			document.getElementById("info_mark_ip_pptp_no").style.display="";
+			document.getElementById("info_mark_mask_no").style.display="";
+			var objs_pptpl2tp_yes = document.getElementsByName("pptpl2tp_yes_mark");
+			for( i=0; i< objs_pptpl2tp_yes.length; i++ )
+				objs_pptpl2tp_yes[i].style.display="none";
+			}
+	}
+	else if (info_get_wanproto == "bigpond"){
+		if (connection_status.info_get_wanip !="0.0.0.0"){
+			document.getElementById("info_get_wanip_4").innerHTML=connection_status.info_get_wanip;
+			document.getElementById("info_get_wanmask_4").innerHTML=connection_status.info_get_wanmask;
+			document.getElementById("constatus_head_big").style.display="";
+			document.getElementById("info_mark_ip_big").style.display="";
+			document.getElementById("info_mark_mask_big").style.display="";
+			var objs_bigpond_no = document.getElementsByName("bigpond_no_mark");
+			for( i=0; i< objs_bigpond_no.length; i++ )
+				objs_bigpond_no[i].style.display="none";
+			}
+		else{
+			document.getElementById("constatus_head_big_no").style.display="";
+			document.getElementById("info_mark_ip_big_no").style.display="";
+			document.getElementById("info_mark_mask_big_no").style.display="";			
+			var objs_bigpond_yes = document.getElementsByName("bigpond_yes_mark");
+			for( i=0; i< objs_bigpond_yes.length; i++ )
+				objs_bigpond_yes[i].style.display="none";
+	}}
+	else if (info_get_wanproto == "lte"){
+		if (connection_status.info_get_wanip != "0.0.0.0"){
+			document.getElementById("info_get_wanip_5").innerHTML=connection_status.info_get_wanip;
+			document.getElementById("info_get_wanmask_5").innerHTML=connection_status.info_get_wanmask;
+			document.getElementById("dns_4").innerHTML=connection_status.info_get_dns1;
+			document.getElementById("dns_4").innerHTML+=connection_status.info_get_dns2;
+			document.getElementById("info_mark_ip_lte").style.display="";
+			document.getElementById("info_mark_mask_lte").style.display="";
+			document.getElementById("constatus_defgtw_lte").style.display="";
+			document.getElementById("constatus_dnsser_lte").style.display="";		
+		if(connection_status.lte_gateway=="")
+			document.getElementById("info_get_wanmask_lte").innerHTML="0.0.0.0";
+		else
+			document.getElementById("lte_gateway_2").innerHTML=connection_status.lte_gateway;
+			var objs_lte_no = document.getElementsByName("lte_no_mark");
+			for( i=0; i< objs_lte_no.length; i++ )
+				objs_lte_no[i].style.display="none";
+		}
+		else{
+			document.getElementById("info_mark_ip_lte_no").style.display="";
+			document.getElementById("info_mark_mask_lte_no").style.display="";
+			document.getElementById("constatus_defgtw_lte_no").style.display="";
+			document.getElementById("constatus_dnsser_lte_no").style.display="";
+			var objs_lte_yes = document.getElementsByName("lte_yes_mark");
+			for( i=0; i< objs_lte_yes.length; i++ )
+				objs_lte_yes[i].style.display="none";
+		}
+	}
+	else if (info_get_wanproto == "3g"){
+		
+		if(mb_conn_type.indexOf("4G") > -1 && connection_status.wan_ip_4g != "0.0.0.0" && connection_status.wan_ip_4g != ""){
+			document.getElementById("traffic_connect_time_4g").style.display="";
+			document.getElementById("constatus_head_4g").style.display="";
+			document.getElementById("info_mark_ip_4g").style.display="";
+			document.getElementById("info_mark_mask_4g").style.display="";
+			document.getElementById("constatus_dnsser_4g").style.display="";
+			document.getElementById("new_time_1").innerHTML=connection_status.new_time;
+			document.getElementById("wan_dhcp_ipaddr_1").innerHTML=connection_status.wan_ip_4g;
+			document.getElementById("wan_dhcp_netmask_1").innerHTML=connection_status.wan_dhcp_netmask;
+			document.getElementById("dns_5").innerHTML=connection_status.info_get_dns1;
+			document.getElementById("dns_5").innerHTML+=connection_status.info_get_dns2;
+
+			document.getElementById("traffic_connect_time_3g_wan").style.display="none";
+			document.getElementById("constatus_head_3g_wan").style.display="none";
+			document.getElementById("info_mark_ip_3g_wan").style.display="none";
+			document.getElementById("info_mark_mask_3g_wan").style.display="none";
+			document.getElementById("constatus_dnsser_3g_wan").style.display="none";
+
+			document.getElementById("traffic_connect_time_3g_no").style.display="none";
+			document.getElementById("constatus_head_3g_no").style.display="none";
+			document.getElementById("info_mark_ip_3g_no").style.display="none";
+			document.getElementById("info_mark_mask_3g_no").style.display="none";
+			document.getElementById("constatus_dnsser_3g_no").style.display="none";
+		}
+		else if (connection_status.info_get_wanip != "0.0.0.0"){
+			var ppp=change_sec_to_time(connection_status.ppp_uptime);			
+			document.getElementById("traffic_connect_time_3g_wan").style.display="";
+			document.getElementById("constatus_head_3g_wan").style.display="";
+			document.getElementById("info_mark_ip_3g_wan").style.display="";
+			document.getElementById("info_mark_mask_3g_wan").style.display="";
+			document.getElementById("constatus_dnsser_3g_wan").style.display="";
+			document.getElementById("ppp_uptime_2").innerHTML=ppp;
+			document.getElementById("info_get_wanip_6").innerHTML=connection_status.info_get_wanip;
+			document.getElementById("info_get_wanmask_6").innerHTML=connection_status.info_get_wanmask;
+			document.getElementById("dns_6").innerHTML=connection_status.info_get_dns1;
+			document.getElementById("dns_6").innerHTML+=connection_status.info_get_dns2;			
+
+			document.getElementById("traffic_connect_time_4g").style.display="none";
+			document.getElementById("constatus_head_4g").style.display="none";
+			document.getElementById("info_mark_ip_4g").style.display="none";
+			document.getElementById("info_mark_mask_4g").style.display="none";
+			document.getElementById("constatus_dnsser_4g").style.display="none";
+
+			document.getElementById("traffic_connect_time_3g_no").style.display="none";
+			document.getElementById("constatus_head_3g_no").style.display="none";
+			document.getElementById("info_mark_ip_3g_no").style.display="none";
+			document.getElementById("info_mark_mask_3g_no").style.display="none";
+			document.getElementById("constatus_dnsser_3g_no").style.display="none";
+
+			}
+		else
+			{
+			document.getElementById("traffic_connect_time_3g_no").style.display="";
+			document.getElementById("constatus_head_3g_no").style.display="";
+			document.getElementById("info_mark_ip_3g_no").style.display="";
+			document.getElementById("info_mark_mask_3g_no").style.display="";
+			document.getElementById("constatus_dnsser_3g_no").style.display="";
+			
+			document.getElementById("traffic_connect_time_3g_wan").style.display="none";
+			document.getElementById("constatus_head_3g_wan").style.display="none";
+			document.getElementById("info_mark_ip_3g_wan").style.display="none";
+			document.getElementById("info_mark_mask_3g_wan").style.display="none";
+			document.getElementById("constatus_dnsser_3g_wan").style.display="none";
+
+			document.getElementById("traffic_connect_time_4g").style.display="none";
+			document.getElementById("constatus_head_4g").style.display="none";
+			document.getElementById("info_mark_ip_4g").style.display="none";
+			document.getElementById("info_mark_mask_4g").style.display="none";
+			document.getElementById("constatus_dnsser_4g").style.display="none";
+			}
+	}
+	}
+	if(getTop(window).game_router_flag != 1 && ipv6_type == "dhcp"){
+		if( connection_status.ipv6_lease_time == "" || connection_status.ipv6_lease_time == "infinity lease" )
+			connection_status.ipv6_lease_time = "infinity lease" ;
+		else
+			connection_status.ipv6_lease_time = parseInt(connection_status.ipv6_lease_time);
+
+		if( connection_status.ipv6_lease_obtain == "" )
+			connection_status.ipv6_lease_obtain = "0";
+
+		connection_status.ipv6_lease_obtain = parseInt(connection_status.ipv6_lease_obtain);
+
+		if( connection_status.ipv6_lease_time == "infinity lease" ){
+			var ipv6_obtian_time="infinity lease";
+			var ipv6_lease_time="infinity lease";
+		}
+		else{
+			var ipv6_obtian_time=change_time_type(connection_status.ipv6_lease_time);
+
+			var now_time=<% show_uptime() %>;
+			if( (connection_status.now_time - connection_status.ipv6_lease_obtain) > connection_status.ipv6_lease_time )
+				var ipv6_lease_sec = 0;
+			else
+				var ipv6_lease_sec=connection_status.ipv6_lease_time - connection_status.now_time + connection_status.ipv6_lease_obtain;
+			var ipv6_lease_time=change_time_type(ipv6_lease_sec);
+		}
+
+		<% ipv6_auto_dns() %>
+		if(connection_status.ipv6_wan_ip != "0.0.0.0" && connection_status.ipv6_wan_ip != ""){
+			document.getElementById("info_mark_ip_ipv6").style.display="";
+			document.getElementById("constatus_defgtw_ipv6").style.display="";
+			document.getElementById("constatus_dnsser_ipv6").style.display="";
+			document.getElementById("constatus_obt_ipv6").style.display="";
+			document.getElementById("constatus_exp_ipv6").style.display="";
+
+			document.getElementById("info_get_wanip_7").innerHTML=connection_status.ipv6_wan_ip;
+			document.getElementById("info_get_gateway_7").innerHTML=connection_status.ipv6_gateway;
+			document.getElementById("dns_7").innerHTML=ipv6_auto_dns1;
+			document.getElementById("dns_7").innerHTML+=ipv6_auto_dns2;
+			document.getElementById("obtian_time_7").innerHTML=ipv6_obtian_time;
+			document.getElementById("lease_time_7").innerHTML=ipv6_lease_time;
+
+			var objs_ipv6_no = document.getElementsByName("ipv6_no_mark");
+			for( i=0; i< objs_ipv6_no.length; i++ )
+				objs_ipv6_no[i].style.display="none";
+		}else{
+			document.getElementById("info_mark_ip_ipv6_no").style.display="";
+			document.getElementById("constatus_defgtw_ipv6_no").style.display="";
+			document.getElementById("constatus_dnsser_ipv6_no").style.display="";
+			document.getElementById("constatus_obt_ipv6_no").style.display="";
+			document.getElementById("constatus_exp_ipv6_no").style.display="";
+
+			var objs_ipv6_yes = document.getElementsByName("ipv6_yes_mark");
+			for( i=0; i< objs_ipv6_yes.length; i++ )
+				objs_ipv6_yes[i].style.display="none";
+		}
+	}
+	else if(getTop(window).game_router_flag != 1 && ipv6_type == "pppoe"){
+		if(connection_status.ipv6_wan_ip != "0.0.0.0" && connection_status.ipv6_wan_ip != ""){
+			var new_time=change_sec_to_time(connection_status.ipv6_ppp_uptime);
+			document.getElementById("ppp_uptime_8").innerHTML=new_time;
+			document.getElementById("info_get_wanip_8").innerHTML=connection_status.ipv6_wan_ip;
+			document.getElementById("traffic_connect_time_pppoe_ipv6").style.display="";
+			document.getElementById("constatus_head_pppoe_ipv6").style.display="";
+			document.getElementById("constatus_neg_pppoe_ipv6").style.display="";
+			document.getElementById("constatus_auth_pppoe_ipv6").style.display="";
+			document.getElementById("info_mark_ip_pppoe_ipv6").style.display="";
+			var objs_ipv6_ppp_no = document.getElementsByName("ipv6_ppp_no_mark");
+			for( i=0; i< objs_ipv6_ppp_no.length; i++ )
+				objs_ipv6_ppp_no[i].style.display="none";
+			}
+		else
+			{
+			document.getElementById("traffic_connect_time_pppoe_no_ipv6").style.display="";
+			document.getElementById("constatus_head_pppoe_no_ipv6").style.display="";
+			document.getElementById("constatus_neg_pppoe_no_ipv6").style.display="";
+			document.getElementById("constatus_auth_pppoe_no_ipv6").style.display="";
+			document.getElementById("info_mark_ip_pppoe_no_ipv6").style.display="";
+			var objs_ipv6_ppp_yes = document.getElementsByName("ipv6_ppp_yes_mark");
+			for( i=0; i< objs_ipv6_ppp_yes.length; i++ )
+				objs_ipv6_ppp_yes[i].style.display="none";
+			}
+	}
+
+}
+
+function ajaxCheckStatus()
+{
+	var file="/conn_status_data.txt";
+	var xmlHttp = createXMLHttpRequest();
+	var result;
+	xmlHttp.onreadystatechange=function()
+	{
+		var cf=document.forms[0];
+		if(xmlHttp.readyState==4 && xmlHttp.status==200)
+		{
+			result=JSON.parse(xmlHttp.responseText);
+			show_status(result);
+		}
+	}
+	xmlHttp.open("GET", file, true);
+	xmlHttp.send();
+	setTimeout("ajaxCheckStatus()", 10000);
+}
+
+function AddDays(newdate,DaysToAdd,sec_time) 
+{
+	var newdate=new Date(newdate);
+	DaysToAdd=DaysToAdd/24;
+	var newtimems=newdate.getTime()+(sec_time*1000);
+	newdate.setTime(newtimems);
+	newday=newdate.toString();
+	day_array=newday.split(' ');
+	if(isIE())	
+		newday=day_array[0]+' '+day_array[1]+' '+day_array[2]+' '+day_array[3]+' '+day_array[5];
+	else
+		newday=day_array[0]+' '+day_array[1]+' '+day_array[2]+' '+day_array[4]+' '+day_array[3];
+	return newday;
+}
+
+function connect_stop(check)
+{
+	cf=document.forms[0];
+	if(getTop(window).game_router_flag != 1 && (ipv6_type == "pppoe" || ipv6_type == "dhcp") && (check == "1"))
+		cf.endis_connect.value=check;
+	else{
+	if (info_get_wanproto != "dhcp")
+	{
+		if(confirm("$establish_connection"))
+			cf.endis_connect.value=check;
+		else
+			return false;
+	}
+	else
+		cf.endis_connect.value=check;		
+	}
+	cf.submit();
+}
+
+function connect_start(check)
+{
+	cf=document.forms[0];
+	cf.endis_connect.value=check;
+	cf.submit();
+}
+
+function change_time_type(time)
+{
+        var sec = time;
+        var sec = parseInt(sec);
+		
+	var minute_sec = sec%3600;
+	if(minute_sec != sec)
+		var day_hour = (sec - minute_sec)/3600;
+	else
+		var day_hour = 0;
+
+	var hour = day_hour%24;
+	if(hour != day_hour)
+		var day = (day_hour - hour)/24;
+	else
+		var day = 0;
+
+	var sec_sec = minute_sec%60;
+	if(sec_sec != minute_sec)
+		var minute = (minute_sec - sec_sec)/60;
+	else
+		var minute = 0;
+	
+
+	day = day.toString();
+	hour = hour.toString();
+	minute = minute.toString();
+
+        var new_time=day+" $days_mark, "+hour+" $hours_mark, "+minute+" $minute_mark ";
+        return new_time;
+	
+}
+</script>
+
+
+<script>
+	if((getTop(window).support_ds_lite_flag === 1 && is_jp_version && enable_ds == "1" ) || (getTop(window).game_router_flag != 1 && (ipv6_type == "pppoe" || ipv6_type == "dhcp") && (info_get_wanproto == "static" || info_get_wanproto == "ipoa")))
+		document.write('<TABLE>');
+	else{
+	if(info_get_wanproto == "dhcp")
+		document.write('<TABLE border=1 class="form_table dhcp_connect-2" name="dhcp_statusTable" id="dhcp_connect" cellpadding=2 cellspacing=0 style="margin-left: 2%; margin-right: 2%; width:96%">');
+	else if(info_get_wanproto == "pppoe" || info_get_wanproto == "pppoa")
+		document.write('<TABLE border=1 name="pppoe_statusTable" id="ppp_connect" cellpadding=2 cellspacing=0 style="margin-left: 2%; margin-right: 2%; width:96%">');
+	else if(info_get_wanproto == "pptp" || info_get_wanproto == "l2tp")
+		document.write('<TABLE border=1 name="pptp_statusTable" id="pptp_connect" cellpadding=2 cellspacing=0 style="margin-left: 2%; margin-right: 2%; width:96%">');
+	else
+		document.write('<TABLE border=1 cellpadding=2 cellspacing=0 style="margin-left: 2%; margin-right: 2%; width:96%">');
+	}
+
+</script>
+<!--extender-->
+	<TR style="display:none" id="info_mark_ip_ex"><TD nowrap><B>$info_mark_ip</B></TD><TD nowrap id="info_extender_ip_1"></TD></TR>
+	<TR style="display:none" id="info_mark_mask_ex"><TD nowrap><B>$info_mark_mask</B></TD><TD nowrap id="info_extender_mask_1"></TD></TR>
+	<TR style="display:none" id="constatus_defgtw_ex"><TD nowrap><B>$constatus_defgtw</B></TD><TD nowrap id="info_extender_gateway_1"></TD></TR>
+	    <TR id="constatus_dhcpser_ex" style="display:none"><TD nowrap><B>$constatus_dhcpser</B></TD><TD nowrap id="info_extender_server_1"></TD></TR>
+	    <TR id="constatus_dhcpser_ex_wan" style="display:none"><TD nowrap><B>$constatus_dhcpser</B></TD><TD nowrap id="wan_dhcp_server_1"></TD></TR>
+	<TR style="display:none" id="constatus_dnsser_ex"><TD nowrap><B>$constatus_dnsser</B></TD><TD nowrap id="dns_1"> </TD></TR>
+		<TR style="display:none" id="constatus_obt_ex"><TD nowrap><B>$constatus_obt</B></TD><TD nowrap id="obtian_time_1"></TD></TR>
+		<TR style="display:none" id="constatus_exp_ex"><TD nowrap><B>$constatus_exp</B></TD><TD nowrap id="lease_time_1"></TD></TR>
+		<TR style="display:none" id="constatus_obt_ex_no"><TD nowrap><B>$constatus_obt</B></TD><TD nowrap>----</TD></TR>
+		<TR style="display:none" id="constatus_exp_ex_no"><TD nowrap><B>$constatus_exp</B></TD><TD nowrap>----</TD></TR>		
+<!--ap-->		
+	<TR style="display:none" id="info_mark_ip_ap"><TD nowrap><B>$info_mark_ip</B></TD><TD nowrap id="info_get_apip_1"></TD></TR>
+	<TR style="display:none" id="info_mark_mask_ap"><TD nowrap><B>$info_mark_mask</B></TD><TD nowrap id="info_get_apmask_1"></TD></TR>
+	<TR style="display:none" id="constatus_defgtw_ap"><TD nowrap><B>$constatus_defgtw</B></TD><TD nowrap id="info_get_apgateway_1"></TD></TR>
+	<TR style="display:none" id="constatus_dhcpser_ap"><TD nowrap><B>$constatus_dhcpser</B></TD><TD nowrap id="wan_dhcp_server_2"></TD></TR>
+	<TR style="display:none" id="constatus_dnsser_ap"><TD nowrap><B>$constatus_dnsser</B></TD><TD nowrap id="dns_2"></TD></TR>
+
+		<TR style="display:none" id="constatus_obt_ap"><TD nowrap><B>$constatus_obt</B></TD><TD nowrap id="obtian_time_2"></TD></TR>
+		<TR style="display:none" id="constatus_exp_ap"><TD nowrap><B>$constatus_exp</B></TD><TD nowrap id="lease_time_2"></TD></TR>
+
+		<TR style="display:none" id="constatus_obt_ap_no"><TD nowrap><B>$constatus_obt</B></TD><TD nowrap>----</TD></TR>
+		<TR style="display:none" id="constatus_exp_ap_no"><TD nowrap><B>$constatus_exp</B></TD><TD nowrap>----</TD></TR>
+<!--dhcp-->
+	<TR style="display:none" id="info_mark_ip_dhcp" name="dhcp_yes_mark"><TD nowrap><B>$info_mark_ip</B></TD><TD nowrap id="info_get_wanip_1"></TD></TR>
+	<TR style="display:none" id="info_mark_mask_dhcp" name="dhcp_yes_mark"><TD nowrap><B>$info_mark_mask</B></TD><TD nowrap id="info_get_wanmask_1"></TD></TR>
+	<TR style="display:none" id="constatus_defgtw_dhcp" name="dhcp_yes_mark"><TD nowrap><B>$constatus_defgtw</B></TD><TD nowrap id="info_get_gateway_1"></TD></TR>
+	<TR style="display:none" id="constatus_dhcpser_dhcp" name="dhcp_yes_mark"><TD nowrap><B>$constatus_dhcpser</B></TD><TD nowrap id="wan_dhcp_server_3"></TD></TR>
+	<TR style="display:none" id="constatus_dnsser_dhcp" name="dhcp_yes_mark"><TD nowrap><B>$constatus_dnsser</B></TD><TD nowrap id="dns_3"></TD></TR>
+	<TR style="display:none" id="constatus_obt_dhcp" name="dhcp_yes_mark"><TD nowrap><B>$constatus_obt</B></TD><TD nowrap id="obtian_time_3"></TD></TR>
+	<TR style="display:none" id="constatus_exp_dhcp" name="dhcp_yes_mark"><TD nowrap><B>$constatus_exp</B></TD><TD nowrap id="lease_time_3"></TD></TR>
+
+	
+	<TR style="display:none" id="info_mark_ip_dbcp_no" name="dhcp_no_mark"><TD nowrap><B>$info_mark_ip</B></TD><TD nowrap> 0.0.0.0</TD></TR>
+	<TR style="display:none" id="info_mark_mask_dhcp_no" name="dhcp_no_mark"><TD nowrap><B>$info_mark_mask</B></TD><TD nowrap> 0.0.0.0</TD></TR>
+	<TR style="display:none" id="constatus_defgtw_dhcp_no" name="dhcp_no_mark"><TD nowrap><B>$constatus_defgtw</B></TD><TD nowrap> 0.0.0.0</TD></TR>
+	<TR style="display:none" id="constatus_dhcpser_dhcp_no" name="dhcp_no_mark"><TD nowrap><B>$constatus_dhcpser</B></TD><TD nowrap> 0.0.0.0</TD></TR>
+	<TR style="display:none" id="constatus_dnsser_dhcp_no" name="dhcp_no_mark"><TD nowrap><B>$constatus_dnsser</B></TD><TD nowrap> 0.0.0.0</TD></TR>
+	<TR style="display:none" id="constatus_obt_dhcp_no" name="dhcp_no_mark"><TD nowrap><B>$constatus_obt</B></TD><TD nowrap>----</TD></TR>
+	<TR style="display:none" id="constatus_exp_dhcp_no" name="dhcp_no_mark"><TD nowrap><B>$constatus_exp</B></TD><TD nowrap>----</TD></TR>
+<!--pppoe/pppoa-->
+	<TR style="display:none" id="traffic_connect_time_pppoe" name="ppp_yes_mark"><TD nowrap><B>$traffic_connect_time</B></TD><TD nowrap id="ppp_uptime_1"></TD></TR>
+	<TR style="display:none" id="constatus_head_pppoe" name="ppp_yes_mark"><TD nowrap><B>$constatus_head</B></TD><TD nowrap>  $connected_mark </TD></TR>
+	<TR style="display:none" id="constatus_neg_pppoe" name="ppp_yes_mark"><TD nowrap><B>$constatus_neg</B></TD><TD nowrap>  $wps_add_success</TD></TR>
+	<TR style="display:none" id="constatus_auth_pppoe" name="ppp_yes_mark"><TD nowrap><B>$constatus_auth</B></TD><TD nowrap>  $wps_add_success</TD></TR>
+	<TR style="display:none" id="info_mark_ip_pppoe" name="ppp_yes_mark"><TD nowrap><B>$info_mark_ip</B></TD><TD nowrap id="info_get_wanip_2"></TD></TR>
+	<TR style="display:none" id="info_mark_mask_pppoe" name="ppp_yes_mark"><TD nowrap><B>$info_mark_mask</B></TD><TD nowrap id="info_get_wanmask_2"></TD></TR></div>
+
+	<TR style="display:none" id="traffic_connect_time_pppoe_no" name="ppp_no_mark"><TD nowrap><B>$traffic_connect_time</B></TD><TD nowrap>  00:00:00</TD></TR>
+	<TR style="display:none" id="constatus_head_pppoe_no" name="ppp_no_mark"><TD nowrap><B>$constatus_head</B></TD><TD nowrap> $disconnected_mark </TD></TR>
+	<TR style="display:none" id="constatus_neg_pppoe_no" name="ppp_no_mark"><TD nowrap><B>$constatus_neg</B></TD><TD nowrap>  ----</TD></TR>
+	<TR style="display:none" id="constatus_auth_pppoe_no" name="ppp_no_mark"><TD nowrap><B>$constatus_auth</B></TD><TD nowrap>  ----</TD></TR>
+	<TR style="display:none" id="info_mark_ip_pppoe_no" name="ppp_no_mark"><TD nowrap><B>$info_mark_ip</B></TD><TD nowrap>  0.0.0.0</TD></TR>
+	<TR style="display:none" id="info_mark_mask_pppoe_no" name="ppp_no_mark"><TD nowrap><B>$info_mark_mask</B></TD><TD nowrap>  0.0.0.0</TD></TR>
+<!--pptp/l2tp-->
+	<TR style="display:none" id="constatus_head_pptp" name="pptpl2tp_yes_mark"><TD nowrap><B>$constatus_head</B></TD><TD nowrap> $connected_mark </TD></TR>
+	<TR style="display:none" id="info_mark_ip_pptp" name="pptpl2tp_yes_mark"><TD nowrap><B>$info_mark_ip</B></TD><TD nowrap id="info_get_wanip_3"></TD></TR>
+	<TR style="display:none" id="info_mark_mask_pptp" name="pptpl2tp_yes_mark"><TD nowrap><B>$info_mark_mask</B></TD><TD nowrap id="info_get_wanmask_3"></TD></TR>
+
+	<TR style="display:none" id="constatus_head_pptp_no" name="pptpl2tp_no_mark"><TD nowrap><B>$constatus_head</B></TD><TD nowrap> $disconnected_mark </TD></TR>
+	<TR style="display:none" id="info_mark_ip_pptp_no" name="pptpl2tp_no_mark"><TD nowrap><B>$info_mark_ip</B></TD><TD nowrap> 0.0.0.0</TD></TR>
+	<TR style="display:none" id="info_mark_mask_no" name="pptpl2tp_no_mark"><TD nowrap><B>$info_mark_mask</B></TD><TD nowrap> 0.0.0.0</TD></TR>
+<!--bigpond-->
+	<TR style="display:none" id="constatus_head_big" name="bigpond_yes_mark"><TD nowrap><B>$constatus_head</B></TD><TD nowrap> $login_mark </TD></TR>
+	<TR style="display:none" id="info_mark_ip_big" name="bigpond_yes_mark"><TD nowrap><B>$info_mark_ip</B></TD><TD nowrap id="info_get_wanip_4"></TD></TR>
+	<TR style="display:none" id="info_mark_mask_big" name="bigpond_yes_mark"><TD nowrap><B>$info_mark_mask</B></TD><TD nowrap id="info_get_wanmask_4"></TD></TR>
+
+	<TR style="display:none" id="constatus_head_big_no" name="bigpond_no_mark"><TD nowrap><B>$constatus_head</B></TD><TD nowrap> $logout_mark </TD></TR>
+	<TR style="display:none" id="info_mark_ip_big_no" name="bigpond_no_mark"><TD nowrap><B>$info_mark_ip</B></TD><TD nowrap> 0.0.0.0</TD></TR>
+	<TR style="display:none" id="info_mark_mask_big_no" name="bigpond_no_mark"><TD nowrap><B>$info_mark_mask</B></TD><TD nowrap> 0.0.0.0</TD></TR>
+<!--lte-->
+	<TR style="display:none" id="info_mark_ip_lte" name="lte_yes_mark"><TD nowrap><B>$info_mark_ip</B></TD><TD nowrap id="info_get_wanip_5"></TD></TR>
+	<TR style="display:none" id="info_mark_mask_lte" name="lte_yes_mark"><TD nowrap><B>$info_mark_mask</B></TD><TD nowrap id="info_get_wanmask_lte" id="info_get_wanmask_5"> </TD></TR>
+	<TR style="display:none" id="constatus_defgtw_lte" name="lte_yes_mark"><TD nowrap><B>$constatus_defgtw</B></TD><TD nowrap id="lte_gateway_2"> </TD></TR>
+	<TR style="display:none" id="constatus_dnsser_lte" name="lte_yes_mark"><TD nowrap><B>$constatus_dnsser</B></TD><TD nowrap id="dns_4"></TD></TR>
+
+	<TR style="display:none" id="info_mark_ip_lte_no" name="lte_no_mark"><TD nowrap><B>$c</B></TD><TD nowrap> 0.0.0.0</TD></TR>
+	<TR style="display:none" id="info_mark_mask_lte_no" name="lte_no_mark"><TD nowrap><B>$info_mark_mask</B></TD><TD nowrap> 0.0.0.0</TD></TR>
+	<TR style="display:none" id="constatus_defgtw_lte_no" name="lte_no_mark"><TD nowrap><B>$constatus_defgtw</B></TD><TD nowrap> 0.0.0.0</TD></TR>
+	<TR style="display:none" id="constatus_dnsser_lte_no" name="lte_no_mark"><TD nowrap><B>$constatus_dnsser</B></TD><TD nowrap> 0.0.0.0</TD></TR>
+<!--4g-->
+	<TR style="display:none" id="traffic_connect_time_4g"><TD nowrap><B>$traffic_connect_time</B></TD><TD nowrap id="new_time_1"></TD></TR>
+	<TR style="display:none" id="constatus_head_4g"><TD nowrap><B>$constatus_head</B></TD><TD nowrap>  $connected_mark </TD></TR>
+	<TR style="display:none" id="info_mark_ip_4g"><TD nowrap><B>$info_mark_ip</B></TD><TD nowrap id="wan_dhcp_ipaddr_1"></TD></TR>
+	<TR style="display:none" id="info_mark_mask_4g"><TD nowrap><B>$info_mark_mask</B></TD><TD nowrap id="wan_dhcp_netmask_1"></TD></TR>
+	<TR style="display:none" id="constatus_dnsser_4g"><TD nowrap><B>$constatus_dnsser</B></TD><TD nowrap id="dns_5"></TD></TR>
+
+		<TR style="display:none" id="traffic_connect_time_3g_wan"><TD nowrap><B>$traffic_connect_time</B></TD><TD nowrap id="ppp_uptime_2"></TD></TR>
+		<TR style="display:none" id="constatus_head_3g_wan"><TD nowrap><B>$constatus_head</B></TD><TD nowrap>  $connected_mark </TD></TR>
+		<TR style="display:none" id="info_mark_ip_3g_wan"><TD nowrap><B>$info_mark_ip</B></TD><TD nowrap id="info_get_wanip_6"></TD></TR>
+		<TR style="display:none" id="info_mark_mask_3g_wan"><TD nowrap><B>$info_mark_mask</B></TD><TD nowrap id="info_get_wanmask_6"></TD></TR>
+		<TR style="display:none" id="constatus_dnsser_3g_wan"><TD nowrap><B>$constatus_dnsser</B></TD><TD nowrap id="dns_6"></TD></TR></div>
+
+		<TR style="display:none" id="traffic_connect_time_3g_no"><TD nowrap><B>$traffic_connect_time</B></TD><TD nowrap>  00:00:00</TD></TR>
+		<TR style="display:none" id="constatus_head_3g_no"><TD nowrap><B>$constatus_head</B></TD><TD nowrap> $disconnected_mark </TD></TR>
+		<TR style="display:none" id="info_mark_ip_3g_no"><TD nowrap><B>$info_mark_ip</B></TD><TD nowrap> 0.0.0.0</TD></TR>
+		<TR style="display:none" id="info_mark_mask_3g_no"><TD nowrap><B>$info_mark_mask</B></TD><TD nowrap> 0.0.0.0</TD></TR>
+		<TR style="display:none" id="constatus_dnsser_3g_no"><TD nowrap><B>$constatus_dnsser</B></TD><TD nowrap> 0.0.0.0</TD></TR>
+		
+</TABLE>
+<TABLE cellspacing=5 cellPadding=0 width=100% border=0>
+<TR>
+	<TD nowrap align=center>
+	<BR>
+<script>
+
+if((!(getTop(window).support_ds_lite_flag === 1 && is_jp_version && enable_ds == "1")) && !(getTop(window).game_router_flag != 1 && info_get_wanproto == "pppoe" && ipv6_type == "pppoe" && same_info == "1")){
+var master="<% cfg_get("http_loginname") %>";
+if (master=="admin")
+{
+	if ( ap_mode_on == 1 && ap_ip_mode == 1 )
+		document.write('<input class="common1_bt" type="button" name="Release" id="disconnect" value=$release_mark disabled>&nbsp;&nbsp;<input class="common1_bt" type="button" name="Renew" id="connect" value=$renew_mark disabled>');
+	else if ( info_get_wanproto == "static" )
+        {}
+	else if( info_get_wanproto == "dhcp" )
+		document.write('<input class="common_bt" type="button" name="Release" id="disconnect" value=$release_mark onclick="connect_stop(0);" >&nbsp;&nbsp;<input class="common_bt apply_bt"  type="button" name="Renew" id="connect" value=$renew_mark onclick="connect_start(3);" >');
+	else{
+		if (monthly_limit_reached == "1" && (info_get_wanproto == "pptp" || info_get_wanproto == "pppoe" || info_get_wanproto == "pppoa" || info_get_wanproto == "lte" || info_get_wanproto == "l2tp" || info_get_wanproto == "3g"))
+			document.write('<input class="common_gray_bt" type="button" name="Connect" id="connect" disabled value=$connect_mark onclick="connect_start(3);" >&nbsp;&nbsp;<input class="common_bt"  type="button" name="Disconnect" id="disconnect" value=$disconnect_mark onclick="connect_stop(0);" >');
+		
+		else
+			document.write('<input class="common_bt" type="button" name="Connect" id="connect" value=$connect_mark onclick="connect_start(3);" >&nbsp;&nbsp;<input class="common_bt"  type="button" name="Disconnect" id="disconnect" value=$disconnect_mark onclick="connect_stop(0);" >');
+		}
+}else
+{
+	if ( ap_mode_on == 1 && ap_ip_mode == 1 )
+		document.write('<input class="common1_bt" type="button" name="Release" id="disconnect" value=$release_mark disabled >&nbsp;&nbsp;<input class="common1_bt"  type="button" name="Renew" id="connect" value=$renew_mark disabled >');
+	else if ( info_get_wanproto == "static" )
+        {}
+	else if( info_get_wanproto == "dhcp" )
+		document.write('<input class="common1_bt" type="button" name="Release" id="disconnect" value=$release_mark disabled >&nbsp;&nbsp;<input class="common1_bt"  type="button" name="Renew" id="connect" value=$renew_mark disabled >');
+	else{
+		if (monthly_limit_reached == "1" && (info_get_wanproto == "pptp" || info_get_wanproto == "pppoe" || info_get_wanproto == "lte" || info_get_wanproto == "l2tp" || info_get_wanproto == "3g"))
+			document.write('<input class="common_gray_bt" type="button" name="Connect" id="connect" disabled value=$connect_mark onclick="connect_start(3);" >&nbsp;&nbsp;<input class="common_bt"  type="button" name="Disconnect" id="disconnect" value=$disconnect_mark onclick="connect_stop(0);" >');
+		}
+}
+}
+
+</script>
+	</TD>
+</TR>
+$bluebar
+</table>
+<script>
+	if(getTop(window).game_router_flag != 1 && ipv6_type == "dhcp")
+		document.write('<TABLE border=1 class="form_table dhcp_connect-2" name="ipv6_statusTable" id="ipv6_connect" cellpadding=2 cellspacing=0 style="margin-left: 2%; margin-right: 2%; width:96%">');
+	else if(getTop(window).game_router_flag != 1 && ipv6_type == "pppoe")
+		document.write('<TABLE border=1 name="ipv6_statusTable" id="ipv6_connect" cellpadding=2 cellspacing=0 style="margin-left: 2%; margin-right: 2%; width:96%">');
+	else
+		document.write('<TABLE>');
+</script>
+<!--ipv6-dhcp-->
+	<TR style="display:none" id="info_mark_ip_ipv6" name="ipv6_yes_mark"><TD nowrap><B>$info_mark_ip</B></TD><TD nowrap id="info_get_wanip_7"></TD></TR>
+	<TR style="display:none" id="constatus_defgtw_ipv6" name="ipv6_yes_mark"><TD nowrap><B>$constatus_defgtw</B></TD><TD nowrap id="info_get_gateway_7"></TD></TR>
+	<TR style="display:none" id="constatus_dnsser_ipv6" name="ipv6_yes_mark"><TD nowrap><B>$constatus_dnsser</B></TD><TD nowrap id="dns_7"></TD></TR>
+	<TR style="display:none" id="constatus_obt_ipv6" name="ipv6_yes_mark"><TD nowrap><B>$constatus_obt</B></TD><TD nowrap id="obtian_time_7"></TD></TR>
+	<TR style="display:none" id="constatus_exp_ipv6" name="ipv6_yes_mark"><TD nowrap><B>$constatus_exp</B></TD><TD nowrap id="lease_time_7"></TD></TR>
+
+
+	<TR style="display:none" id="info_mark_ip_ipv6_no" name="ipv6_no_mark"><TD nowrap><B>$info_mark_ip</B></TD><TD nowrap> 0.0.0.0</TD></TR>
+	<TR style="display:none" id="constatus_defgtw_ipv6_no" name="ipv6_no_mark"><TD nowrap><B>$constatus_defgtw</B></TD><TD nowrap> 0.0.0.0</TD></TR>
+	<TR style="display:none" id="constatus_dnsser_ipv6_no" name="ipv6_no_mark"><TD nowrap><B>$constatus_dnsser</B></TD><TD nowrap> 0.0.0.0</TD></TR>
+	<TR style="display:none" id="constatus_obt_ipv6_no" name="ipv6_no_mark"><TD nowrap><B>$constatus_obt</B></TD><TD nowrap>----</TD></TR>
+	<TR style="display:none" id="constatus_exp_ipv6_no" name="ipv6_no_mark"><TD nowrap><B>$constatus_exp</B></TD><TD nowrap>----</TD></TR>
+<!--ipv6-pppoe-->
+	<TR style="display:none" id="traffic_connect_time_pppoe_ipv6" name="ipv6_ppp_yes_mark"><TD nowrap><B>$traffic_connect_time</B></TD><TD nowrap id="ppp_uptime_8"></TD></TR>
+	<TR style="display:none" id="constatus_head_pppoe_ipv6" name="ipv6_ppp_yes_mark"><TD nowrap><B>$constatus_head</B></TD><TD nowrap>  $connected_mark </TD></TR>
+	<TR style="display:none" id="constatus_neg_pppoe_ipv6" name="ipv6_ppp_yes_mark"><TD nowrap><B>$constatus_neg</B></TD><TD nowrap>  $wps_add_success</TD></TR>
+	<TR style="display:none" id="constatus_auth_pppoe_ipv6" name="ipv6_ppp_yes_mark"><TD nowrap><B>$constatus_auth</B></TD><TD nowrap>  $wps_add_success</TD></TR>
+	<TR style="display:none" id="info_mark_ip_pppoe_ipv6" name="ipv6_ppp_yes_mark"><TD nowrap><B>$info_mark_ip</B></TD><TD nowrap id="info_get_wanip_8"></TD></TR>
+
+	<TR style="display:none" id="traffic_connect_time_pppoe_no_ipv6" name="ipv6_ppp_no_mark"><TD nowrap><B>$traffic_connect_time</B></TD><TD nowrap>  00:00:00</TD></TR>
+	<TR style="display:none" id="constatus_head_pppoe_no_ipv6" name="ipv6_ppp_no_mark"><TD nowrap><B>$constatus_head</B></TD><TD nowrap> $disconnected_mark </TD></TR>
+	<TR style="display:none" id="constatus_neg_pppoe_no_ipv6" name="ipv6_ppp_no_mark"><TD nowrap><B>$constatus_neg</B></TD><TD nowrap>  ----</TD></TR>
+	<TR style="display:none" id="constatus_auth_pppoe_no_ipv6" name="ipv6_ppp_no_mark"><TD nowrap><B>$constatus_auth</B></TD><TD nowrap>  ----</TD></TR>
+	<TR style="display:none" id="info_mark_ip_pppoe_no_ipv6" name="ipv6_ppp_no_mark"><TD nowrap><B>$info_mark_ip</B></TD><TD nowrap>  NA</TD></TR>
+<script>
+if(getTop(window).game_router_flag != 1 && (ipv6_type == "pppoe" || ipv6_type == "dhcp"))
+{
+	document.write('</TABLE>');
+	document.write('<TABLE cellspacing=5 cellPadding=0 width=100% border=0>');
+	document.write('<TR>');
+	document.write('<TD nowrap align=center>');
+	document.write('<BR>');
+
+	var master="<% cfg_get("http_loginname") %>";
+	if (master=="admin")
+	{
+		if (ipv6_type == "dhcp")
+			document.write('<input class="common_bt" type="button" name="Release" id="disconnect" value=$release_mark onclick="connect_stop(1);" >&nbsp;&nbsp;<input class="common_bt apply_bt"  type="button" name="Renew" id="connect" value=$renew_mark onclick="connect_start(2);" >');
+		else
+			document.write('<input class="common_bt" type="button" name="Connect" id="connect" value=$connect_mark onclick="connect_start(2);" >&nbsp;&nbsp;<input class="common_bt"  type="button" name="Disconnect" id="disconnect" value=$disconnect_mark onclick="connect_stop(1);" >');
+	}else
+	{
+		document.write('<input class="common1_bt" type="button" name="Release" id="disconnect" value=$release_mark disabled >&nbsp;&nbsp;<input class="common1_bt"  type="button" name="Renew" id="connect" value=$renew_mark disabled >');
+	}
+	document.write('</TD>');
+	document.write('</TR>');
+	document.write('$bluebar');
+}
+</script>
+</TABLE>
+<TABLE cellspacing=5 cellPadding=0 width=100% border=0 id="close_tab" style="display:none">
+<TR class='el-hide'>
+        <TD nowrap align=center>
+        <script>
+        if(info_get_wanproto == "dhcp" || info_get_wanproto == "pppoe" || info_get_wanproto == "pppoa")
+                document.write('<input  class="delete_bt" type=button name="close_window" id="close" value="$close_win_mark" onclick="self.close();">');
+        else if(info_get_wanproto == "pptp" || info_get_wanproto == "l2tp")
+                document.write('<input  class="delete_bt" type=button name="Close_Window" id="close" value="$close_win_mark" onclick="self.close();">');
+        else
+                document.write('<input  class="delete_bt" type=button name="Close Window" id="close" value="$close_win_mark" onclick="self.close();">');
+        </script>
+        </TD>
+</TR>
+</TABLE>
+
+</div>
+
+</FORM>
+</BODY>
+</HTML>

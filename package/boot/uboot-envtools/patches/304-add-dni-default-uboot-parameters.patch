@@ -1,0 +1,47 @@
+diff --git a/tools/env/fw_env.h b/tools/env/fw_env.h
+index aff471b..c66a326 100644
+--- a/tools/env/fw_env.h
++++ b/tools/env/fw_env.h
+@@ -36,6 +36,8 @@
+ #define DEVICE2_ENVSECTORS     2
+ #endif
+ 
++#define USE_DNI_UBOOT
++#ifndef USE_DNI_UBOOT
+ #ifndef CONFIG_BAUDRATE
+ #define CONFIG_BAUDRATE		115200
+ #endif
+@@ -51,6 +53,30 @@
+ 	"ip=${ipaddr}:${serverip}:${gatewayip}:${netmask}:${hostname}::off; "	\
+ 	"bootm"
+ #endif
++#else
++#define CONFIG_BAUDRATE		115200
++#define CONFIG_BOOTARGS "console=ttyMSM0,115200n8"
++#define CONFIG_BOOTCOMMAND  	"mii write 0x4 0x0 0x800; " \
++				"sleep 1; nmrp; " \
++				"echo Loading DNI firmware for checking...; " \
++				"loadn_dniimg 0 0x1980000 0x44000000; " \
++				"calc_rootadd 0x1980000 0x44000000; " \
++				"iminfo 0x44000000; " \
++				"if test $? -ne 0; then echo linux checksum error; fw_recovery; fi;iminfo $rootfs_addr_for_fw_checking; " \
++				"if test $? -ne 0; then echo rootfs checksum error; fw_recovery; fi;nand read 0x44000000 0x1980000 0x06400000; " \
++				"dnibootm"
++#define CONFIG_BOOTDELAY	2
++#define CONFIG_IPADDR    192.168.1.1
++#define CONFIG_NETMASK   255.255.255.0
++#define CONFIG_SERVERIP  192.168.1.10
++#define CONFIG_EXTRA_ENV_SETTINGS		\
++	"ethact=eth0\0"				\
++	"machid=8010000\0"			\
++//	"paniconwcssfatal=1\0"			\
++	"stderr=serial@78B3000\0"		\
++	"stdin=serial@78B3000\0"		\
++	"stdout=serial@78B3000\0"
++#endif
+ 
+ extern int   fw_printenv(int argc, char *argv[]);
+ extern char *fw_getenv  (char *name);
+-- 
+1.7.0.4
+

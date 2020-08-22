@@ -1,0 +1,15 @@
+<html>
+<head>
+</head>
+<body>
+<script>
+var url = "<% ntgr_success_url() %>";
+if( "<%cfg_get("dns_hijack") %>" == "1" && "<%cfg_get("hijack_process") %>" == "2" )
+	setTimeout(function() {
+		top.location.href = url;
+	}, 2000);
+else
+	top.location.href = url;
+</script>
+</body>
+</html>

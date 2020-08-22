@@ -1,0 +1,20 @@
+#! /bin/sh
+
+TRUE_SIZE=`du -b $1 | awk {'print $1'}`
+MIN_SIZE="$3"
+
+if [ "$MIN_SIZE" != "" ] && [ $TRUE_SIZE -le $MIN_SIZE ]; then
+	echo "#############################################################"
+	echo "#  Undersize image($TRUE_SIZE)!, MAX_KERNEL_SIZE is too big"
+	echo "#############################################################"
+	exit 1
+fi
+
+if [ $TRUE_SIZE -lt $2 ];then
+	exit 0
+else
+	echo "#############################################################"
+	echo "#  Oversize image($TRUE_SIZE)!, The maximum is $2"
+	echo "#############################################################"
+	exit 1
+fi

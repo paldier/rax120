@@ -1,0 +1,26 @@
+From fa7db65c6eb972bea4d0dc8f72bddf301c36e22a Mon Sep 17 00:00:00 2001
+From: "iceway.zhang" <iceway.zhang@dniserver.dnish.net>
+Date: Wed, 24 Oct 2018 15:01:18 +0800
+Subject: [PATCH 1/1] fix a compire error of reference header
+
+Signed-off-by: iceway.zhang <iceway.zhang@dniserver.dnish.net>
+---
+ lib/crypto_backend/pbkdf_check.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/lib/crypto_backend/pbkdf_check.c b/lib/crypto_backend/pbkdf_check.c
+index d06e0f7..578142c 100644
+--- a/lib/crypto_backend/pbkdf_check.c
++++ b/lib/crypto_backend/pbkdf_check.c
+@@ -34,6 +34,8 @@
+ #define BENCH_SAMPLES_FAST 3
+ #define BENCH_SAMPLES_SLOW 1
+ 
++#define CLOCK_MONOTONIC_RAW	4
++
+ /* These PBKDF2 limits must be never violated */
+ int crypt_pbkdf_get_limits(const char *kdf, struct crypt_pbkdf_limits *limits)
+ {
+-- 
+2.7.4
+

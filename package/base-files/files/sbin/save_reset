@@ -1,0 +1,5 @@
+#!/bin/sh
+
+	/bin/config set lastRebootReason=3
+	/bin/config commit
+	return 0

@@ -1,0 +1,32 @@
+#!/bin/sh
+
+adt_net_detect()
+{
+    [ -f /tmp/ping_adt_result ] && rm /tmp/ping_adt_result
+#ping must set & param. when internet is bad, it will happen block.
+    ping -c 1 www.netgear.com > /tmp/ping_adt_result 2> /dev/null &
+    ping_id=$!
+    sleep 2 #wait for ping 
+    result=`cat /tmp/ping_adt_result`
+    if [ "x$(echo $result |grep " 0% packet loss")" != "x" ];then
+        echo 1
+    else
+#unplug in wan ,when reboot router, ping will block 30s, 
+#and ping's deadline param dont work, etc:  "ping -w 3 *" is unvalid.
+#when use pppoe, and pppoe's internet is bad, it also will block
+#it's may be a common issue, any other that use ping command will happen block phenomenon.
+        ping_block=`ps -w|grep $ping_id|grep "ping -c 1 www.netgear.com"` #make sure find our ping process
+        [ -n "$ping_block" ] && kill $ping_id
+        echo 0
+    fi
+}
+
+whole_sw=$(/bin/config get dgc_func_have_autotimezone)
+whole_sw=1 # force to enable on rax120
+if [ "x$whole_sw" == "x1" ];then
+    while [ "x$(adt_net_detect)" == "x0" ];do
+        sleep 3
+    done
+    # wait network is good, then run following.
+    /usr/sbin/auto-detection-tz
+fi

@@ -1,0 +1,55 @@
+#!/bin/sh
+# ppp-session.script used for pppoe connection
+
+CONFIG="/bin/config"
+ECHO="/bin/echo"
+PPPOE_LST_SESSION="/tmp/ppp/pppoe_lst_session"
+PPPOE_SESSION="/tmp/ppp/pppoe_session"
+CONFIG_SESSION_ID="pppoe_sessionID"
+CONFIG_PEER_MAC="pppoe_peer_mac"
+UNIT="$2"
+
+if [ "$UNIT" == "1" ]; then
+	PPPOE_LST_SESSION="/tmp/ppp/pppoe1_lst_session"
+	PPPOE_SESSION="/tmp/ppp/pppoe1_session"
+	CONFIG_SESSION_ID="pppoe1_sessionID"
+	CONFIG_PEER_MAC="pppoe1_peer_mac"
+elif [ "$UNIT" == "ipv6" ]; then
+	PPPOE_LST_SESSION="/tmp/ppp/pppoev6_lst_session"
+	PPPOE_SESSION="/tmp/ppp/pppoev6_session"
+	CONFIG_SESSION_ID="pppoev6_sessionID"
+	CONFIG_PEER_MAC="pppoev6_peer_mac"
+fi
+
+pppoe_ses_set(){
+        #set value
+	$CONFIG set $CONFIG_SESSION_ID=$(cat $PPPOE_SESSION  | cut -d ':' -f 1)
+	$CONFIG set $CONFIG_PEER_MAC=$(cat $PPPOE_SESSION  | cut -d ':' -f 2,3,4,5,6,7)
+	$CONFIG commit
+}
+pppoe_ses_reset(){
+	$CONFIG set $CONFIG_SESSION_ID=0
+	$CONFIG set $CONFIG_PEER_MAC=0:0:0:0:0:0
+	$CONFIG commit
+}
+pppoe_ses_load(){
+        #reload config value
+	sesID=$($CONFIG get $CONFIG_SESSION_ID)
+	mac=$($CONFIG get $CONFIG_PEER_MAC)
+	[ "x$sesID" != "x" -a "$sesID" != "0" ] &&
+		$ECHO "Kill the last session at first:$CONFIG_SESSION_ID=$sesID, $CONFIG_PEER_MAC=$mac"
+
+	$ECHO 0:0:0:0:0:0:0 > $PPPOE_LST_SESSION
+	[ "x$sesID" != "x" -a "x$mac" != "x" ] && $ECHO "$sesID:$mac" > $PPPOE_LST_SESSION
+}
+
+case $1 in
+        pppoe_ses_set)
+                pppoe_ses_set
+                ;;
+        pppoe_ses_load)
+                pppoe_ses_load
+                ;;
+        pppoe_ses_reset)
+                pppoe_ses_reset
+esac

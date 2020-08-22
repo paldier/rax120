@@ -1,0 +1,25 @@
+<html>
+<head>
+<title>USB Backup Query</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta http-equiv="Pragma" content="no-cache">
+<script type="text/javascript">
+<% usb_backup_drive() %>
+r_sta = "<% cfg_get("usb_backup_trash_state") %>";
+s_sta = "<% cfg_get("usb_backup_state") %>";
+parent.sync_sta = s_sta;
+parent.rec_sta = r_sta;
+
+if(r_sta == "1" || s_sta == "3")
+{
+	parent.remove_select();
+	parent.hideMenu();
+	setTimeout("this.location.href='USB_backup_trash_status.html';", 10000);
+}
+if((parent.ori_sync_sta == "3" && s_sta != "3") || (parent.ori_rec_sta == "1" && r_sta != "1"))
+		parent.location.href='USB_backup_trashcan.htm';
+</script>
+</head>
+<body>
+</body>
+</html>

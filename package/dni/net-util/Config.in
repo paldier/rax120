@@ -1,0 +1,28 @@
+config net-util_WLAN_COMMON
+	bool "net-util modules to support wlan common"
+	default y
+	help
+		This defined macro "WLAN_COMMON_SUUPPORT" to let module "net-util"
+		to support wlan common
+
+config net-util_RFC3442_249
+	bool "net-util modules to support rfc3442 249"
+	default y
+	help
+		This defined macro "RFC3442_249_SUPPORT" to let module "net-util"
+		to support rfc3442 249
+
+config net-util_DNI_WAN_DNS3
+	bool "net-util modules to support dni wan dns3"
+	default y
+	help
+		This defined macro "DNI_WAN_DNS3_SUPPORT" to let module "net-util"
+		to support dni wan dns3
+
+config net-util_DETWANV6
+	bool "net-util modules to support detwanv6"
+	default y
+	help
+		This defined macro "DETWANV6" to let module "net-util"
+		to support detwanv6
+

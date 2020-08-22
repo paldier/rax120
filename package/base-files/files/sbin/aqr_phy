@@ -1,0 +1,60 @@
+#!/bin/sh
+
+ssdk_sh=/usr/sbin/ssdk_sh
+ifconfig=/sbin/ifconfig
+aqr_eth="eth5"
+
+usage ()
+{
+	cat <<EOF
+Usage:
+$0 set speed 2500
+	Force the AQR111 work in speed 2500 (Mbit/s)
+$0 get speed
+	Get current AQR111 work speed
+EOF
+	exit 1
+}
+
+# Provided by GEORGE.HSIAO
+set_phy_2500 ()
+{
+	$ssdk_sh debug phy set 7 0x40070010 0x9001  # Set bits[8:7] = 00
+	$ssdk_sh debug phy set 7 0x40070020 0x00e1  # Set bits[C] = 0, bits[8:7] = 01
+	$ssdk_sh debug phy set 7 0x4007c400 0x1440  # Set bits[F] = 0, bits[C:A] = 101
+	sleep 1
+	$ssdk_sh debug phy set 7 0x4004c441 0x8
+}
+
+set_phy ()
+{
+	[ "$#" -ne 2 -o "$1" != "speed" ] && usage
+
+	if [ "$2" = "2500" ]; then
+		set_phy_2500
+	else
+		usage
+	fi
+
+	echo "Please replug the cable"
+}
+
+get_phy ()
+{
+	[ "$1" != "speed" ] && usage
+
+	local status=$(cat /sys/class/net/$aqr_eth/operstate)
+	if [ "$status" != "up" ]; then
+		echo "link down"
+	else
+		local speed=$(cat /sys/class/net/$aqr_eth/speed)
+		echo "speed $speed"
+	fi
+}
+
+case "$1" in
+	set) set_phy "$2" "$3";;
+	get) get_phy "$2";;
+	-h|help|--help) usage;;
+	*) usage;;
+esac

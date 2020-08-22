@@ -1,0 +1,16 @@
+diff -ruN cryptsetup-2.0.5/src/cryptsetup.c cryptsetup-2.0.5.org/src/cryptsetup.c
+--- cryptsetup-2.0.5/src/cryptsetup.c	2018-10-27 23:34:57.000000000 +0800
++++ cryptsetup-2.0.5.org/src/cryptsetup.c	2020-02-26 11:55:32.540653817 +0800
+@@ -587,10 +587,11 @@
+ 		r = -EINVAL;
+ 		break;
+ 	case CRYPT_INACTIVE:
+-		if (path)
++	/*	if (path)
+ 			log_std("%s is inactive.\n", action_argv[0]);
+ 		else
+ 			log_std("%s/%s is inactive.\n", crypt_get_dir(), action_argv[0]);
++			*/
+ 		r = -ENODEV;
+ 		break;
+ 	case CRYPT_ACTIVE:

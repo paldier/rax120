@@ -1,0 +1,47 @@
+diff --git a/src/misc/syslog.c b/src/misc/syslog.c
+--- a/src/misc/syslog.c	2017-11-03 15:06:31.337974539 +0000
++++ b/src/misc/syslog.c	2017-11-03 15:05:53.881975013 +0000
+@@ -17,6 +17,7 @@
+ static int log_facility = LOG_USER;
+ static int log_mask = 0xff;
+ static int log_fd = -1;
++static int connected = 0;
+ 
+ int setlogmask(int maskpri)
+ {
+@@ -42,14 +43,24 @@
+ 	LOCK(lock);
+ 	close(log_fd);
+ 	log_fd = -1;
++	connected = 0;
+ 	UNLOCK(lock);
+ 	pthread_setcancelstate(cs, 0);
+ }
+ 
+ static void __openlog()
+ {
+-	log_fd = socket(AF_UNIX, SOCK_DGRAM|SOCK_CLOEXEC, 0);
+-	if (log_fd >= 0) connect(log_fd, (void *)&log_addr, sizeof log_addr);
++	if (log_fd < 0) log_fd = socket(AF_UNIX, SOCK_DGRAM|SOCK_CLOEXEC, 0);
++	if (log_fd >= 0 && !connected) {
++		if(connect(log_fd, (void *)&log_addr, sizeof log_addr) == 0)
++			connected = 1;
++	}
++	else {
++		if(log_fd >= 0){
++			close(log_fd);
++			log_fd = -1;
++		}
++	}
+ }
+ 
+ void openlog(const char *ident, int opt, int facility)
+@@ -91,7 +102,7 @@
+ 	int hlen;
+ 	int fd;
+ 
+-	if (log_fd < 0) __openlog();
++	if (log_fd < 0 || !connected) __openlog();
+ 
+ 	if (!(priority & LOG_FACMASK)) priority |= log_facility;
+ 

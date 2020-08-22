@@ -1,0 +1,19 @@
+<HTML>
+<HEAD>
+<script language="javascript" type="text/javascript" src="/funcs.js"></script>
+
+<script language="javascript" type="text/javascript">
+var internet_type ="<% cfg_get("internet_type") %>";
+var internet_ppp_type="<% cfg_get("internet_ppp_type") %>";
+if(internet_type == "0" && internet_ppp_type == "3")
+	goto_formframe("RST_multipppoe_conn_status.htm",false);
+else
+	goto_formframe("RST_conn_status.htm",false);
+</script>
+<META http-equiv="content-type" content='text/html; charset=UTF-8'>
+<LINK rel="stylesheet" type="text/css" href="style/hijack_style.css">
+</HEAD>
+<BODY bgcolor=#ffffff>
+</BODY>
+</HTML>
+

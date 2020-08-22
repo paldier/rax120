@@ -1,0 +1,49 @@
+#!/bin/sh /etc/rc.common
+
+USE_PROCD=1
+START=19
+STOP=100
+
+SVC="fing_dil"
+
+#start_service used to start and recovery fing module for openWRT 
+start_service() {
+  echo "start_service *************"
+  procd_open_instance $SVC
+  procd_set_param command /usr/bin/fing_dil  
+  procd_set_param respawn ${respawn_threshold:-3600} ${respawn_timeout:-60} ${respawn_retry:-5}
+  procd_set_param limits core="unlimited"
+  procd_close_instance
+}
+
+boot() {
+  echo "boot *************"
+  /etc/init.d/dilboot
+  start
+}
+
+stop_service() {
+  echo "stop_service *************"
+  kill -17 1
+  rm /tmp/fing_dil.log
+  return 0
+}
+
+restart() {
+  echo "Restart_service *************"
+  stop
+  start
+  return 0
+}
+
+shutdown() {
+  return 0
+}
+
+#start_nonopenwrt used for NH ODM to start fing module 
+#Just call this procedure to start fing module for NH SKUs
+start_nonopenwrt() {
+  echo "start fing module for Non openWRT ********* "
+  /etc/init.d/dilboot
+  /usr/bin/fing_dil --log_debug &	  
+}

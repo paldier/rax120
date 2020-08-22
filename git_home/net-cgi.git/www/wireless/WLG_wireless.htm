@@ -1,0 +1,1887 @@
+<% cfg_set("set_wireless_tag", "0") %>
+<% http_header("style/form.css", "/funcs.js", "/jquery-1.7.2.min.js","/wlan.js") %>
+<style>
+	#pwd_display,#pwd_an_display, #pwd_ad_display, #radius_display, #radius_an_display{width:21px;margin-left:-28px;cursor:pointer;position:relative;top:6px}
+	::-ms-clear,::-ms-reveal{display: none;}
+</style>
+<% body_header_alt("_wlan", "WLG_wireless.htm", "wlan") %>
+<div id="black_over_lay" class="black_overlay">
+</div>
+<div class="page_title">$wlan_mark</div>
+<div class="fix_button">
+<TABLE width=100% border=0 cellpadding=0 cellspacing=2>
+<script>
+var master="<% cfg_get("http_loginname") %>";
+var netgear_region="<% get_firmware_region() %>";
+var valid_region = "<% valid_firmware_region() %>";
+valid_region = parseInt(valid_region, 10);
+if( master == "admin" && valid_region == 1 )
+document.write('<TR><TD nowrap colspan=2 align=center><input class="cancel_bt" type="button" name="Cancel" id="cancel" value="$cancel_mark" onClick="location.href=\'WLG_wireless.htm\';">&nbsp;&nbsp;<input class="apply_bt" type="button" name="Apply" id="apply" value="$apply_mark" onclick="return check_wlan();"></TD></TR>');
+else
+document.write('<TR><TD nowrap colspan=2 align=center><input class="cancel1_bt" type="button" name="Cancel" id="cancel" value="$cancel_mark" disabled>&nbsp;&nbsp;<input class="apply1_bt" type="button" name="Apply" id="apply" value="$apply_mark" disabled></TD></TR>');
+</script>
+</TABLE>
+</div>
+<div id="main" class="main_top_button"> 
+<% pop_help_button() %>
+
+<% table_header() %>
+
+<script>
+var have_wep_flag = getTop(window).have_wep_flag;
+var have_wpas_flag = getTop(window).have_wpas_flag;
+var have_wpa3_flag = getTop(window).have_wpa3_flag;
+var host_name=parent.host_name;
+var wds_support_wpa = getTop(window).wds_support_wpa;
+var gui_region="<% cfg_get("GUI_Region") %>"
+var pr_flag = (( gui_region == "Chinese" && (netgear_region == "" || netgear_region.toUpperCase() == "WW")) || netgear_region.toUpperCase() == "PR") ? 1 : 0
+var pr_wds_support_wpa=( wds_support_wpa == 1  && pr_flag == 1) ? 1 : 0;
+var have_enterprise = getTop(window).have_enterprise;
+var have_wpa3_enterprise = getTop(window).have_wpa3_enterprise;
+var bgn_mode1_value = getTop(window).bgn_mode1_value;
+var an_mode1_value = getTop(window).an_mode1_value;
+<% all_mode_strings() %>
+var msg = "<% string_warning("bgn") %>";
+var an_msg = "<% string_warning("an") %>";
+var lanIP = "<% cfg_get("lan_ipaddr") %>";
+var lanSubnet = "<% cfg_get("lan_netmask") %>";
+var wanIP = "<% wan_ip() %>";
+var wanSubnet = "<% wan_netmask() %>";
+
+var str_wpae="";
+var str_wpa3e="";
+var str_none="";
+var str_wep="";
+var str_wpa="";
+var str_wpa2="";
+var str_wpas="";
+var str_none_an="";
+var str_wep_an="";
+var str_wpa_an="";
+var str_wpa2_an="";
+var str_wpas_an="";
+var str_wpa3="";
+var str_wpas_sae="";
+var str_wpa3_an="";
+var str_wpas_sae_an="";
+
+var str_none_ad="";
+var str_wpa2_ad="";
+
+var StartChannel = new Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1); 
+var FinishChannel = new Array(11,13,13,13,13,13,13,13,11,11,13,13,13); //middle east move up two line
+var StartChannelB = new Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1,1,1,1,1,1,1,1,1,1,1,1,1);
+var FinishChannelB = new Array(11,13,13,13,11,13,13,11,13,13,13,13,11,13,13,13,13,13,13,13,13,11,11,13,13);
+//bug 23854:The dialogue of DFS channel is not implemented
+var dfs_info="<% cat_file("/proc/sys/dfs_detect/channel_interval") %>";
+dfs_info = dfs_info.substring(0, dfs_info.length - 1);//delete the last char '#' 
+<% dfs_radar_detect() %>
+var an_router_flag = parent.an_router_flag;
+var ac_router_flag = parent.ac_router_flag;
+var ad_router_flag = parent.ad_router_flag;
+var str_have_an="";
+var str_have_ad="";
+
+var video_router_flag = parent.video_router_flag;
+var dfs_channel_router_flag = parent.dfs_channel_router_flag;
+var dfs_canada_router_flag = parent.dfs_canada_router_flag;/* bug 25665: DFS channel supported in canada,Europe and Austrilia */
+var dfs_europe_router_flag = parent.dfs_europe_router_flag;
+var dfs_australia_router_flag = parent.dfs_australia_router_flag;
+var dfs_japan_router_flag = parent.dfs_japan_router_flag; //DFS channel supported in Japan
+var dfs_russia_router_flag = parent.dfs_russia_router_flag;
+var wl_disablecoext="<% cfg_get("wl_disablecoext") %>";
+<% show_wlan_variable() %>
+var suffix1="";
+var suffix2="";
+var suffix3="";
+var suffix4="";
+var wla_mode="<% cfg_get("wla_simple_mode") %>";
+var guest_router_flag=getTop(window).guest_router_flag;
+var guest_network_user="<% judge_guest_user() %>";
+var enable_ax = "<% cfg_get("wla_ax") %>";
+var enable_ofdma_2g = "<% cfg_get("wlg_dl_ofdma") %>";
+var enable_ofdma_5g = "<% cfg_get("wla_dl_ofdma") %>";
+var enable_ht160 = "<% cfg_get("wla_ht160") %>";
+var smart_connect_flag = parent.smart_connect_flag;
+if(getTop(window).use_orbi_style_flag == "1")
+var get_smart_connect = "<% cfg_get("lbd_enable") %>";
+else
+var get_smart_connect = "<% cfg_get("enable_smart_connect") %>";
+var get_sec_channel = "<% cfg_get("wla_sec_channel") %>";
+
+if(getTop(window).use_orbi_style_flag == "1"){
+	wlan_mode_3_value = (wlan_mode_3_value=="1147")?"1146":wlan_mode_3_value;
+	var opmode_list={
+		"0": ["1", wlan_mode_1_value],
+		"1": ["2", wlan_mode_2_value],
+		"2": ["3", wlan_mode_3_value]
+	};
+	var opmode_an_list={
+		"0": ["7", "1147"],
+		"1": ["8", "2294"],
+		"2": ["9", "4803-HT80"],
+		"3": ["10", "4803-HT160"]
+	};
+}
+var channel_json="<% access_file("/www/channel_info.json") %>";
+</script>
+<input type="hidden" name="hidden_wlan_mode">
+<input type="hidden" name="hidden_wlan_channel">
+<input type="hidden" name="generate_flag">
+<input type="hidden" name="old_length">
+<input type="hidden" name="old_length_a">
+<input type="hidden" name="wl_sec_wpaphrase_len">
+<input type="hidden" name="wla_sec_wpaphrase_len">
+<input type="hidden" name="wl_hidden_wpa_psk">
+<input type="hidden" name="wla_hidden_wpa_psk">
+<input type="hidden" name="hidden_sec_type">
+<input type="hidden" name="wep_press_flag">
+<input type="hidden" name="wpa1_press_flag" value=0>
+<input type="hidden" name="wpa2_press_flag" value=0>
+<input type="hidden" name="wpas_press_flag" value=0>
+<input type="hidden" name="wpa3_sae_press_flag" value=0>
+<input type="hidden" name="wla_wpa1_press_flag" value=0>
+<input type="hidden" name="wla_wpa2_press_flag" value=0>
+<input type="hidden" name="wla_wpas_press_flag" value=0>
+<input type="hidden" name="wla_wpa3_sae_press_flag" value=0>
+<input type="hidden" name="wps_change_flag">
+<input type="hidden" name="hidden_enable_guestNet">
+<input type="hidden" name="hidden_enable_ssidbro">
+<input type="hidden" name="hidden_allow_guest">
+<input type="hidden" name="radiusServerIP">
+<input type="hidden" name="radiusServerIP_a">
+<input type="hidden" name="opmode_bg">
+<input type="hidden" name="wl_mode">
+
+<input type="hidden" name="wl_ssid">
+<input type="hidden" name="wla_ssid">
+<input type="hidden" name="wl_WRegion">
+<input type="hidden" name="wla_WRegion">
+<input type="hidden" name="qca_wireless_region">
+<input type="hidden" name="wl_hidden_wlan_channel">
+<input type="hidden" name="wla_hidden_wlan_channel">
+<input type="hidden" name="wla_hidden_sec_channel" value="-1">
+<input type="hidden" name="wla_hidden_sel_dfs" value="0">
+<input type="hidden" name="wl_hidden_wlan_mode">
+<input type="hidden" name="wla_hidden_wlan_mode">
+<input type="hidden" name="wl_hidden_sec_type">
+<input type="hidden" name="wla_hidden_sec_type">
+
+<input type="hidden" name="hidden_WpaeRadiusSecret">
+<input type="hidden" name="hidden_WpaeRadiusSecret_a">
+
+<input type="hidden" name="wl_enable_ssid_broadcast">
+<input type="hidden" name="wla_enable_ssid_broadcast">
+<input type="hidden" name="hidden_enable_video">
+<input type="hidden" name="change_region_flag">
+
+<input type="hidden" name="wl_tx_ctrl">
+<input type="hidden" name="wla_tx_ctrl">
+<input type="hidden" name="wl_apply_flag" value="0">
+<input type="hidden" name="hid_enable_coexist">
+
+<input type="hidden" name="wig_ssid">
+<input type="hidden" name="wig_hidden_wlan_channel">
+<input type="hidden" name="wig_hidden_sec_type">
+<input type="hidden" name="wig_sec_wpaphrase_len">
+<input type="hidden" name="wig_hidden_wpa_psk">
+<input type="hidden" name="wig_wpa2_press_flag" value=0>
+
+<input type="hidden" name="hid_enable_smart_connect" value="0">
+<input type="hidden" name="hid_wla_ax">
+<input type="hidden" name="hid_ofdma_2g">
+<input type="hidden" name="hid_ofdma_5g">
+<script>
+if(valid_region != 1 && an_router_flag == 1)
+{
+	document.write('<TR><TD nowrap colspan=2><A tabindex=-1 class="disabled" href="javascript:loadhelp(\'_wlan\',\'Region\')"><B>$wlg_region_select</B></A></TD></TR>');
+	document.write('<TR> <TD nowrap width=35% class="label-td">$wlan_mark_reg:</TD><TD nowrap>');
+	document.write('<select name="WRegion" id="wireless_region" size="1" style="width:240px"');
+	document.write('</select></TD></TR>');
+}
+else if(an_router_flag == 1)
+{
+	document.write('<TR><TD nowrap colspan=2><A tabindex=-1 class="disabled" href="javascript:loadhelp(\'_wlan\',\'Region\')"><B>$wlg_region_select</B></A></TD></TR>');
+	document.write('<TR> <TD nowrap width=35% class="label-td">$wlan_mark_reg:</TD><TD nowrap>');
+	if(netgear_region.toUpperCase() == "NA" || netgear_region.toUpperCase() == "CA" || netgear_region.toUpperCase() == "JP" || netgear_region.toUpperCase() == "RU" || netgear_region.toUpperCase() == "US" || netgear_region.toUpperCase() == "PR")
+		document.write('<select name="WRegion" id="wireless_region" size="1" onchange="$$.setChannel(\'wl0\');$$.setChannel(\'wl1\');Change_ax_opmode(document.forms[0]);" disabled="disabled">');
+	else
+		document.write('<select name="WRegion" id="wireless_region" size="1" onchange="$$.setChannel(\'wl0\');$$.setChannel(\'wl1\');Change_ax_opmode(document.forms[0]);">');
+		document.write('<option value=0>$coun_af</option>');
+		document.write('<option value=1>$coun_as</option>');
+		document.write('<option value=2>$coun_au</option>');
+		document.write('<option value=3>$coun_ca</option>');
+		document.write('<option value=11>$coun_ch</option>');
+		document.write('<option value=4>$coun_eu</option>');
+		document.write('<option value=12>$coun_in</option>');
+		document.write('<option value=5>$coun_is</option>');
+		document.write('<option value=6>$coun_jp</option>');
+		document.write('<option value=7>$coun_ko</option>');
+		document.write('<option value=13>$coun_ma</option>');
+		document.write('<option value=8>$coun_mx</option>');
+		document.write('<option value=14>$coun_md_1</option>');
+		document.write('<option value=15>$coun_md_2</option>');
+		document.write('<option value=16>Middle East(Egypt/Tunisia/Kuwait)</option>');
+		document.write('<option value=17>Middle East(Turkey)</option>');
+		document.write('<option value=18>Middle East(Saudi Arabia/United Arab Emirates)</option>');
+		document.write('<option value=19>$coun_ru</option>');
+		document.write('<option value=20>$coun_si</option>');
+		if(getTop(window).host_name != "RAX10")
+			document.write('<option value=9>$coun_sa</option>');
+		document.write('<option value=21>$coun_ta</option>');
+	if(netgear_region.toUpperCase() == "NA" || netgear_region.toUpperCase() == "US")
+		document.write('<option value=10>$coun_na</option>');
+	else
+		document.write('<option value=10>$coun_us</option>');
+		if(getTop(window).use_orbi_style_flag == "1")
+		{
+			document.write('<option value=22>$coun_hk</option>');
+			document.write('<option value=23>Vietnam</option>');
+		} else {
+			document.write('<option value=22>Vietnam</option>');
+			document.write('<option value=23>$coun_hk</option>');
+		}
+		document.write('</select></TD></TR>');
+	if(netgear_region.toUpperCase() == "JP")
+		document.getElementsByName("WRegion")[0].value = 6;
+	else if(netgear_region.toUpperCase() == "CA")
+		document.getElementsByName("WRegion")[0].value = 3;
+	else if(netgear_region.toUpperCase() == "PR")
+		document.getElementsByName("WRegion")[0].value = 11;
+	else
+		document.getElementsByName("WRegion")[0].value = wl_get_countryA;
+	rewrite_list_value(document.forms[0], "WRegion");
+}
+if(smart_connect_flag == "1")
+	document.write('$bluebar');
+</script>
+<TR id='wladv_ax' style="display:none">
+        <TD nowrap colspan=2 >
+		<input type="checkbox" name="enable_ax" value="" id="enable_ax_chec" onclick="Change_ax_opmode(document.forms[0]);"><label for="enable_ax_chec">Enable AX - This WiFi mode will enable AX features such as OFDMA</label>
+	</TD>
+</TR>
+<TR id='ofdma_tr' style="display:none">
+        <TD nowrap colspan=2 >
+		<input type="checkbox" name="ofdma_2g" value="" id="enable_ofdma_2g"><label for="enable_ofdma_2g">Enable OFDMA in 2.4GHz</label>
+	</TD>
+        <TD nowrap colspan=2 >
+		<input type="checkbox" name="ofdma_5g" value="" id="enable_ofdma_5g"><label for="enable_ofdma_5g">Enable OFDMA in 5GHz</label>
+	</TD>
+</TR>
+<script>
+var endis_wl_radio = "<% enable_ap_orNot("bgn") %>";
+if(smart_connect_flag == "1") {
+	document.write('<TR>');
+	document.write("<TD colspan=2><input type='checkbox' name='enable_smart_connect' id='enable_smart_connect' onchange='handle_samrt_connect()'><label for='enable_smart_connect'>$enable_smart_conn_tip</label></TD>");
+	document.write('</TR> $bluebar');
+
+	if(endis_wl_radio == '0' || endis_wla_radio == '0' ) {
+		document.getElementById("enable_smart_connect").disabled = true;
+		getObj('enable_smart_connect').color = 'gray';
+	}
+}
+</script>
+<TR> 
+	<TD nowrap colspan=2 class="label-td"><A tabindex=-1 class="disabled" href="javascript:loadhelp('_wlan','network')"><B>$wlan_network_mark<script> if( an_router_flag == 1) document.write(" (2.4GHz $w2_suffix)")</script></B></A></TD>
+</TR>
+<TR id=ssid_bc_bgn>
+	<TD nowrap class="label-td">
+	<input type="checkbox" name="ssid_bc" id="enable_ssid_bc" value="1"><label for="enable_ssid_bc">$adva_wlan_ssid_broadcast</label>
+	</TD>
+</TR>
+<TR id="coexistence_line">
+        <TD nowrap colspan=2>
+	<input type="checkbox" name="enable_coexistence" id="enable_coexistence"><label for="enable_coexistence">$adva_enable_coexistence</label>
+        </TD>
+</TR>
+<TR> 
+	<TD nowrap width=35% class="label-td">$wlan_mark_ssid:</TD>
+	<TD nowrap class="tdright"><input class="input1" type="text" name="ssid" id="ssid" value="<% cfg_get_ssid_value("wl_ssid") %>" size="20" maxlength="32"></TD>
+</TR>
+<tr style="display:none">
+	<td><input type="text" name="wla1ssid" value="<% cfg_get_ssid_value("wla1_ssid") %>" size="20" maxlength="32"></td>
+	<td><input type="text" name="wlg1ssid" value="<% cfg_get_ssid_value("wlg1_ssid") %>" size="20" maxlength="32"></td>
+</tr>
+<script>
+if(valid_region != 1 && an_router_flag == 0)
+{
+	document.write('<TR> <TD nowrap width=35% class="label-td">$wlan_mark_reg:</TD><TD nowrap>');
+	document.write('<select name="WRegion" id="wireless_region" size="1" style="width:240px"');
+	document.write('</select></TD></TR>');
+}
+else if(an_router_flag == 0)
+{
+	document.write('<TR> <TD nowrap width=35% class="label-td">$wlan_mark_reg:</TD><TD nowrap>');
+	if(netgear_region.toUpperCase() == "NA" || netgear_region.toUpperCase() == "JP" || netgear_region.toUpperCase() == "US")
+		document.write('<select name="WRegion" id="wireless_region" size="1" onchange="setChannel();" disabled="disabled">');
+	else
+		document.write('<select name="WRegion" id="wireless_region" size="1" onchange="setChannel();">');
+		document.write('<option value=0>$coun_af</option>');
+		document.write('<option value=1>$coun_as</option>');
+		document.write('<option value=2>$coun_au</option>');
+		document.write('<option value=4>$coun_eu</option>');
+		document.write('<option value=5>$coun_is</option>');
+		document.write('<option value=6>$coun_jp</option>');
+		document.write('<option value=7>$coun_ko</option>');
+		document.write('<option value=10>$coun_na</option>');
+		document.write('<option value=8>$coun_mx</option>');
+		document.write('<option value=22>$coun_middle_east</option>');
+		document.write('<option value=19>$coun_ru</option>');
+		if(getTop(window).host_name != "RAX10")
+			document.write('<option value=9>$coun_sa</option>');
+
+	document.write('</select></TD></TR>');
+	document.getElementsByName("WRegion")[0].value = wl_get_countryA;
+}
+</script>
+<TR> 
+	<TD nowrap width=35% class="label-td">$wlan_mark_chan:</TD>
+	<TD nowrap class="tdright">
+<script>
+	if(valid_region != 1)
+	{
+		document.write('<select name="w_channel" id="wireless_channel" size="1" style="width:60px">');
+		document.write('</select>');
+	}
+	else
+	{
+		document.write('<select name="w_channel" id="wireless_channel" size="1">');
+		document.write('<option id="auto" selected>$auto_mark</option>');
+		document.write('<option>01</option>');
+		document.write('<option>02</option>');
+		document.write('<option>03</option>');
+		document.write('<option>04</option>');
+		document.write('<option>05</option>');
+		document.write('<option>06</option>');
+		document.write('<option>07</option>');
+		document.write('<option>08</option>');
+		document.write('<option>09</option>');
+		document.write('<option>10</option>');
+		document.write('<option>11</option>');
+		document.write('<option>12</option>');
+		document.write('<option>13</option>');
+		document.write('<option>14</option>');
+		document.write('</select>');
+	}
+</script>
+	</TD>
+</TR>
+<script>
+	if(old_wds_endis_fun == "1")
+	{
+		document.getElementById("auto").disabled = true;
+	}
+</script>
+<TR> 
+	<TD nowrap width=35% class="label-td">$wlan_mark_mode:</TD>
+	<TD nowrap id="opmode_all" class="tdright">
+	<select name="opmode" id="opmode" size="1" onchange="wl_sectype_change();$$.setChannel('wl0');Change_ax_opmode(document.forms[0]);">
+		<option value="1"><script>document.write(wlan_mode_1);</script></option>
+		<option value="2"><script>document.write(wlan_mode_2);</script></option>
+		<option value="3"><script>document.write(wlan_mode_3);</script></option>
+        </select>
+	</TD>
+	<TD nowrap id="opmode_54" style="display:none">
+	<select name="opmode54" size="1" onchange="wl_54_sectype_change();$$.setChannel('wl0');">
+		<option value="1"><script>document.write(wlan_mode_1);</script></option>		
+    </select>
+	</TD>
+</TR>
+$bluebar
+</TABLE>
+
+<TABLE width=100% border=0 cellpadding=0 cellspacing=2>
+<TR>
+	<TD nowrap colspan=2 class="label-td"><A tabindex=-1 class="disabled" href="javascript:loadhelp('_wlan','security')"><B>$sec_type</B></A></TD>
+</TR>
+<TR id="sec1_off">
+	<TD nowrap colspan=2 class="label-td">
+	<input type="radio" name="security_type" id="security_disable" value="Disable" onClick=setSecurity(1) AccessKey="N"><label for="security_disable">$sec_off</label>
+	</TD>
+</TR>
+<TR id="wep_54">
+	<TD nowrap colspan=2 class="label-td">
+	<input type="radio" name="security_type" id="security_wep" value="WEP" onClick=setSecurity(2)><label for="security_wep">$sec_wep</label>
+	</TD>
+</TR>
+<TR id="wpa_psk_54" style="display:none">
+	<TD nowrap colspan=2 class="label-td">
+	<input type="radio" name="security_type" id="security_wpa" value="WPA-PSK" onClick=setSecurity(3)><label id="security_wpa_re" for="security_wpa">$sec_wpa</label>
+	</TD>
+</TR>
+<TR>
+	<TD nowrap colspan=2 class="label-td">
+	<input type="radio" name="security_type" id="security_wpa2" value="WPA2-PSK" onClick=setSecurity(4)><label id="security_wpa2_re" for="security_wpa2">$sec_wpa2</label>
+	</TD>
+</TR>
+<TR id="wpas_psk" style="display:none;">
+	<TD nowrap colspan=2 class="label-td">
+	<input type="radio" name="security_type" id="security_auto" value="AUTO-PSK" onClick=setSecurity(5)><label id="security_auto_re" for="security_auto">$sec_wpas</label>
+	</TD>
+</TR>
+<TR id="wpa_wpa2_enterprise" style="display:none">
+	<TD nowrap colspan=2 class="label-td">
+	<input type="radio" name="security_type" id="security_wpa_enter" value="WPA-Enterprise" onClick=setSecurity(6)><label for="security_wpa_enter">$sec_wpa_enterprise</label>
+	</TD>
+</TR>
+<TR id="wpa3_psk" style="display:none;">
+	<TD nowrap colspan=2 class="label-td">
+	<input type="radio" name="security_type" id="security_wpa3" value="WPA3-PSK" onClick=setSecurity(7)><label for="security_wpa3">WPA3-Personal</label>
+	</TD>
+</TR>
+<TR id="wpas_sae_psk" style="display:none;">
+	<TD nowrap colspan=2 class="label-td">
+	<input type="radio" name="security_type" id="security_auto_wpa3" value="AUTO-WPA3-PSK" onClick=setSecurity(8)><label for="security_auto_wpa3">WPA2-Personal[AES] + WPA3-Personal</label>
+	</TD>
+</TR>
+<TR id="wpa3_enterprise" style="display:none">
+	<TD nowrap colspan=2 class="label-td">
+	<input type="radio" name="security_type" id="security_wpa3_enter" value="WPA3-Enterprise" onClick=setSecurity(9)><label for="security_wpa3_enter">WPA3-Enterprise</label>
+	</TD>
+</TR>
+</TABLE>
+
+<div id=view></div>
+
+<div align="center" ID="none" style="position:absolute;top:0;left:0;visibility:hidden">
+	<TABLE cellspacing=5 cellPadding=0 width=100% border=0>
+	<TR>
+		<TD nowrap colspan=2></TD>
+	</TR>
+	</TABLE>
+</div>   
+
+<div align="center" ID="wep" style="position:absolute;top:0;left:0;visibility:hidden">
+	<TABLE cellspacing=5 cellPadding=0 width=100% border=0>
+	$bluebar
+	<TR>
+		<TD nowrap colspan=2 class="label-td">
+		<A tabindex=-1 class="disabled" href="javascript:loadhelp('_wlan','wep')"><B>$sec_enc_head</B></A>
+		</TD>
+	</TR>
+	<TR>
+		<TD nowrap>$sec_auth</TD>
+		<TD nowrap>
+			<select NAME="authAlgm" id="wep_auth_type" size="1">
+				<option value=1 <% select_check("wl_auth", "1") %> >$sec_share</option>
+				<option value=2 <% select_check("wl_auth", "2") %> >$sec_auto</option>
+			</select>
+		</TD>
+	</TR>
+	<TR>
+		<TD nowrap>$sec_enc</TD>
+		<TD nowrap> 
+			<select NAME="wepenc" id="wep_enc_strength" size="1" onChange="changekeylen(document.forms[0]);">
+				<option value=5  <% select_check("wl_key_length", "5") %> >$sec_64</option>
+				<option value=13 <% select_check("wl_key_length", "13") %> >$sec_128</option>
+			</select>
+		</TD>
+	</TR>
+	$bluebar
+	<TR>
+		<TD nowrap colspan=2>
+		<A tabindex=-1 class="disabled" href="javascript:loadhelp('_wlan','wepkey')"><B>$sec_key</B></A>
+		</TD>
+	</TR>
+	<TR>
+		<TD nowrap colspan=2>
+		<TABLE>
+		<TR>
+			<TD nowrap>
+			<input type=radio NAME="wep_key_no" id="wep_key_no1" checked value="1">
+			<label for="wep_key_no1">$sec_key1</label></TD>
+			<TD nowrap>
+			<input TYPE="TEXT" SIZE="document.forms[0].wepenc.value*2+8" autocomplete="off"  MAXLENGTH="34" NAME="KEY1" ID="key1" VALUE="" OnFocus="this.maxLength=document.forms[0].wepenc.value*2;this.size=document.forms[0].wepenc.value*2+8;">
+			</TD>
+		</TR>
+		<TR>
+			<TD nowrap>
+			<input type=radio NAME="wep_key_no" id="wep_key_no2" value="2">
+			<label for="wep_key_no2">$sec_key2</label></TD>
+			<TD nowrap>
+			<input TYPE="TEXT" SIZE="document.forms[0].wepenc.value*2+8" autocomplete="off" MAXLENGTH="34" NAME="KEY2" ID="key2" VALUE="" OnFocus="this.maxLength=document.forms[0].wepenc.value*2;this.size=document.forms[0].wepenc.value*2+8;">
+			</TD>
+		</TR>
+		<TR>
+			<TD nowrap>
+			<input type=radio NAME="wep_key_no" id="wep_key_no3" value="3">
+			<label for="wep_key_no3">$sec_key3</label></TD>
+			<TD nowrap><input TYPE="TEXT" SIZE="document.forms[0].wepenc.value*2+8" autocomplete="off" MAXLENGTH="34" NAME="KEY3" ID="key3" VALUE="" OnFocus="this.maxLength=document.forms[0].wepenc.value*2;this.size=document.forms[0].wepenc.value*2+8;">
+			</TD>
+		</TR>
+		<TR>
+			<TD nowrap>
+			<input type=radio NAME="wep_key_no" id="wep_key_no4" value="4">
+			<label for="wep_key_no4">$sec_key4</label></TD>
+			<TD nowrap>
+			<input TYPE="TEXT" SIZE="document.forms[0].wepenc.value*2+8" autocomplete="off" MAXLENGTH="34" NAME="KEY4" ID="key4" VALUE=""  OnFocus="this.maxLength=document.forms[0].wepenc.value*2;this.size=document.forms[0].wepenc.value*2+8;">
+			</TD>
+		</TR>
+		</TABLE>
+		</TD>
+	</TR>
+	</TABLE>
+</div>
+
+<div align="center" ID="wpa" style="position:absolute;top:0;left:0;visibility:hidden">
+	<TABLE cellspacing=5 cellPadding=0 width=100% border=0>
+	$bluebar
+	<TR>
+		<TD nowrap colspan=2>
+		<script>
+		if(have_wpa3_flag == "1")
+		document.write("<A tabindex=-1 class=\"disabled\" href=\"javascript:loadhelp('_wlan','wpa-psk')\"><B>$sec_type (WPA-Personal)</B></A>");
+		else
+		document.write("<A tabindex=-1 class=\"disabled\" href=\"javascript:loadhelp('_wlan','wpa-psk')\"><B>$sec_type (WPA-PSK)</B></A>");
+		</script>
+		</TD>
+	</TR>
+	<TR>
+		<TD nowrap>$sec_phr :</TD>
+		<TD nowrap class="tdright">
+		<input type="password" id="passphrase" size="20" autocomplete="off" maxlength="64" name="passphrase" value="<% cfg_sed_passphrase("wl_wpa1_psk") %>" onFocus="document.forms[0].wpa1_press_flag.value=1" onKeyPress="document.forms[0].wpa1_press_flag.value=1">
+		<img id="pwd_display" src="image/pwd_close_eye.png" onclick="change_password_display(1)">
+		<span class="optiondesc" id="wpaPwdPhrExtText">$sec_863_or_64h</span>
+		</TD>
+	</TR>
+	</TABLE>
+</div>
+ 
+<div align="center" ID="wpa2" style="position:absolute;top:0;left:0;visibility:hidden">  
+	<TABLE cellspacing=5 cellPadding=0 width=100% border=0>
+	$bluebar
+	<TR>
+		<TD nowrap colspan=2>
+		<script>
+		if(have_wpa3_flag == "1")
+		document.write("<A tabindex=-1 class=\"disabled\" href=\"javascript:loadhelp('_wlan','wpa2-psk')\"><B>$sec_type (WPA2-Personal)</B></A>");
+		else
+		document.write("<A tabindex=-1 class=\"disabled\" href=\"javascript:loadhelp('_wlan','wpa2-psk')\"><B>$sec_type (WPA2-PSK)</B></A>");
+		</script>
+		</TD>
+	</TR>
+	<TR>
+		<TD nowrap class="label-td">
+		<span class="optiondesc" id="wpaPwdPhraseText">$sec_phr :</span>
+		</TD>
+		<TD nowrap class="tdright label-td">
+			<input type="password" class="input1" id="passphrase" autocomplete="off" maxlength="64" size="20" name="passphrase" value="<% cfg_sed_passphrase("wl_wpa2_psk") %>" onFocus="document.forms[0].wpa2_press_flag.value=1" onKeyPress="document.forms[0].wpa2_press_flag.value=1">
+			<img id="pwd_display" src="image/pwd_close_eye.png" onclick="change_password_display(2)">
+			<span class="optiondesc" id="wpaPwdPhrExtText">$sec_863_or_64h</span>
+		</TD>
+	</TR>
+	</TABLE>
+</div>
+
+<div align="center" ID="wpas" style="position:absolute;top:0;left:0;visibility:hidden">
+	<TABLE cellspacing=5 cellPadding=0 width=100% border=0>
+	$bluebar
+	<TR>
+		<TD nowrap colspan=2>
+		<script>
+		if(have_wpa3_flag == "1")
+		document.write("<A tabindex=-1 class=\"disabled\" href=\"javascript:loadhelp('_wlan','wpa-psk+wpa2-psk')\"><B>$sec_type (WPA-Personal + WPA2-Personal)</B></A>");
+		else
+		document.write("<A tabindex=-1 class=\"disabled\" href=\"javascript:loadhelp('_wlan','wpa-psk+wpa2-psk')\"><B>$sec_type (WPA-PSK + WPA2-PSK)</B></A>");
+		</script>
+		</TD>
+	</TR>
+	<TR>
+		<TD nowrap class="label-td">
+		<span class="optiondesc" id="wpaPwdPhraseText">$sec_phr :</span>
+		</TD>
+		<TD nowrap class="tdright">
+			<input type="password" class="input1" id="passphrase" size="20" autocomplete="off" maxlength="64" name="passphrase" value="<% cfg_sed_passphrase("wl_wpas_psk") %>" onFocus="document.forms[0].wpas_press_flag.value=1" onKeyPress="document.forms[0].wpas_press_flag.value=1">
+			<img id="pwd_display" src="image/pwd_close_eye.png" onclick="change_password_display(3)">
+			<span class="optiondesc" id="wpaPwdPhrExtText">$sec_863_or_64h</span>
+		</TD>	  
+	</TR>
+	</TABLE>
+</div>
+
+<div align="center" ID="wpae" style="position:absolute;top:0;left:0;visibility:hidden">
+	<TABLE cellspacing=5 cellPadding=0 width=100% border=0>
+	$bluebar
+	<TR>
+		<TD nowrap colspan=2>
+		<A tabindex=-1 class="disabled" href="javascript:loadhelp('_wlan','wpawpa2')"><B>$sec_type ( $sec_wpa_enterprise )</B></A>
+		</TD>
+	</TR>
+	<TR>
+		<TD nowrap class="label-td">$sec_wpa_mode</TD>
+		<TD class="tdright">
+		<select name="wpae_mode" id="wpae_mode" size='1' onchange="wpaemode()">
+			<option value='WPAE-AES'>WPA2 [AES]</option>
+			<option value='WPAE-TKIPAES'>WPA [TKIP] + WPA2 [AES]</option>
+		</select>
+		</TD>
+	</TR>
+	<TR>
+		<TD nowrap class="ip-label-td">$radius_serverIP</TD>
+        <TD nowrap class="tdright ip-input-row">
+        <input type="text" size="3" autocomplete="off" maxlength="3" name="radiusIPAddr1" id="radius_ipaddress1" onFocus="this.select();" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">.
+        <input type="text" size="3" autocomplete="off" maxlength="3" name="radiusIPAddr2" id="radius_ipaddress2" onFocus="this.select();" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">.
+        <input type="text" size="3" autocomplete="off" maxlength="3" name="radiusIPAddr3" id="radius_ipaddress3" onFocus="this.select();" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">.
+        <input type="text" size="3" autocomplete="off" maxlength="3" name="radiusIPAddr4" id="radius_ipaddress4" onFocus="this.select();" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">
+        </TD>  
+	</TR>
+	<TR>
+		<TD nowrap class="label-td">$radius_serverPort</TD>	
+		<TD nowrap class="tdright"><input class="input1" type="text" id="radius_port" size="20" maxlength="5" name="textWpaeRadiusPort" value="1812" onKeyPress="return getkey('num',event);"></TD>	
+	</TR>	
+	<TR>
+		<TD nowrap class="label-td">$radius_serverSecret</TD>	
+		<TD nowrap class="tdright">
+			<input class="input1" type="password" id="radius_secret" size="20" autocomplete="off" maxlength="128" value="<% cfg_get_ssid_value("wl_radiusSecret") %>" name="textWpaeRadiusSecret" onKeyPress="return getkey('ssid', event)">
+			<img id="radius_display" src="image/pwd_close_eye.png" onclick="change_password_display(9)">
+		</TD>	
+	</TR>	
+	</TABLE>
+</div>
+
+<div align="center" ID="wpa3" style="position:absolute;top:0;left:0;visibility:hidden">  
+	<TABLE cellspacing=5 cellPadding=0 width=100% border=0>
+	$bluebar
+	<TR>
+		<TD nowrap colspan=2>
+		<A tabindex=-1 class="disabled" href="javascript:loadhelp('_wlan','wpa2-psk')"><B>$sec_type (WPA3-Personal)</B></A>
+		</TD>
+	</TR>
+	<TR>
+		<TD nowrap class="label-td">
+		<span class="optiondesc" id="wpaPwdPhraseText">$sec_phr :</span>
+		</TD>
+		<TD nowrap class="tdright label-td">
+		<input type="password" class="input1" id="passphrase" autocomplete="off" maxlength="128" size="20" name="passphrase" value="<% cfg_sed_passphrase("wl_wpa3_sae_passphrase") %>" onFocus="document.forms[0].wpa3_sae_press_flag.value=1" onKeyPress="document.forms[0].wpa3_sae_press_flag.value=1">
+		<img id="pwd_display" src="image/pwd_close_eye.png" onclick="change_password_display(12)">
+		<span class="optiondesc" id="wpaPwdPhrExtText">(8-127 characters or 128 hex digits)</span>
+		</TD>
+	</TR>
+	</TABLE>
+</div>
+
+<div align="center" ID="wpas_sae" style="position:absolute;top:0;left:0;visibility:hidden">
+	<TABLE cellspacing=5 cellPadding=0 width=100% border=0>
+	$bluebar
+	<TR>
+		<TD nowrap colspan=2>
+		<A tabindex=-1 class="disabled" href="javascript:loadhelp('_wlan','wpa-psk+wpa2-psk')"><B>$sec_type (WPA2-Personal + WPA3-Personal)</B></A>
+		</TD>
+	</TR>
+	<TR>
+		<TD nowrap class="label-td">
+		<span class="optiondesc" id="wpaPwdPhraseText">$sec_phr :</span>
+		</TD>
+		<TD nowrap class="tdright">
+		<input type="password" class="input1" id="passphrase" size="20" autocomplete="off" maxlength="64" name="passphrase" value="<% cfg_sed_passphrase("wl_wpa2_psk") %>" onFocus="document.forms[0].wpa2_press_flag.value=1" onKeyPress="document.forms[0].wpa2_press_flag.value=1">
+		<img id="pwd_display" src="image/pwd_close_eye.png" onclick="change_password_display(13)">
+		<span class="optiondesc" id="wpaPwdPhrExtText">$sec_863_or_64h</span>
+		</TD>	  
+	</TR>
+	</TABLE>
+</div>
+
+<div align="center" ID="wpa3e" style="position:absolute;top:0;left:0;visibility:hidden">
+	<TABLE cellspacing=5 cellPadding=0 width=100% border=0>
+	$bluebar
+	<TR>
+		<TD nowrap colspan=2>
+		<A tabindex=-1 class="disabled" href="javascript:loadhelp('_wlan','wpawpa2')"><B>$sec_type ( WPA3-Enterprise )</B></A>
+		</TD>
+	</TR>
+	<TR>
+		<TD nowrap class="ip-label-td">$radius_serverIP</TD>
+        <TD nowrap class="tdright ip-input-row">
+        <input type="text" size="3" autocomplete="off" maxlength="3" name="radiusIPAddr1" id="radius_ipaddress1" onFocus="this.select();" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">.
+        <input type="text" size="3" autocomplete="off" maxlength="3" name="radiusIPAddr2" id="radius_ipaddress2" onFocus="this.select();" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">.
+        <input type="text" size="3" autocomplete="off" maxlength="3" name="radiusIPAddr3" id="radius_ipaddress3" onFocus="this.select();" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">.
+        <input type="text" size="3" autocomplete="off" maxlength="3" name="radiusIPAddr4" id="radius_ipaddress4" onFocus="this.select();" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">
+        </TD>
+	</TR>
+	<TR>
+		<TD nowrap class="label-td">$radius_serverPort</TD>
+		<TD nowrap class="tdright"><input class="input1" type="text" id="radius_port" size="20" maxlength="5" name="textWpaeRadiusPort" value="1812" onKeyPress="return getkey('num',event);"></TD>
+	</TR>
+	<TR>
+		<TD nowrap class="label-td">$radius_serverSecret</TD>
+		<TD nowrap class="tdright">
+			<input class="input1" type="password" id="radius_secret" size="20" autocomplete="off" maxlength="128" value="<% cfg_get_ssid_value("wl_radiusSecret") %>" name="textWpaeRadiusSecret" onKeyPress="return getkey('ssid', event)">
+			<img id="radius_display" src="image/pwd_close_eye.png" onclick="change_password_display(11)">
+		</TD>
+	</TR>
+	</TABLE>
+</div>
+
+
+<!--the following message is for a/n -->
+<div id="have_an"></div>
+<div align="center" ID="hidden_an" style="position:absolute;top:0;left:0;visibility:hidden">
+<TABLE cellspacing=5 cellPadding=0 width=100% border=0>
+$bluebar
+<TR> 
+	<TD nowrap colspan=2><A tabindex=-1 class="disabled" href="javascript:loadhelp('_wlan','network')"><B>
+	<script>
+		if( ac_router_flag == 1)
+			document.write("$wlan_network_ac_mark")
+		else
+			document.write("$wlan_network_mark (5GHz $w5_suffix)")
+	</script>
+	</B></A></TD>
+</TR>
+<TR>
+	<TD nowrap>
+	<input class="input1" type="checkbox" name="ssid_bc_an" id="ssid_bc_an" value="1"><label for="ssid_bc_an">$adva_wlan_ssid_broadcast</label>
+	</TD>
+</TR>
+<TR id=video style="display:none">
+	<TD nowrap colspan=2><input type=checkbox name="enable_video_an" id="enable_video_an" value='1'><label for="enable_video_an">$enable_video_network</label>
+	</TD>
+</TR>
+<TR> 
+	<TD nowrap width=35% class="label-td">$wlan_mark_ssid:</TD>
+	<TD nowrap class="tdright"><input type="text" class="input1" name="ssid_an" id="ssid_an" value="<% cfg_get_ssid_value("wla_ssid") %>" size="20" maxlength="32"></TD>
+</TR>
+<TR> 
+	<TD nowrap width=35% class="label-td">$wlan_mark_chan:</TD>
+	<TD nowrap class="tdright">
+<script>
+	if(valid_region != 1)
+	{
+		document.write('<select name="w_channel_an" id="wireless_channel_an" size="1" style="width:60px">');
+		document.write('</select>');
+	}
+	else
+	{
+		document.write('<select name="w_channel_an" id="wireless_channel_an" size="1" onchange="get_sec_channel = this.value;">');
+		if(dfs_channel_router_flag == 1 && parent.auto_5g_chennel_flag == 1)
+			document.write("<option selected value=0>Auto</option> ");
+		document.write('<option value=36>36</option>');
+		document.write('<option value=40>40</option>');
+		document.write('<option value=44>44</option>');
+		document.write('<option value=48>48</option>');
+		document.write('<option value=149>149</option>');
+		document.write('<option value=153>153</option>');
+		document.write('<option value=157>157</option>');
+		document.write('<option value=161>161</option>');
+		document.write('<option value=165>165</option>');
+		document.write('</select>');
+	}
+</script>
+	</TD>
+</TR>
+<TR id="sec_channel_tr" style="display:none;"> 
+	<TD nowrap width=35% class="label-td">Secondary VHT80 channel:</TD>
+	<TD nowrap class="tdright">
+		<select name="w_channel_an_sec" id="w_channel_an_sec" size="1" onchange="get_sec_channel = this.value;"></select>
+	</TD>
+</TR>
+<TR> 
+	<TD nowrap width=35% class="label-td">$wlan_mark_mode:</TD>
+	<TD nowrap id="opmode_an_all" class="tdright">
+	<select name="opmode_an" id="opmode_an" size="1" onchange="$$.setChannel('wl1');wla_sectype_change();Change_ax_opmode(document.forms[0]);">
+		<option value="1"><script>document.write(an_wlan_mode_1)</script></option>
+		<option value="2"><script>document.write(an_wlan_mode_2)</script></option>
+		<script>
+			if(getTop(window).use_orbi_style_flag == "1" && getTop(window).host_name != "RAX10")
+			{
+				document.write('<option value="3">an_wlan_mode_3</option>');
+				var WRegion_value=convert_value_to_original(document.forms[0], "WRegion");
+				if(WRegion_value == 2 || WRegion_value == 4 || WRegion_value == 6 || WRegion_value == 10 || WRegion_value == 11 || WRegion_value == 21|| WRegion_value == 20 || WRegion_value == 22 || WRegion_value == 7)
+				document.write('<option value="4">an_wlan_mode_4</option>');
+			}
+			else
+				document.write('<option value="3">an_wlan_mode_3</option>');
+		</script>
+        </select>
+	</TD>
+		<TD nowrap id="opmode_an_54" style="display:none">
+	<select name="opmode_an54" size="1" onchange="$$.setChannel('wl1');wla_54_sectype_change();">
+		<option value="1"><script>document.write(an_wlan_mode_1)</script></option>
+    </select>
+	</TD>
+</TR>
+
+$bluebar
+</table>
+
+<TABLE width=100% border=0 cellpadding=0 cellspacing=2>
+<TR>
+	<TD nowrap colspan=2 class="label-td"><A tabindex=-1 class="disabled" href="javascript:loadhelp('_wlan','security')"><B>$sec_type</B></A></TD>
+</TR>
+<TR>
+	<TD nowrap colspan=2 class="label-td">
+	<input type="radio" name="security_type_an" id="security_an_disable" value="Disable" onClick=setSecurity_an(1) AccessKey="N"><label for="security_an_disable">$sec_off</label>
+	</TD>
+</TR>
+<TR id="wep_an_54" style="display:none">
+	<TD nowrap colspan=2 class="label-td">
+	<input type="radio" name="security_type_an" id="security_an_wep" value="WEP" onClick=setSecurity_an(2)><label for="security_an_wep">$sec_wep</label>
+	</TD>
+</TR>
+<TR id="wpa_psk_an_54">
+	<TD nowrap colspan=2 class="label-td">
+	<input type="radio" name="security_type_an" id="security_an_wpa" value="WPA-PSK" onClick=setSecurity_an(3)><label id="security_an_wpa_re" for="security_an_wpa">$sec_wpa</label>
+	</TD>
+</TR>
+<TR>
+	<TD nowrap colspan=2 class="label-td">
+	<input type="radio" name="security_type_an" id="security_an_wpa2" value="WPA2-PSK" onClick=setSecurity_an(4)><label id="security_an_wpa2_re" for="security_an_wpa2">$sec_wpa2</label>
+	</TD>
+</TR>
+<TR id="wpas_psk_an" style="display:none;">
+	<TD nowrap colspan=2 class="label-td">
+	<input type="radio" name="security_type_an" id="security_an_auto" value="AUTO-PSK" onClick=setSecurity_an(5)><label id="security_an_auto_re" for="security_an_auto">$sec_wpas</label>
+	</TD>
+</TR>
+<TR id="wpa_wpa2_an_enterprise" style="display:none">
+	<TD nowrap colspan=2 class="label-td">
+	<input type="radio" name="security_type_an" id="security_an_wpa_enter" value="WPA-Enterprise" onClick=setSecurity_an(6)><label for="security_an_wpa_enter">$sec_wpa_enterprise</label>
+	</TD>
+</TR>
+<TR id="wpa3_psk_an" style="display:none;">
+	<TD nowrap colspan=2 class="label-td">
+	<input type="radio" name="security_type_an" id="security_an_wpa3" value="WPA3-PSK" onClick=setSecurity_an(7)><label for="security_an_wpa3">WPA3-Personal</label>
+	</TD>
+</TR>
+<TR id="wpas_sae_psk_an" style="display:none;">
+	<TD nowrap colspan=2 class="label-td">
+	<input type="radio" name="security_type_an" id="security_an_auto_wpa3" value="AUTO-WPA3-PSK" onClick=setSecurity_an(8)><label for="security_an_auto_wpa3">WPA2-Personal[AES] + WPA3-Personal</label>
+	</TD>
+</TR>
+<TR id="wpa3_an_enterprise" style="display:none">
+	<TD nowrap colspan=2 class="label-td">
+	<input type="radio" name="security_type_an" id="security_an_wpa3_enter" value="WPA3-Enterprise" onClick=setSecurity_an(9)><label for="security_an_wpa3_enter">WPA3-Enterprise</label>
+	</TD>
+</TR>
+</TABLE>
+
+<div id=view_a></div>
+
+<div align="center" ID="none_an" style="position:absolute;top:0;left:0;visibility:hidden">
+	<TABLE cellspacing=5 cellPadding=0 width=100% border=0>
+	<TR>
+		<TD nowrap colspan=2 class="label-td"></TD>
+	</TR>
+	</TABLE>
+</div>   
+
+<div align="center" ID="wep_an" style="position:absolute;top:0;left:0;visibility:hidden">
+	<TABLE cellspacing=5 cellPadding=0 width=100% border=0>
+	$bluebar
+	<TR>
+		<TD nowrap colspan=2>
+		<A tabindex=-1 class="disabled" href="javascript:loadhelp('_wlan','wep')"><B>$sec_enc_head</B></A>
+		</TD>
+	</TR>
+	<TR>
+		<TD nowrap>$sec_auth</TD>
+		<TD nowrap>
+			<select NAME="authAlgm_an" id="wep_auth_type_an" size="1"><!--bug 21943:change authAlgm_a to authAlgm_an,other changes is same as this -->
+				<option value=1 <% select_check("wla_auth", "1") %> >$sec_share</option>
+				<option value=2 <% select_check("wla_auth", "2") %> >$sec_auto</option>
+			</select>
+		</TD>
+	</TR>
+	<TR>
+		<TD nowrap>$sec_enc</TD>
+		<TD nowrap> 
+			<select NAME="wepenc_an" id="wep_enc_strength_an" size="1" onChange="changekeylen_a(document.forms[0]);">
+				<option value=5  <% select_check("wla_key_length", "5") %> >$sec_64</option>
+				<option value=13 <% select_check("wla_key_length", "13") %> >$sec_128</option>
+			</select>
+		</TD>
+	</TR>
+	$bluebar
+	<TR>
+		<TD nowrap colspan=2>
+		<A tabindex=-1 class="disabled" href="javascript:loadhelp('_wlan','wepkey')"><B>$sec_key</B></A>
+		</TD>
+	</TR>
+	<TR>
+		<TD nowrap colspan=2>
+		<TABLE>
+		<TR>
+			<TD nowrap>$sec_key1
+			<input type=radio NAME="wep_key_no_an" id="wep_key_no_an1" checked value="1">
+			<label for="wep_key_no_an1"></label></TD>
+			<TD nowrap>
+			<input TYPE="TEXT" SIZE="document.forms[0].wepenc_an.value*2+8" autocomplete="off" MAXLENGTH="34" NAME="KEY1_an" ID="key1_an" VALUE="" OnFocus="this.maxLength=document.forms[0].wepenc_an.value*2;this.size=document.forms[0].wepenc_an.value*2+8;">
+			</TD>
+		</TR>
+		<TR>
+			<TD nowrap>$sec_key2
+			<input type=radio NAME="wep_key_no_an" id="wep_key_no_an2" value="2">
+			<label for="wep_key_no_an2"></label></TD>
+			<TD nowrap>
+			<input TYPE="TEXT" SIZE="document.forms[0].wepenc_an.value*2+8" autocomplete="off" MAXLENGTH="34" NAME="KEY2_an" ID="key2_an" VALUE="" OnFocus="this.maxLength=document.forms[0].wepenc_an.value*2;this.size=document.forms[0].wepenc_an.value*2+8;">
+			</TD>
+		</TR>
+		<TR>
+			<TD nowrap>$sec_key3
+			<input type=radio NAME="wep_key_no_an" id="wep_key_no_an3" value="3">
+			<label for="wep_key_no_an3"></label></TD>
+			<TD nowrap><input TYPE="TEXT" SIZE="document.forms[0].wepenc_an.value*2+8" autocomplete="off" MAXLENGTH="34" NAME="KEY3_an" ID="key3_an" VALUE="" OnFocus="this.maxLength=document.forms[0].wepenc_an.value*2;this.size=document.forms[0].wepenc_an.value*2+8;">
+			</TD>
+		</TR>
+		<TR>
+			<TD nowrap>$sec_key4
+			<input type=radio NAME="wep_key_no_an" id="wep_key_no_an4" value="4">
+			<label for="wep_key_no_an4"></label></TD>
+			<TD nowrap>
+			<input TYPE="TEXT" SIZE="document.forms[0].wepenc.value*2+8" autocomplete="off" MAXLENGTH="34" NAME="KEY4_an" ID="key4_an" VALUE=""  OnFocus="this.maxLength=document.forms[0].wepenc_an.value*2;this.size=document.forms[0].wepenc_an.value*2+8;">
+			</TD>
+		</TR>
+		</TABLE>
+		</TD>
+	</TR>
+	</TABLE>
+</div>
+
+<div align="center" ID="wpa_an" style="position:absolute;top:0;left:0;visibility:hidden">
+	<TABLE cellspacing=5 cellPadding=0 width=100% border=0>
+	$bluebar
+	<TR>
+		<TD nowrap colspan=2>
+		<script>
+		if(have_wpa3_flag == "1")
+		document.write("<A tabindex=-1 class=\"disabled\" href=\"javascript:loadhelp('_wlan','wpa-psk')\"><B>$sec_type (WPA-Personal)</B></A>");
+		else
+		document.write("<A tabindex=-1 class=\"disabled\" href=\"javascript:loadhelp('_wlan','wpa-psk')\"><B>$sec_type (WPA-PSK)</B></A>");
+		</script>
+		</TD>
+	</TR>
+	<TR>
+		<TD nowrap class="label-td">$sec_phr :</TD>
+		<TD nowrap class="tdright label-td">
+			<input class="input1" type="password" id="passphrase_an" size="20" autocomplete="off" maxlength="64" name="passphrase_an" value="<% cfg_sed_passphrase("wla_wpa1_psk") %>" onFocus="document.forms[0].wla_wpa1_press_flag.value=1" onKeyPress="document.forms[0].wla_wpa1_press_flag.value=1">
+			<img id="pwd_an_display" src="image/pwd_close_eye.png" onclick="change_password_display(4)">
+		<span class="optiondesc" id="wpaPwdPhrExtText">$sec_863_or_64h</span>
+		</TD>
+	</TR>
+	</TABLE>
+</div>
+ 
+<div align="center" ID="wpa2_an" style="position:absolute;top:0;left:0;visibility:hidden">  
+	<TABLE cellspacing=5 cellPadding=0 width=100% border=0>
+	$bluebar
+	<TR>
+		<TD nowrap colspan=2>
+		<script>
+		if(have_wpa3_flag == "1")
+		document.write("<A tabindex=-1 class=\"disabled\" href=\"javascript:loadhelp('_wlan','wpa2-psk')\"><B>$sec_type (WPA2-Personal)</B></A>");
+		else
+		document.write("<A tabindex=-1 class=\"disabled\" href=\"javascript:loadhelp('_wlan','wpa2-psk')\"><B>$sec_type (WPA2-PSK)</B></A>");
+		</script>
+		</TD>
+	</TR>
+	<TR>
+		<TD nowrap class="label-td">
+		<span class="optiondesc" id="wpaPwdPhraseText">$sec_phr :</span>
+		</TD>
+		<TD nowrap class="tdright">
+			<input class="input1" type="password" id="passphrase_an" autocomplete="off" maxlength="64" size="20" name="passphrase_an" value="<% cfg_sed_passphrase("wla_wpa2_psk") %>" onFocus="document.forms[0].wla_wpa2_press_flag.value=1" onKeyPress="document.forms[0].wla_wpa2_press_flag.value=1">
+			<img id="pwd_an_display" src="image/pwd_close_eye.png" onclick="change_password_display(5)">
+		<span class="optiondesc" id="wpaPwdPhrExtText">$sec_863_or_64h</span>
+		</TD>
+	</TR>
+	</TABLE>
+</div>
+
+<div align="center" ID="wpas_an" style="position:absolute;top:0;left:0;visibility:hidden">
+	<TABLE cellspacing=5 cellPadding=0 width=100% border=0>
+	$bluebar
+	<TR>
+		<TD nowrap colspan=2>
+		<script>
+		if(have_wpa3_flag == "1")
+		document.write("<A tabindex=-1 class=\"disabled\" href=\"javascript:loadhelp('_wlan','wpa-psk+wpa2-psk')\"><B>$sec_type (WPA-Personal + WPA2-Personal)</B></A>");
+		else
+		document.write("<A tabindex=-1 class=\"disabled\" href=\"javascript:loadhelp('_wlan','wpa-psk+wpa2-psk')\"><B>$sec_type (WPA-PSK + WPA2-PSK)</B></A>");
+		</script>
+		</TD>
+	</TR>
+	<TR>
+		<TD nowrap class="label-td">
+		<span class="optiondesc" id="wpaPwdPhraseText">$sec_phr :</span>
+		</TD>
+		<TD nowrap class="tdright">
+			<input type="password" class="input1" id="passphrase_an" size="20" autocomplete="off" maxlength="64" name="passphrase_an" value="<% cfg_sed_passphrase("wla_wpas_psk") %>" onFocus="document.forms[0].wla_wpas_press_flag.value=1" onKeyPress="document.forms[0].wla_wpas_press_flag.value=1">
+			<img id="pwd_an_display" src="image/pwd_close_eye.png" onclick="change_password_display(6)">
+		<span class="optiondesc" id="wpaPwdPhrExtText">$sec_863_or_64h</span>
+		</TD>	  
+	</TR>
+	</TABLE>
+</div>
+
+<div align="center" ID="wpae_an" style="position:absolute;top:0;left:0;visibility:hidden">
+	<TABLE cellspacing=5 cellPadding=0 width=100% border=0>
+	$bluebar
+	<TR>
+		<TD nowrap colspan=2>
+		<A tabindex=-1 class="disabled" href="javascript:loadhelp('_wlan','wpawpa2')"><B>$sec_type ( $sec_wpa_enterprise )</B></A>
+		</TD>
+	</TR>
+	<TR>
+		<TD nowrap class="label-td">$sec_wpa_mode</TD>
+		<TD class="tdright">
+		<select name="wpae_mode_an" id="wpae_mode_an" size='1' onchange="wpaemode_an()">
+			<option value='WPAE-AES'>WPA2 [AES]</option>
+			<option value='WPAE-TKIPAES'>WPA [TKIP] + WPA2 [AES]</option>
+		</select>
+		</TD>
+	</TR>
+	<TR>
+		<TD nowrap class="ip-label-td">$radius_serverIP</TD>
+        <TD nowrap class="tdright ip-input-row">
+        <input type="text" size="3" autocomplete="off" maxlength="3" name="radiusIPAddr1_an" id="radius_ipaddress1_an" onFocus="this.select();" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">.
+        <input type="text" size="3" autocomplete="off" maxlength="3" name="radiusIPAddr2_an" id="radius_ipaddress2_an" onFocus="this.select();" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">.
+        <input type="text" size="3" autocomplete="off" maxlength="3" name="radiusIPAddr3_an" id="radius_ipaddress3_an" onFocus="this.select();" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">.
+        <input type="text" size="3" autocomplete="off" maxlength="3" name="radiusIPAddr4_an" id="radius_ipaddress4_an" onFocus="this.select();" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">
+        </TD>  
+	</TR>
+	<TR>
+		<TD nowrap class="label-td">$radius_serverPort</TD>	
+		<TD nowrap class="tdright"><input class="input1" type="text" id="radius_port_an" size="20" maxlength="5" name="textWpaeRadiusPort_an" value="1812" onKeyPress="return getkey('num',event);"></TD>	
+	</TR>	
+	<TR>
+		<TD nowrap class="label-td">$radius_serverSecret</TD>	
+		<TD nowrap class="tdright">
+			<input type="password" class="input1" id="radius_secret_an" size="20" autocomplete="off" maxlength="128" value="<% cfg_get_ssid_value("wla_radiusSecret") %>" name="textWpaeRadiusSecret_an" onKeyPress="return getkey('ssid', event)">
+			<img id="radius_an_display" src="image/pwd_close_eye.png" onclick="change_password_display(10)">
+		</TD>	
+	</TR>	
+	</TABLE>
+</div>
+
+<div align="center" ID="wpa3_an" style="position:absolute;top:0;left:0;visibility:hidden">  
+	<TABLE cellspacing=5 cellPadding=0 width=100% border=0>
+	$bluebar
+	<TR>
+		<TD nowrap colspan=2>
+		<A tabindex=-1 class="disabled" href="javascript:loadhelp('_wlan','wpa2-psk')"><B>$sec_type (WPA3-Personal)</B></A>
+		</TD>
+	</TR>
+	<TR>
+		<TD nowrap class="label-td">
+		<span class="optiondesc" id="wpaPwdPhraseText">$sec_phr :</span>
+		</TD>
+		<TD nowrap class="tdright">
+		<input class="input1" type="password" id="passphrase_an" autocomplete="off" maxlength="128" size="20" name="passphrase_an" value="<% cfg_sed_passphrase("wla_wpa3_sae_passphrase") %>" onFocus="document.forms[0].wla_wpa3_sae_press_flag.value=1" onKeyPress="document.forms[0].wla_wpa3_sae_press_flag.value=1">
+		<img id="pwd_an_display" src="image/pwd_close_eye.png" onclick="change_password_display(14)">
+		<span class="optiondesc" id="wpaPwdPhrExtText">(8-127 characters or 128 hex digits)</span>
+		</TD>
+	</TR>
+	</TABLE>
+</div>
+
+<div align="center" ID="wpas_sae_an" style="position:absolute;top:0;left:0;visibility:hidden">
+	<TABLE cellspacing=5 cellPadding=0 width=100% border=0>
+	$bluebar
+	<TR>
+		<TD nowrap colspan=2>
+		<A tabindex=-1 class="disabled" href="javascript:loadhelp('_wlan','wpa-psk+wpa2-psk')"><B>$sec_type (WPA2-Personal + WPA3-Personal)</B></A>
+		</TD>
+	</TR>
+	<TR>
+		<TD nowrap class="label-td">
+		<span class="optiondesc" id="wpaPwdPhraseText">$sec_phr :</span>
+		</TD>
+		<TD nowrap class="tdright">
+		<input type="password" class="input1" id="passphrase_an" size="20" autocomplete="off" maxlength="64" name="passphrase_an" value="<% cfg_sed_passphrase("wla_wpa2_psk") %>" onFocus="document.forms[0].wla_wpa2_press_flag.value=1" onKeyPress="document.forms[0].wla_wpa2_press_flag.value=1">
+		<img id="pwd_an_display" src="image/pwd_close_eye.png" onclick="change_password_display(15)">
+		<span class="optiondesc" id="wpaPwdPhrExtText">$sec_863_or_64h</span>
+		</TD>	  
+	</TR>
+	</TABLE>
+</div>
+
+<div align="center" ID="wpa3e_an" style="position:absolute;top:0;left:0;visibility:hidden">
+	<TABLE cellspacing=5 cellPadding=0 width=100% border=0>
+	$bluebar
+	<TR>
+		<TD nowrap colspan=2>
+		<A tabindex=-1 class="disabled" href="javascript:loadhelp('_wlan','wpawpa2')"><B>$sec_type ( WPA3-Enterprise )</B></A>
+		</TD>
+	</TR>
+	<TR>
+		<TD nowrap class="ip-label-td">$radius_serverIP</TD>
+        <TD nowrap class="tdright ip-input-row">
+        <input type="text" size="3" autocomplete="off" maxlength="3" name="radiusIPAddr1_an" id="radius_ipaddress1_an" onFocus="this.select();" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">.
+        <input type="text" size="3" autocomplete="off" maxlength="3" name="radiusIPAddr2_an" id="radius_ipaddress2_an" onFocus="this.select();" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">.
+        <input type="text" size="3" autocomplete="off" maxlength="3" name="radiusIPAddr3_an" id="radius_ipaddress3_an" onFocus="this.select();" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">.
+        <input type="text" size="3" autocomplete="off" maxlength="3" name="radiusIPAddr4_an" id="radius_ipaddress4_an" onFocus="this.select();" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">
+        </TD>
+	</TR>
+	<TR>
+		<TD nowrap class="label-td">$radius_serverPort</TD>
+		<TD nowrap class="tdright"><input class="input1" type="text" id="radius_port_an" size="20" maxlength="5" name="textWpaeRadiusPort_an" value="1812" onKeyPress="return getkey('num',event);"></TD>
+	</TR>
+	<TR>
+		<TD nowrap class="label-td">$radius_serverSecret</TD>
+		<TD nowrap class="tdright">
+			<input type="password" class="input1" id="radius_secret_an" size="20" autocomplete="off" maxlength="128" value="<% cfg_get_ssid_value("wla_radiusSecret") %>" name="textWpaeRadiusSecret_an" onKeyPress="return getkey('ssid', event)">
+			<img id="radius_an_display" src="image/pwd_close_eye.png" onclick="change_password_display(16)">
+		</TD>
+	</TR>
+	</TABLE>
+</div>
+
+</div>
+
+
+<!--the following message is for 11ad -->
+<div id="have_ad"></div>
+
+<div align="center" ID="hidden_ad" style="position:absolute;top:0;left:0;visibility:hidden">
+
+<TABLE cellspacing=5 cellPadding=0 width=100% border=0>
+	$bluebar
+	<TR>
+		<TD nowrap colspan=2><A tabindex=-1 class="disabled" href="javascript:loadhelp('_wlan','network')"><B>$wlan_network_mark (60GHz 802.11ad)</B></A></TD>
+	</TR>
+	<TR>
+		<TD nowrap width=35%>$wlan_mark_ssid:</TD>
+		<TD nowrap class="tdright"><input type="text" name="ssid_ad" id="ssid_ad" value="<% cfg_get_ssid_value("wig_ssid") %>" size="20" maxlength="32"></TD>
+	</TR>
+	<TR>
+		<TD nowrap width=35%>$wlan_mark_chan:</TD>
+		<TD nowrap class="tdright">
+		<script>
+			if(valid_region != 1)
+			{
+				document.write('<select name="w_channel_ad" id="wireless_channel_ad" size="1" style="width:60px">');
+				document.write('</select>');
+			}
+			else
+			{
+				document.write('<select name="w_channel_ad" id="wireless_channel_ad" size="1" >');
+				//document.write('<option value="0">Auto</option>');
+				document.write('<option value="2">2</option>');
+				document.write('<option value="3">3</option>');
+				document.write('</select>');
+			}
+		</script>
+		</TD>
+	</TR>
+	<TR>
+		<TD nowrap width=35%>$wlan_mark_mode:</TD>
+		<TD nowrap id="opmode_ad_all" class="tdright">
+		<select name="opmode_ad" id="opmode_ad" size="1">
+			<option value="1" selected>Up to 4.6 Gbps</option>
+		</select>
+	</TR>
+$bluebar
+</TABLE>
+
+<TABLE cellspacing=5 cellPadding=0 width=100% border=0>
+	<TR>
+		<TD nowrap colspan=2>
+		<A tabindex=-1 class="disabled" href="javascript:loadhelp('_wlan','security')"><B>$sec_type</B></A>
+		</TD>
+	</TR>
+	<TR>
+		<TD nowrap colspan=2>
+		<input type="radio" name="security_type_ad" id="security_ad_disable" value="Disable" onClick=setSecurity_ad(1) AccessKey="N"><label for="security_ad_disable">$sec_off</label>
+		</TD>
+	</TR>
+	<TR>
+		<TD nowrap colspan=2>
+		<input type="radio" name="security_type_ad" id="security_ad_wpa2" value="WPA2-PSK" onClick=setSecurity_ad(4)><label for="security_ad_wpa2">WPA2-PSK(GCMP)</label>
+		</TD>
+	</TR>
+</TABLE>
+
+<div id="view_ad"></div>
+
+<div align="center" ID="none_ad" style="position:absolute;top:0;left:0;visibility:hidden">
+	<TABLE cellspacing=5 cellPadding=0 width=100% border=0>
+	<TR>
+		<TD nowrap colspan=2></TD>
+	</TR>
+	</TABLE>
+</div>
+
+<div align="center" ID="wpa2_ad" style="position:absolute;top:0;left:0;visibility:hidden">
+	<TABLE cellspacing=5 cellPadding=0 width=100% border=0>
+	$bluebar
+	<TR>
+		<TD nowrap colspan=2><A tabindex=-1 class="disabled" href="javascript:loadhelp('_wlan','wpa2-psk')"><B>$sec_type (WPA2-PSK)</B></A>
+		</TD>
+	</TR>
+	<TR>
+		<TD nowrap><span class="optiondesc" id="wpaPwdPhraseText">$sec_phr :</span></TD>
+		<TD nowrap class="tdright">
+			<input type="password" id="passphrase_ad" autocomplete="off" maxlength="64" size="20" name="passphrase_ad" value="<% cfg_sed_passphrase("wig_wpa2_psk") %>" onFocus="document.forms[0].wig_wpa2_press_flag.value=1" onKeyPress="document.forms[0].wig_wpa2_press_flag.value=1">
+			<img id="pwd_ad_display" src="image/pwd_close_eye.png" onclick="change_password_display(7)">
+			<span class="optiondesc" id="wpaPwdPhrExtText">$sec_863_or_64h</span>
+		</TD>
+	</TR>
+	</TABLE>
+</div>
+
+</div>
+
+
+
+<TABLE cellspacing=5 cellPadding=0 width=100% border=0>
+$bluebar
+</TABLE>
+
+</div> <!-- main -->
+<% help_box("0","_wlan") %>
+</FORM>
+<script>
+function change_web_format()
+{
+	if( parent.basic_coexistence_flag == 1 )
+                document.getElementById("coexistence_line").style.display="";
+        else
+                document.getElementById("coexistence_line").style.display="none";
+	
+	if(video_router_flag == 1)
+		document.getElementById("video").style.display="";
+	else
+		document.getElementById("video").style.display="none";
+	if(getTop(window).support_ax_flag == 1)
+		document.getElementById("wladv_ax").style.display="";
+	else
+		document.getElementById("wladv_ax").style.display="none";
+}
+
+function loadvalue()
+{	
+	getTop(window).enabled_wds="<% wds_enable() %>";
+	getTop(window).enabled_wps="<% wps_menu() %>";
+	/* bug23114: after set wireless, the wps button in menu maybe need change to grey, so , refresh the menu color */
+	if( getTop(window).location.href.indexOf("adv_index.htm") != -1 )
+		getTop(window).menu_color_change('wireless');
+	else
+		getTop(window).basic_menu_color_change('wireless');
+
+	var form=document.forms[0];
+	if(guest_network_user  == "1"){
+                form.Apply.className = "apply1_bt";
+                form.Apply.disabled = true;
+        }
+	
+	change_web_format();	
+	
+	var channel=wl_get_channel;
+	var mode="<% cfg_get("wl_simple_mode") %>";
+	var opmode_bg="<% cfg_get("opmode_bg"); %>"
+	if ( mode >= 3 )
+		mode=3;
+
+	if( mode == '1')
+		form.opmode.options[0].selected = true;
+	else if( mode == '2')
+		form.opmode.options[1].selected = true;
+	else
+		form.opmode.options[2].selected = true;	
+	
+	if(old_endis_ssid_broadcast=='1')
+                form.ssid_bc.checked = true;
+        else
+                form.ssid_bc.checked = false;
+
+	if(channel_json == 1)
+	{
+		$$.initChannels();
+	}
+	else
+	{
+		if(valid_region == 1)
+		{
+			if(an_router_flag == 1)
+				setBChannel();
+			else
+				setChannel();
+
+			form.w_channel.value = channel;
+			if(form.w_channel.selectedIndex == -1)
+				form.w_channel.options[0].selected = true;
+		}
+	}
+
+	if( wl_disablecoext == "0" )
+		form.enable_coexistence.checked = true;
+	else
+		form.enable_coexistence.checked = false;	
+	str_none=getObj("none").innerHTML;
+	str_none=str_none.replace(/\`/g, "&#96;");
+	str_wep=getObj("wep").innerHTML;
+	str_wep=str_wep.replace(/\`/g, "&#96;");
+	str_wpa=getObj("wpa").innerHTML;
+	str_wpa=str_wpa.replace(/\`/g, "&#96;");
+	str_wpa2=getObj("wpa2").innerHTML;
+	str_wpa2=str_wpa2.replace(/\`/g, "&#96;");
+	str_wpas=getObj("wpas").innerHTML;
+	str_wpas=str_wpas.replace(/\`/g, "&#96;");
+	str_wpae=getObj("wpae").innerHTML;	
+	str_wpae=str_wpae.replace(/\`/g, "&#96;");
+	str_wpa3e=getObj("wpa3e").innerHTML;
+	str_wpa3e=str_wpa3e.replace(/\`/g, "&#96;");
+	getObj("none").innerHTML='';	
+	getObj("wep").innerHTML='';	
+	getObj("wpa").innerHTML='';	
+	getObj("wpa2").innerHTML='';	
+	getObj("wpas").innerHTML='';	
+	getObj("wpae").innerHTML='';	
+	getObj("wpa3e").innerHTML='';
+	str_wpa3=getObj("wpa3").innerHTML;
+	str_wpa3=str_wpa3.replace(/\`/g, "&#96;");
+	str_wpas_sae=getObj("wpas_sae").innerHTML;
+	str_wpas_sae=str_wpas_sae.replace(/\`/g, "&#96;");
+	getObj("wpa3").innerHTML='';
+	getObj("wpas_sae").innerHTML='';
+	
+	setSecurity(wl_sectype);
+	var sectype=wl_sectype;	
+	if ( wds_endis_fun == '0' || endis_wl_radio == '0' || pr_wds_support_wpa == 1)
+		setDisabled(false,form.security_type[2],form.security_type[3],form.security_type[4]);
+	else
+		setDisabled(true,form.security_type[2],form.security_type[3],form.security_type[4]);
+
+	if ( wds_endis_fun == '0' || endis_wl_radio == '0' )
+		setDisabled(false,form.security_type[5]);
+	else
+		setDisabled(true,form.security_type[5]);
+
+	//Bug 19665, should not be both set to wep in main network and guest network.
+	var wl_guest_enable="<% cfg_get("wlg1_endis_guestNet") %>";
+	var wl_guest_sectype="<% cfg_get("wlg1_sectype") %>";	
+	if(wl_guest_enable==1 && wl_guest_sectype==2)
+		form.security_type[1].disabled = true;
+	
+	if(parseInt(sectype)>0)
+		form.security_type[parseInt(sectype)-1].checked=true;
+
+	if(wl_sectype == '2')
+	{
+		var form=document.forms[0];
+		var keyno=wl_get_keyno;
+		var keylength=wl_get_keylength;
+		changekeylen(document.forms[0]);
+		if(parseInt(keyno)>0)
+			form.wep_key_no[parseInt(keyno)-1].checked = true;
+		form.KEY1.value=wl_key1;
+		form.KEY2.value=wl_key2;
+		form.KEY3.value=wl_key3;
+		form.KEY4.value=wl_key4;
+		form.old_length.value=keylength;
+	}
+	else if(wl_sectype==6 || wl_sectype==9)
+	{
+		if(wl_sectype==6)
+		form.wpae_mode.value = get_wpae_mode;
+		if( get_radiusSerIp != "" && get_radiusSerIp != "0.0.0.0" )
+		{
+			radiusIPArray = get_radiusSerIp.split(".");
+			form.radiusIPAddr1.value = radiusIPArray[0];
+			form.radiusIPAddr2.value = radiusIPArray[1];
+			form.radiusIPAddr3.value = radiusIPArray[2];
+			form.radiusIPAddr4.value = radiusIPArray[3];
+		}
+		form.textWpaeRadiusPort.value = get_radiusPort;
+	}		
+
+
+	
+	if(an_router_flag == 1){	
+		str_have_an=getObj("hidden_an").innerHTML;
+		str_have_an=str_have_an.replace(/\`/g, "&#96;");
+		getObj("hidden_an").innerHTML='';
+		getObj("have_an").innerHTML=str_have_an;
+
+		var channel_a=wla_get_channel;
+		var mode_an="<% cfg_get("wla_simple_mode") %>";
+	
+		if( mode_an == '1' || mode_an == '7')
+			form.opmode_an.options[0].selected = true;
+		else if( mode_an == '2' || mode_an == '8')
+			form.opmode_an.options[1].selected = true;
+		else if(getTop(window).use_orbi_style_flag == "1" && enable_ht160 == "1" && form.opmode_an.options.length=="4" && mode_an == '10')
+			form.opmode_an.options[3].selected = true;
+		else // mode_an == '3' '5' '6' || mode_an == '9'
+			form.opmode_an.options[2].selected = true;
+		
+	        if(old_wla_endis_ssid_broadcast=='1')
+        	        form.ssid_bc_an.checked = true;
+       	 	else
+                	form.ssid_bc_an.checked = false;
+		if( get_enable_video_value == 1 )
+			form.enable_video_an.checked = true;
+		else
+			form.enable_video_an.checked = false;
+		
+		setAwlan_mode();
+		if(valid_region == 1 && channel_json != 1)
+		{
+			setAChannel(form.w_channel_an);		
+
+			//fix bug 29087:5Ghz channel show blank on IE
+			form.w_channel_an.value = channel_a;
+			if(form.w_channel_an.selectedIndex == -1)
+				form.w_channel_an.options[0].selected = true;
+			setAChannel(form.w_channel_an);	
+			form.w_channel_an_sec.value = get_sec_channel;
+			if(form.w_channel_an_sec.options.length !== 0 && form.w_channel_an_sec.selectedIndex == -1)
+				form.w_channel_an_sec.options[0].selected = true;
+		}
+
+		str_none_an=getObj("none_an").innerHTML;
+		str_none_an=str_none_an.replace(/\`/g, "&#96;");
+		str_wep_an=getObj("wep_an").innerHTML;
+		str_wep_an=str_wep_an.replace(/\`/g, "&#96;");
+		str_wpa_an=getObj("wpa_an").innerHTML;
+		str_wpa_an=str_wpa_an.replace(/\`/g, "&#96;");
+		str_wpa2_an=getObj("wpa2_an").innerHTML;
+		str_wpa2_an=str_wpa2_an.replace(/\`/g, "&#96;");
+		str_wpas_an=getObj("wpas_an").innerHTML;
+		str_wpas_an=str_wpas_an.replace(/\`/g, "&#96;");
+		str_wpae_an=getObj("wpae_an").innerHTML;	
+		str_wpae_an=str_wpae_an.replace(/\`/g, "&#96;");
+		str_wpa3e_an=getObj("wpa3e_an").innerHTML;
+		str_wpa3e_an=str_wpa3e_an.replace(/\`/g, "&#96;");
+		getObj("none_an").innerHTML='';	
+		getObj("wep_an").innerHTML='';	
+		getObj("wpa_an").innerHTML='';	
+		getObj("wpa2_an").innerHTML='';	
+		getObj("wpas_an").innerHTML='';	
+		getObj("wpae_an").innerHTML='';		
+		getObj("wpa3e_an").innerHTML='';
+		str_wpa3_an=getObj("wpa3_an").innerHTML;
+		str_wpa3_an=str_wpa3_an.replace(/\`/g, "&#96;");
+		str_wpas_sae_an=getObj("wpas_sae_an").innerHTML;
+		str_wpas_sae_an=str_wpas_sae_an.replace(/\`/g, "&#96;");
+		getObj("wpa3_an").innerHTML='';	
+		getObj("wpas_sae_an").innerHTML='';	
+
+		setSecurity_an(wla_sectype);
+
+		
+		if(ac_router_flag == 1)
+		{
+			document.getElementById("wpa_psk_an_54").style.display="none";
+		}	
+		var sectype_a=wla_sectype;
+		if ( wla_wds_endis_fun == '0' || endis_wla_radio == '0' ||pr_wds_support_wpa == 1 )
+			setDisabled(false,form.security_type_an[2],form.security_type_an[3],form.security_type_an[4]);	
+		else
+			setDisabled(true,form.security_type_an[2],form.security_type_an[3],form.security_type_an[4]);
+	
+		if ( wla_wds_endis_fun == '0' || endis_wla_radio == '0')
+			setDisabled(false,form.security_type_an[5]);
+		else
+			setDisabled(true,form.security_type_an[5]);
+
+		//Bug 19665, should not be both set to wep in main network and guest network.
+		var wl_guest_enable_an="<% cfg_get("wla1_endis_guestNet") %>";
+		var wl_guest_sectype_an="<% cfg_get("wla1_sectype") %>";
+		if(wl_guest_enable_an==1 && wl_guest_sectype_an==2)
+			form.security_type_an[1].disabled = true;
+		if(parseInt(sectype_a)>0)
+			form.security_type_an[parseInt(sectype_a)-1].checked=true;
+	
+		if(wla_sectype == '2')
+		{
+			var form=document.forms[0];
+			var keyno=wla_get_keyno;
+			var keylength=wla_get_keylength;
+			changekeylen_a(document.forms[0]);
+			if(parseInt(keyno)>0)
+				form.wep_key_no_an[parseInt(keyno)-1].checked = true;
+			form.KEY1_an.value=wla_key1;
+			form.KEY2_an.value=wla_key2;
+			form.KEY3_an.value=wla_key3;
+			form.KEY4_an.value=wla_key4;
+			form.old_length_a.value=keylength;
+		}
+		else if(wla_sectype==6 || wla_sectype==9)
+		{
+			if(wla_sectype==6)
+			form.wpae_mode_an.value = get_wpae_mode_a;
+			if( get_radiusSerIp_a != "" && get_radiusSerIp_a != "0.0.0.0" )
+			{
+				radiusIPArray = get_radiusSerIp_a.split(".");
+				form.radiusIPAddr1_an.value = radiusIPArray[0];
+				form.radiusIPAddr2_an.value = radiusIPArray[1];
+				form.radiusIPAddr3_an.value = radiusIPArray[2];
+				form.radiusIPAddr4_an.value = radiusIPArray[3];
+			}
+			form.textWpaeRadiusPort_an.value = get_radiusPort_a;
+		}		
+	}
+
+	if(ad_router_flag == 1){
+		str_have_ad=getObj("hidden_ad").innerHTML;
+		str_have_ad=str_have_ad.replace(/\`/g, "&#96;");
+		getObj("have_ad").innerHTML=str_have_ad;
+		getObj("hidden_ad").innerHTML='';
+
+		str_none_ad=getObj("none_ad").innerHTML;
+		str_none_ad=str_none_ad.replace(/\`/g, "&#96;");
+		getObj("none_ad").innerHTML='';
+
+		str_wpa2_ad=getObj("wpa2_ad").innerHTML;
+		str_wpa2_ad=str_wpa2_ad.replace(/\`/g, "&#96;");
+		getObj("wpa2_ad").innerHTML='';
+
+		if(valid_region == 1)
+		{
+			form.w_channel_ad.value = wig_get_channel;
+			if(form.w_channel_ad.selectedIndex == -1)
+				form.w_channel_ad.options[0].selected = true;
+		}
+
+		if(wig_sectype=="1")
+		{
+			form.security_type_ad[0].checked = true;
+			setSecurity_ad(1);
+		}
+		else if(wig_sectype=="4")
+		{
+			form.security_type_ad[1].checked = true;
+			setSecurity_ad(4);
+		}
+	}
+
+
+	if( mode == '1' && bgn_mode1_value == 54 && have_wep_flag == 1 && get_smart_connect != "1")
+		document.getElementById("wep_54").style.display="";
+	else
+		document.getElementById("wep_54").style.display="none";
+	if( mode_an == '1' && an_mode1_value == 54 && have_wep_flag == 1 && get_smart_connect != "1")
+		document.getElementById("wep_an_54").style.display="";
+	else
+		document.getElementById("wep_an_54").style.display="none";
+
+	if( have_enterprise == 1 )
+	{
+		document.getElementById("wpa_wpa2_enterprise").style.display="";
+		if(an_router_flag == 1)
+			document.getElementById("wpa_wpa2_an_enterprise").style.display="";
+	}
+
+	if(have_wpas_flag == 1)
+	{
+		document.getElementById("wpas_psk").style.display = "";
+		document.getElementById("wpas_psk_an").style.display = "";
+	}
+
+	if( have_wpa3_enterprise == 1 )
+	{
+		document.getElementById("wpa3_enterprise").style.display="";
+		if(an_router_flag == 1)
+			document.getElementById("wpa3_an_enterprise").style.display="";
+	}
+
+	if(getTop(window).guest_router_flag == 1)//42382
+	{
+		if(wlg1_sectype == 2 || wl_sectype == 2)//45001
+			opmode_disabled();
+		else
+			opmode_abled();
+		if(wla1_sectype == 2 || wla_sectype == 2)
+			opmode_an_disabled();
+		else
+			opmode_an_abled();
+	}
+	if(have_wpa3_flag == 1)
+	{
+		document.getElementById("security_wpa_re").innerText="WPA-Personal (TKIP)";
+		document.getElementById("security_wpa2_re").innerText="WPA2-Personal [AES]";
+		document.getElementById("security_auto_re").innerText="WPA-Personal [TKIP] + WPA2-Personal [AES]";
+		document.getElementById("security_an_wpa_re").innerText="WPA-Personal (TKIP)";
+		document.getElementById("security_an_wpa2_re").innerText="WPA2-Personal [AES]";
+		document.getElementById("security_an_auto_re").innerText="WPA-Personal [TKIP] + WPA2-Personal [AES]";
+		document.getElementById("wpa3_psk").style.display="";
+		document.getElementById("wpas_sae_psk").style.display="";
+		document.getElementById("wpa3_psk_an").style.display="";
+		document.getElementById("wpas_sae_psk_an").style.display="";
+	}
+
+	showWps_alert();
+	if(valid_region != 1)
+	{
+		grayoutElements("body", "A", "input", "select");
+		disableElements("input", "select");
+	}
+
+	if(enable_ax == "0")
+		form.enable_ax.checked = false;
+	else
+		form.enable_ax.checked = true;
+
+	if(getTop(window).use_orbi_style_flag == "1" && getTop(window).support_ax_flag == 1)
+		Change_ax_opmode(form);
+
+	if(smart_connect_flag == "1" && get_smart_connect == "1") {
+		form.enable_smart_connect.checked = true;
+		toggle_an_edit();
+		handle_sync_input();
+		sync_broadcast();
+	}
+}
+
+function KeyDown(e)
+{
+	var currKey=0, e=e||window.event;
+	currKey= e.keyCode||e.which||e.charCode;
+
+	if((e.altKey)&&(e.keyCode==53))
+	{
+		document.forms[0].opmode.value = 2;
+	}
+	else if((e.altKey)&&(e.keyCode==52))
+	{
+		document.forms[0].opmode.value = 3;
+	}
+	else if((e.altKey)&&(e.keyCode==48))
+	{
+		document.forms[0].Apply.selected=true;
+		if(check_wlan())
+			document.forms[0].submit();
+	}
+}
+
+function Change_ax_opmode(cf)
+{
+	if(getTop(window).use_orbi_style_flag == "1" && getTop(window).support_ax_flag == 1)
+	{
+		if(cf.enable_ax.checked == true)
+		{
+			cf.opmode.options[0].text = wlan_mode_1+" (11g)";
+			cf.opmode.options[1].text = wlan_mode_2+" (11ax, HT20, 1024-QAM)";
+			cf.opmode.options[2].text = wlan_mode_3+" (11ax, HT40, 1024-QAM)";
+			document.getElementById("ofdma_tr").style.display = "";
+			if(enable_ofdma_2g == "1")
+				cf.ofdma_2g.checked = true;
+			else
+				cf.ofdma_2g.checked = false;
+			if(enable_ofdma_5g == "1")
+				cf.ofdma_5g.checked = true;
+			else
+				cf.ofdma_5g.checked = false;
+		}
+		else
+		{
+			cf.opmode.options[0].text = wlan_mode_4+" (11g)";
+			cf.opmode.options[1].text = wlan_mode_5+" (11ng, HT20, 1024-QAM)";
+			cf.opmode.options[2].text = wlan_mode_6+" (11ng, HT40, 1024-QAM)";
+			cf.opmode.options[0].value = "1";
+			cf.opmode.options[1].value = "2";
+			cf.opmode.options[2].value = "3";
+			document.getElementById("ofdma_tr").style.display = "none";
+		}
+
+		var i=cf.opmode_an.options.length;
+		if(getTop(window).host_name != "RAX10")
+		{
+			suffix1=" (11ax, HT20, 1024-QAM)";
+			suffix2=" (11ax, HT40, 1024-QAM)";
+			suffix3=" (80MHz) (11ax, HT80, 1024-QAM)";
+			suffix4=" (160MHz) (11ax, HT160, 1024-QAM)";
+		}
+		for(i;i>0;i--)
+		{
+			if(cf.enable_ax.checked == true)
+				cf.opmode_an.options[i-1].text=window['an_wlan_mode_'+i]+window['suffix'+i];
+			else
+				cf.opmode_an.options[i-1].text=window['an_wlan_mode_'+(i+4)]+window['suffix'+i].replace(/ax/,"ac");
+		}
+		if(cf.enable_ax.checked == true)
+		{
+			rewrite_list_value(cf, "opmode");
+			rewrite_list_value(cf, "opmode_an");
+		}
+		else
+		{
+			rewrite_list_value_to_original(cf, "opmode");
+			rewrite_list_value_to_original(cf, "opmode_an");
+		}
+	}
+}
+function change_password_display(flag)
+{
+	if(flag == 1 || flag == 2 || flag == 3 || flag == 12 || flag == 13){
+		var inp = document.getElementById("passphrase").name;
+		var e_value = document.getElementById("passphrase").value;
+		var pwd_input = document.getElementById("passphrase");
+		e_value = e_value.replace(/&/g, "&#38;").replace(/"/g, "&#34;").replace(/'/g, "&#39;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\\/g, "&#92;");
+		if(flag == 1){
+			if(pwd_input.type == "password"){
+				$$('#passphrase').replaceWith('<input type="text" id="passphrase" size="20" autocomplete="off" maxlength="64" name="'+inp+'" value="'+e_value+'" onFocus="document.forms[0].wpa1_press_flag.value=1" onKeyPress="document.forms[0].wpa1_press_flag.value=1">');
+				document.getElementById("pwd_display").src = "image/pwd_display_eye.png";
+			}
+			else{
+				$$('#passphrase').replaceWith('<input type="password" id="passphrase" size="20" autocomplete="off" maxlength="64" name="'+inp+'" value="'+e_value+'" onFocus="document.forms[0].wpa1_press_flag.value=1" onKeyPress="document.forms[0].wpa1_press_flag.value=1">');
+				document.getElementById("pwd_display").src = "image/pwd_close_eye.png";
+			}
+		}
+
+		if(flag == 2 || flag == 13){
+			if(pwd_input.type == "password"){
+				$$('#passphrase').replaceWith('<input type="text" id="passphrase" autocomplete="off" maxlength="64" size="20" name="'+inp+'" value="'+e_value+'" onFocus="document.forms[0].wpa2_press_flag.value=1" onKeyPress="document.forms[0].wpa2_press_flag.value=1">');
+				document.getElementById("pwd_display").src = "image/pwd_display_eye.png";
+			}
+			else{
+				$$('#passphrase').replaceWith('<input type="password" id="passphrase" autocomplete="off" maxlength="64" size="20" name="'+inp+'" value="'+e_value+'" onFocus="document.forms[0].wpa2_press_flag.value=1" onKeyPress="document.forms[0].wpa2_press_flag.value=1">');
+				document.getElementById("pwd_display").src = "image/pwd_close_eye.png";
+			}
+		}
+
+		if(flag == 3){
+			if(pwd_input.type == "password"){
+				$$('#passphrase').replaceWith('<input type="text" id="passphrase" size="20" autocomplete="off" maxlength="64" name="'+inp+'" value="'+e_value+'" onFocus="document.forms[0].wpas_press_flag.value=1" onKeyPress="document.forms[0].wpas_press_flag.value=1">');
+				document.getElementById("pwd_display").src = "image/pwd_display_eye.png";
+			}
+			else{
+				$$('#passphrase').replaceWith('<input type="password" id="passphrase" size="20" autocomplete="off" maxlength="64" name="'+inp+'" value="'+e_value+'" onFocus="document.forms[0].wpas_press_flag.value=1" onKeyPress="document.forms[0].wpas_press_flag.value=1">');
+				document.getElementById("pwd_display").src = "image/pwd_close_eye.png";
+			}
+		}
+
+		if(flag == 12){
+			if(pwd_input.type == "password"){
+				$$('#passphrase').replaceWith('<input type="text" id="passphrase" size="20" autocomplete="off" maxlength="128" name="'+inp+'" value="'+e_value+'" onFocus="document.forms[0].wpa3_sae_press_flag.value=1" onKeyPress="document.forms[0].wpa3_sae_press_flag.value=1">');
+				document.getElementById("pwd_display").src = "image/pwd_display_eye.png";
+			}
+			else{
+				$$('#passphrase').replaceWith('<input type="password" id="passphrase" size="20" autocomplete="off" maxlength="128" name="'+inp+'" value="'+e_value+'" onFocus="document.forms[0].wpa3_sae_press_flag.value=1" onKeyPress="document.forms[0].wpa3_sae_press_flag.value=1">');
+				document.getElementById("pwd_display").src = "image/pwd_close_eye.png";
+			}
+		}
+		$$('#passphrase').addClass("input1");
+	}
+
+	if(flag == 4 || flag == 5 || flag == 6 || flag == 14 || flag == 15){
+		var pwd_input_an = document.getElementById("passphrase_an");
+		var inp_an = document.getElementById("passphrase_an").name;
+		var e_value_an = document.getElementById("passphrase_an").value;
+		e_value_an = e_value_an.replace(/&/g, "&#38;").replace(/"/g, "&#34;").replace(/'/g, "&#39;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\\/g, "&#92;");
+
+		if(flag == 4)
+		{
+			if(pwd_input_an.type == "password"){
+				$$('#passphrase_an').replaceWith('<input type="text" id="passphrase_an" size="20" autocomplete="off" maxlength="64" name="'+inp_an+'" value="'+e_value_an+'" onFocus="document.forms[0].wla_wpa1_press_flag.value=1" onKeyPress="document.forms[0].wla_wpa1_press_flag.value=1">');
+				document.getElementById("pwd_an_display").src = "image/pwd_display_eye.png";
+			}else{
+				$$('#passphrase_an').replaceWith('<input type="password" id="passphrase_an" size="20" autocomplete="off" maxlength="64" name="'+inp_an+'" value="'+e_value_an+'" onFocus="document.forms[0].wla_wpa1_press_flag.value=1" onKeyPress="document.forms[0].wla_wpa1_press_flag.value=1">');	
+				document.getElementById("pwd_an_display").src = "image/pwd_close_eye.png";
+			}
+		}
+
+		if(flag == 5 || flag == 15)
+		{
+			if(pwd_input_an.type == "password"){
+				$$('#passphrase_an').replaceWith('<input type="text" id="passphrase_an" autocomplete="off" maxlength="64" size="20" name="'+inp_an+'" value="'+e_value_an+'" onFocus="document.forms[0].wla_wpa2_press_flag.value=1" onKeyPress="document.forms[0].wla_wpa2_press_flag.value=1">');
+				document.getElementById("pwd_an_display").src = "image/pwd_display_eye.png";
+			}else{
+				$$('#passphrase_an').replaceWith('<input type="password" id="passphrase_an" autocomplete="off" maxlength="64" size="20" name="'+inp_an+'" value="'+e_value_an+'" onFocus="document.forms[0].wla_wpa2_press_flag.value=1" onKeyPress="document.forms[0].wla_wpa2_press_flag.value=1">');
+				document.getElementById("pwd_an_display").src = "image/pwd_close_eye.png";
+			}
+		}
+
+		if(flag == 6)
+		{
+			if(pwd_input_an.type == "password"){
+				$$('#passphrase_an').replaceWith('<input type="text" id="passphrase_an" size="20" autocomplete="off" maxlength="64" name="'+inp_an+'" value="'+e_value_an+'" onFocus="document.forms[0].wla_wpas_press_flag.value=1" onKeyPress="document.forms[0].wla_wpas_press_flag.value=1">');		
+				document.getElementById("pwd_an_display").src = "image/pwd_display_eye.png";
+			}else{
+				$$('#passphrase_an').replaceWith('<input type="password" id="passphrase_an" size="20" autocomplete="off" maxlength="64" name="'+inp_an+'" value="'+e_value_an+'" onFocus="document.forms[0].wla_wpas_press_flag.value=1" onKeyPress="document.forms[0].wla_wpas_press_flag.value=1">');			
+				document.getElementById("pwd_an_display").src = "image/pwd_close_eye.png";
+			}
+		}
+
+		if(flag == 14)
+		{
+			if(pwd_input_an.type == "password"){
+				$$('#passphrase_an').replaceWith('<input type="text" id="passphrase_an" size="20" autocomplete="off" maxlength="128" name="'+inp_an+'" value="'+e_value_an+'" onFocus="document.forms[0].wla_wpa3_sae_press_flag.value=1" onKeyPress="document.forms[0].wla_wpa3_sae_press_flag.value=1">');
+				document.getElementById("pwd_an_display").src = "image/pwd_display_eye.png";
+			}else{
+				$$('#passphrase_an').replaceWith('<input type="password" id="passphrase_an" size="20" autocomplete="off" maxlength="128" name="'+inp_an+'" value="'+e_value_an+'" onFocus="document.forms[0].wla_wpa3_sae_press_flag.value=1" onKeyPress="document.forms[0].wla_wpa3_sae_press_flag.value=1">');
+				document.getElementById("pwd_an_display").src = "image/pwd_close_eye.png";
+			}
+		}
+		$$('#passphrase_an').addClass("input1");
+	}
+
+
+	if(flag == 7 || flag == 8){
+		var pwd_input_ad = document.getElementById("passphrase_ad");
+		var inp_ad = document.getElementById("passphrase_ad").name;
+		var e_value_ad = document.getElementById("passphrase_ad").value;
+		e_value_ad = e_value_ad.replace(/&/g, "&#38;").replace(/"/g, "&#34;").replace(/'/g, "&#39;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\\/g, "&#92;");
+
+		if(flag == 7)
+		{
+			if(pwd_input_ad.type == "password"){
+				$$('#passphrase_ad').replaceWith('<input type="text" id="passphrase_ad" autocomplete="off" maxlength="64" size="20" name="'+inp_ad+'" value="'+e_value_ad+'" onFocus="document.forms[0].wig_wpa2_press_flag.value=1" onKeyPress="document.forms[0].wig_wpa2_press_flag.value=1">');
+				document.getElementById("pwd_ad_display").src = "image/pwd_display_eye.png";
+			}else{
+				$$('#passphrase_ad').replaceWith('<input type="password" id="passphrase_ad" autocomplete="off" maxlength="64" size="20" name="'+inp_ad+'" value="'+e_value_ad+'" onFocus="document.forms[0].wig_wpa2_press_flag.value=1" onKeyPress="document.forms[0].wig_wpa2_press_flag.value=1">');		
+				document.getElementById("pwd_ad_display").src = "image/pwd_close_eye.png";
+			}
+		}
+
+		if(flag == 8)
+		{
+			if(pwd_input_ad.type == "password"){
+				$$('#passphrase_ad').replaceWith('<input type="text" id="passphrase_ad" size="20" autocomplete="off" maxlength="64" name="'+inp_ad+'" value="'+e_value_ad+'" onFocus="document.forms[0].wig_wpas_press_flag.value=1" onKeyPress="document.forms[0].wig_wpas_press_flag.value=1">');
+				document.getElementById("pwd_ad_display").src = "image/pwd_display_eye.png";
+			}else{
+				$$('#passphrase_ad').replaceWith('<input type="password" id="passphrase_ad" size="20" autocomplete="off" maxlength="64" name="'+inp_ad+'" value="'+e_value_ad+'" onFocus="document.forms[0].wig_wpas_press_flag.value=1" onKeyPress="document.forms[0].wig_wpas_press_flag.value=1">');
+				document.getElementById("pwd_ad_display").src = "image/pwd_close_eye.png";
+			}
+		}
+		$$('#passphrase_ad').addClass("input1");
+	}
+
+		if(flag == 9 || flag == 11)
+		{
+		var pwd_ra_bg = document.getElementById("radius_secret");
+		var inp_ra_bg = document.getElementById("radius_secret").name;
+		var value_ra_bg = document.getElementById("radius_secret").value;
+		value_ra_bg = value_ra_bg.replace(/&/g, "&#38;").replace(/"/g, "&#34;").replace(/'/g, "&#39;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\\/g, "&#92;");
+
+			if(pwd_ra_bg.type == "password"){
+				$$('#radius_secret').replaceWith('<input type="text" id="radius_secret" size="20" autocomplete="off" maxlength="128" value="'+value_ra_bg+'" name="'+inp_ra_bg+'" onKeyPress="return getkey(\'ssid\', event)">');
+				document.getElementById("radius_display").src = "image/pwd_display_eye.png";
+			}
+			else{
+				$$('#radius_secret').replaceWith('<input type="password" id="radius_secret" size="20" autocomplete="off" maxlength="128" value="'+value_ra_bg+'" name="'+inp_ra_bg+'" onKeyPress="return getkey(\'ssid\', event)">');
+				document.getElementById("radius_display").src = "image/pwd_close_eye.png";
+			}
+			$$('#radius_secret').addClass("input1");
+		}
+
+		if(flag == 10 || flag == 16)
+		{
+		var pwd_ra_an = document.getElementById("radius_secret_an");
+		var inp_ra_an = document.getElementById("radius_secret_an").name;
+		var value_ra_an = document.getElementById("radius_secret_an").value;
+		value_ra_an = value_ra_an.replace(/&/g, "&#38;").replace(/"/g, "&#34;").replace(/'/g, "&#39;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\\/g, "&#92;");
+
+			if(pwd_ra_an.type == "password"){
+				$$('#radius_secret_an').replaceWith('<input type="text" id="radius_secret_an" size="20" autocomplete="off" maxlength="128" value="'+value_ra_an+'" name="'+inp_ra_an+'" onKeyPress="return getkey(\'ssid\', event)">');
+				document.getElementById("radius_an_display").src = "image/pwd_display_eye.png";
+			}
+			else{
+				$$('#radius_secret_an').replaceWith('<input type="password" id="radius_secret_an" size="20" autocomplete="off" maxlength="128" value="'+value_ra_an+'" name="'+inp_ra_an+'" onKeyPress="return getkey(\'ssid\', event)">');
+				document.getElementById("radius_an_display").src = "image/pwd_close_eye.png";
+			}
+			$$('#radius_secret_an').addClass("input1");
+		}
+
+		var cf=document.forms[0];
+		if( cf.enable_smart_connect.checked )
+		{
+			handle_sync_input();
+			toggle_an_edit();
+		}
+}
+
+</script>
+</BODY>
+</HTML>

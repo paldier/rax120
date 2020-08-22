@@ -1,0 +1,18 @@
+--- db-4.7.25.NC/dist/config.sub.org	2017-07-14 10:20:38.888038534 +0800
++++ db-4.7.25.NC/dist/config.sub	2017-07-14 10:21:10.016037548 +0800
+@@ -255,6 +255,7 @@
+ 	| mips16 \
+ 	| mips64 | mips64el \
+ 	| mips64vr | mips64vrel \
++	| aarch64-openwrt \
+ 	| mips64orion | mips64orionel \
+ 	| mips64vr4100 | mips64vr4100el \
+ 	| mips64vr4300 | mips64vr4300el \
+@@ -335,6 +336,7 @@
+ 	| mips-* | mipsbe-* | mipseb-* | mipsel-* | mipsle-* \
+ 	| mips16-* \
+ 	| mips64-* | mips64el-* \
++	| aarch64-openwrt-* \
+ 	| mips64vr-* | mips64vrel-* \
+ 	| mips64orion-* | mips64orionel-* \
+ 	| mips64vr4100-* | mips64vr4100el-* \

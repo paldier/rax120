@@ -1,0 +1,24 @@
+#!/bin/sh /etc/rc.common
+
+start()
+{
+	# if Eth Wan NIF is a VLAN NIF, the default txqueuelen is 0.
+	# it should be assigned a reasonable value
+	RawEthWan=eth4
+	wan_preference=$($CONFIG get wan_preference)
+	if [ "$wan_preference" = "2" ]; then
+		RawEthWan=eth5
+	elif [ "$wan_preference" = "1" ]; then
+		RawEthWan=bond3
+		return 0;
+	fi
+	ip link set $RawEthWan txqueuelen 1000
+	dni_qos --dni_qos_if $RawEthWan 
+	/sbin/qos.sh start
+}
+
+stop()
+{
+	/sbin/qos.sh stop
+	dni_qos --dni_qos_if xxx    # xxx NOT exist, this will detach original attached interface.
+}

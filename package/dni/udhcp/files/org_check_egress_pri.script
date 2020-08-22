@@ -1,0 +1,43 @@
+#!/bin/sh
+local enable_orange=`config get enable_orange`
+local enable_orange_ipv6=`config get enable_orange_ipv6`
+local ipv4_wanip=`ifconfig brwan | grep 'inet addr'`
+local ipv6_scope=`cat /proc/net/if_inet6 | grep br0 | awk '{print $4}'`
+local WAN_IF=$1
+local enable_iptv=`config get enable_vlan`
+local vlan_type=`config get vlan_type`
+local wan_ifname=`config get wan_hwname`
+org_ipv4_wan_up=0
+org_ipv6_wan_up=0
+egress_pri_changed=0
+
+if [ $enable_iptv -eq 1 ] && [ $vlan_type -eq 1 ]; then
+	for i in 0 1 2 3 4 5 6 7 8 9 10; do
+		tv=`config get vlan_tag_$i`
+		[ -n "$tv" ] || continue
+		set - $(echo $tv)
+		# $1: enable, $2: name, $3: vid, $4: pri, $5:wports, $6:wlports
+		[ "$1" = "1" ] || continue
+		vlan_id=$3
+		if [ "$vlan_id" = "832" -o "$vlan_id" = "835" ]; then
+			ORG_FLAG=1
+			vlan_pri=$4
+			wan_ifname=$wan_ifname.$vlan_id
+			break
+		fi
+	done
+fi
+
+local egress_pri=`cat /proc/net/vlan/$wan_ifname | grep EGRESS | awk '{print $4}'`
+
+[ $enable_orange -eq 1 -a "x$ipv4_wanip" != "x" ] && org_ipv4_wan_up=1
+[ $enable_orange_ipv6 -eq 1 -a $ipv6_scope = "00" ] && 	org_ipv6_wan_up=1
+[ $egress_pri != "0:0" ] && egress_pri_changed=1
+
+if [ "$egress_pri_changed" = "1" ]; then
+	if [ "$org_ipv4_wan_up" = "1" -a "$org_ipv6_wan_up" = "0" ]; then
+		/usr/share/udhcpc/org_dhcp_pri_config.script 1 $WAN_IF
+	fi
+fi
+
+exit 0

@@ -1,0 +1,44 @@
+<html>
+<head>
+    <link rel="stylesheet" href="/style/form.css">
+    <script language=javascript type=text/javascript src="/funcs.js"></script>
+    <title>ReadySHARE Vault</title>
+    <meta http-equiv=content-type content='text/html; charset=UTF-8'>
+</head>
+
+<body onLoad="please_wait(false);">
+<div class="page_title">ReadySHARE Vault</div>
+<div id="main" class="main inner-main">
+    <table width="100%" border="0" cellpadding="0" cellspacing="3">
+        <tr>
+            <td colspan="2" class="top0">
+                <img src="/liteblue.gif" width="100%" height="12">
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2">
+		    <p>$print_prompt1</p>
+		    <p><b>$print_prompt2</b></p>
+		    <script>
+		    if(getTop(window).use_orbi_style_flag != "1")
+		    {
+			    document.write("<p>$print_prompt4</p>");
+			    document.write("<p>$print_prompt5</p>");
+		    }
+		    else
+		    {
+			    document.write("<p>$print_prompt4_1</p>");
+			    document.write("<p>$print_prompt5_1</p>");
+		    }
+		    </script>
+	    </td>
+        </tr>
+		<tr>
+            <td colspan="2">
+                <img src="/liteblue.gif" width="100%" height="12">
+            </td>
+        </tr>
+    </table>
+</div>
+</body>
+</html>

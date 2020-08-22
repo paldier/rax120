@@ -1,0 +1,144 @@
+#!/bin/sh
+
+### Button status defination
+FREE=0	# Button is pop up
+PUSH=1	# Button is pressed
+HOLD=2	# Button is pressed and hold on a moment
+
+### Free button pressed state
+free_pushbut=10
+free_wifibut=20
+free_resetbut=30
+
+### Tool
+CONFIG=/bin/config
+
+file=/proc/simple_config/button_state
+opmode=
+buttonstate=
+pushbutton=${FREE}
+wifibutton=${FREE}
+resetbutton=${FREE}
+
+
+echo ${free_pushbut} > ${file}
+echo ${free_wifibut} > ${file}
+echo ${free_resetbut} > ${file}
+
+#usb_0 over current flag
+if [ ! -e /sys/class/gpio/gpio32 ]; then
+    echo 32 > /sys/class/gpio/export
+fi
+
+#usb_1 over current flag
+if [ ! -e /sys/class/gpio/gpio33 ]; then
+    echo 33 > /sys/class/gpio/export
+fi
+
+while [ 1 ]
+do
+        usb0_enable=`cat /sys/class/gpio/gpio32/value`
+        usb1_enable=`cat /sys/class/gpio/gpio33/value`
+        if [ $usb0_enable -eq '0' -a $usb1_enable -eq '0' ];then
+                ledcontrol -n usb_en0 -c white -s off
+                ledcontrol -n usb_en1 -c white -s off
+                /bin/sleep 1
+                ledcontrol -n usb_en0 -c white -s on
+                ledcontrol -n usb_en1 -c white -s on
+        elif [ $usb0_enable -eq '0' ];then
+                ledcontrol -n usb_en0 -c white -s off
+                /bin/sleep 1
+                ledcontrol -n usb_en0 -c white -s on
+        elif [ $usb1_enable -eq '0' ];then
+                ledcontrol -n usb_en1 -c white -s off
+                /bin/sleep 1
+                ledcontrol -n usb_en1 -c white -s on
+        fi
+
+	if [ -f /tmp/factory_test ];then
+		/bin/sleep 1
+		#get states of buttons
+	    buttonstate=$(/bin/cat ${file})
+		wifibutton=$(/bin/echo ${buttonstate} | cut -c 4)
+		resetbutton=$(/bin/echo ${buttonstate} | cut -c 6)
+
+		if [ ${PUSH} -eq ${wifibutton} ]; then
+        	        wlan up
+                	echo ${free_wifibut} > ${file}
+	        fi
+
+		if [ ${HOLD} -eq ${resetbutton} ]; then
+			/sbin/factory_default
+			/sbin/reboot
+			echo ${free_resetbut} > ${file}
+		fi
+
+		continue
+	fi
+
+	#Get states of buttons
+	buttonstate=$(/bin/cat ${file})
+	pushbutton=$(/bin/echo ${buttonstate} | cut -c 2)
+	wifibutton=$(/bin/echo ${buttonstate} | cut -c 4)
+	resetbutton=$(/bin/echo ${buttonstate} | cut -c 6)
+
+	if [ ${PUSH} -eq ${pushbutton} ]; then
+	    if [ "x$($CONFIG get quick_wps_fastlane)" = "xwps" ]; then
+		if [ "$(${CONFIG} get endis_wl_radio)" = "1" -a "$(${CONFIG} get endis_wl_wps)" = "0" ] ||
+		[ "$(${CONFIG} get endis_wla_radio)" = "1" -a "$(${CONFIG} get endis_wla_wps)" = "0" ]
+		then
+			# WPS is disabled, WPS LED will be controlled by kernel to blinking
+			echo 1 > /proc/simple_config/diswps
+		elif [ "$(${CONFIG} get endis_wl_radio)" != "0" -o "$(${CONFIG} get endis_wla_radio)" != "0" ]; then
+			if [ "x$($CONFIG get wl_hw_btn_state)" != "xoff" ]; then
+				# WPS is enabled
+				echo 0 > /proc/simple_config/diswps
+				wlan wps --pbc_start
+				echo "start" > /tmp/wps_process_state
+			fi
+		fi
+	    else
+	    	wps_fastlane pressed
+	    fi
+		echo ${free_pushbut} > ${file}
+	fi
+
+	WAN_IFNAME=$(${CONFIG} get wan_ifname)
+	LAN_IP=$(${CONFIG} get lan_ipaddr)
+	WAN_MAC=$(${CONFIG} get cur_wanmac)
+
+	if [ ${HOLD} -eq ${wifibutton} ]; then
+		if [ "x$(${CONFIG} get i_opmode)" = "xapmode" ]; then
+			${CONFIG} set ap_mode="0"
+			/etc/init.d/opmode restart > /dev/console
+			echo ${free_wifibut} > ${file}
+		elif [ "x$(${CONFIG} get i_opmode)" = "xnormal" ]; then
+			if [ "x$(/bin/cat /tmp/port_status)" = "x1" ]; then
+				/usr/sbin/detwan -i ${WAN_IFNAME} -p ${LAN_IP} -d ${WAN_MAC} -k
+				${CONFIG} set ap_mode="1"
+				/sbin/cfgapply apmode > /dev/console
+				echo ${free_wifibut} > ${file}
+			else
+				echo ${free_wifibut} > ${file}
+			fi
+		fi
+	elif [ ${PUSH} -eq ${wifibutton} ]; then
+		wlan toggle
+		echo ${free_wifibut} > ${file}
+		
+	fi
+
+	if [ ${PUSH} -eq ${resetbutton} ]; then
+		/sbin/save_reboot
+		/sbin/reboot
+		echo ${free_resetbut} > ${file}
+	elif [ ${HOLD} -eq ${resetbutton} ]; then
+		/sbin/Nencmgr reset
+		/bin/config default
+		/sbin/save_reset
+		/sbin/reboot
+		echo ${free_resetbut} > ${file}
+	fi
+
+	/bin/sleep 1
+done

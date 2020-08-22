@@ -1,0 +1,144 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006 OpenWrt.org
+
+START=95
+
+security_enhancement(){
+	local check_security_flag="0"
+	local passwd_backup=$($CONFIG get http_passwd_backup)
+	local answer1_backup=$($CONFIG get PWD_answer1_backup)
+	local answer2_backup=$($CONFIG get PWD_answer2_backup)
+
+	if [ "x$($CONFIG get blank_state)" = "x1" ]; then
+		if [ "x$($CONFIG get origin_blank_state_flag)" = "x1" ]; then
+			if [ "x$($CONFIG get dns_hijack)" = "x1" -a "x$($CONFIG get hijack_process)" = "x1" -a "x$($CONFIG get hijack_config_status)" = "x0" ]; then
+				# Downgrade Firmware from SE to SE.
+					$CONFIG set http_passwd="$passwd_backup"
+					$CONFIG set http_passwd_digest="$passwd_backup"
+					$CONFIG set PWD_answer1="$answer1_backup"
+					$CONFIG set PWD_answer2="$answer2_backup"
+
+					$CONFIG unset http_passwd_backup
+					$CONFIG unset PWD_answer1_backup
+					$CONFIG unset PWD_answer2_backup
+
+					$CONFIG set blank_state="0"
+					$CONFIG set origin_blank_state_flag="0" 
+					$CONFIG set flag_use_passwd_digest="1" 
+					$CONFIG set dns_hijack="0" 
+					$CONFIG set hijack_process="3" 
+					$CONFIG set hijack_config_status="4" 
+
+					sleep 2
+					killall -SIGUSR2 dnsmasq
+					sleep 1
+					killall -SIGUSR2 dnsmasq
+
+			else
+				# Downgrade FW from SE to non-SE, and then upgrade to SE.
+				$CONFIG set blank_state="0"
+				if [ "x$($CONFIG get flag_use_passwd_digest)" != "x1" ]; then
+					check_security_flag="1"
+				fi
+			fi
+		else
+			# Config default.
+			$CONFIG set blank_state="0"
+			check_security_flag="1"
+			if [ "x$($CONFIG get dns_hijack)" = "x0" ];then
+				$CONFIG set origin_blank_state_flag="1"
+			fi
+		fi
+	else
+		# Upgrade process.
+		$CONFIG set origin_blank_state_flag="0"
+		if [ "x$($CONFIG get flag_use_passwd_digest)" != "x1" ]; then
+			$CONFIG set origin_blank_state_flag="1"
+			check_security_flag="1"
+		fi
+	fi
+
+	local http_passwd=$($CONFIG get http_passwd)
+	local answer1=$($CONFIG get PWD_answer1)
+	local answer2=$($CONFIG get PWD_answer2)
+	if [ "x$check_security_flag" = "x1" ]; then
+		if [ "x$(/usr/sbin/hash-data -c "$http_passwd")" = "x1" ]; then
+			$CONFIG set weak_password_check="1"
+		fi
+	$CONFIG set	http_passwd="$(/usr/sbin/hash-data -e "$http_passwd")"
+	$CONFIG set	http_passwd_digest="$(/usr/sbin/hash-data -e "$http_passwd")"
+	$CONFIG set samba_passwd="$(/usr/sbin/hash-data -s "$http_passwd")"
+	$CONFIG set	PWD_answer1="$(/usr/sbin/hash-data -e "$answer1")"
+	$CONFIG set	PWD_answer2="$(/usr/sbin/hash-data -e "$answer1")"
+	$CONFIG set flag_use_passwd_digest="1"
+	fi
+
+	$CONFIG commit
+}
+
+boot() {
+	mount_root done
+	rm -f /sysupgrade.tgz
+	local hk_board=$(grep -w  "IPQ807x" /proc/device-tree/model | awk -F: '{print $1}')
+
+    if [ "x$($CONFIG get factory_mode)" = "x1" ]; then
+        utelnetd_p=`pidof utelnetd`
+        if [ "x${utelnetd_p}" = "x" ]; then
+            /usr/sbin/utelnetd -d -i br0
+        fi
+    fi
+
+	security_enhancement
+	#Stop Power LED blink to identify the end of boot process
+	if [ "x$($CONFIG get factory_mode)" = "x1" ]; then
+		/bin/sleep 12
+		/sbin/ledcontrol -n power -c white -s on
+	else
+		/sbin/ledcontrol -n power -c white -s on
+	fi
+
+    if [ "x$($CONFIG get factory_mode)" = "x1" ]; then
+        /bin/rm /sbin/ping-netgear
+        echo "in factory mode"
+    else
+        /sbin/ping-netgear &
+    fi
+
+	/sbin/check_status.sh &
+        # check disk and make sure all disks mouted successfully
+        echo "check mouted USB partions..." > /dev/console
+        /sbin/usb_mounted_check.sh
+	# According to Salter.Xu's request, echo boot done log to console
+	# for automated testing tool identify boot done
+	echo "DUT_boot_up_done!!!!!!!!!!" > /dev/console
+
+	# Set LED option mode
+	led_option="$($CONFIG get led_blinking_setting)"
+	if [ "$led_option" = "0" ]; then
+		/sbin/ledcontrol -n option_blink -c green -s on
+	elif [ "$led_option" = "1" ]; then
+		/sbin/ledcontrol -n option_on -c green -s on
+	elif [ "$led_option" = "2" ]; then
+		/sbin/ledcontrol -n option_off -c green -s on
+	fi
+
+	# process user commands
+	[ -f /etc/rc.local ] && {
+		sh /etc/rc.local
+	}
+
+	# set leds to normal state
+	. /etc/diag.sh
+	set_state done
+
+	# start wireless temp control
+	if [ "$($CONFIG get factory_mode)" != "1" ]; then
+		/sbin/thermal.sh start 88 80 60 &
+	fi
+
+	[ "$(/bin/config get fwupgrade_performed)" = "1" ] && /bin/config set fwupgrade_performed=0
+
+	# Enable USB power supply
+	echo 1 > /proc/simple_config/usb5v_0
+	echo 1 > /proc/simple_config/usb5v_1
+}

@@ -1,0 +1,17 @@
+#!/bin/sh
+
+BRIDGE="/tmp/bridge_info"
+
+brctl show | awk '{if($1~/br[1-9]/) print $1}' > $BRIDGE
+while read bridge
+do
+	iptables -N ${bridge}_fwd
+	iptables -I FORWARD -i $bridge -j ${bridge}_fwd
+	iptables -I ${bridge}_fwd -o $bridge -j loc2loc
+done < $BRIDGE
+
+opmode=$(config get i_opmode)
+if [ "$opmode" = "iptv" ]; then
+	iptables -I FORWARD -i brwan -j brwan_fwd
+	iptables -I brwan_fwd -o brwan -j loc2loc
+fi

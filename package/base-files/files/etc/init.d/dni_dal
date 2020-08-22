@@ -1,0 +1,45 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006 OpenWrt.org 
+
+START=16
+
+boot()
+{
+	factory_mode_flag=`/bin/config get factory_mode`
+	if [ "x$factory_mode_flag" = "x1" ]; then
+		exit 0
+        fi
+
+	#create a new partition and mount it to /tmp/arlo
+	if [ "x$(ubinfo -a |grep vol_ntgrdata)" = "x" ]; then
+		mkdir -p /tmp/dal
+	fi
+	mount_point="/tmp/dal"
+	if [ "x$(ubinfo -a |grep vol_ntgrdata)" != "x" ]; then
+		if [ "x`/bin/config get reset_arlo`" != "x0" ];then
+			rm -rf /tmp/ntgrdata/dal/*
+			/bin/config set reset_arlo=0 && config commit
+		fi
+		ln -s /tmp/ntgrdata/dal $mount_point
+	else
+		ubidev=$(ubinfo -a | grep -B5 vol_dal | sed -nr 's/Volume ID:.*\(on (ubi.*)\)/\1/p')
+		[ "x$ubidev" = "x" ] && {
+			# make a new volume on ubi0 by default. Should be OK because we always attache
+			# ntgrdata UBI image firstly. Any better idea?
+			ubidev="ubi0"
+			size="5MiB"
+			ubimkvol /dev/$ubidev -N vol_dal -s $size
+		}
+		ubidev_name=$(ubinfo -a | grep vol_dal)
+		[ "x$ubidev_name" != "x" ] && {
+			ubirmvol /dev/$ubidev -N vol_dal
+		}
+		if [ "x`/bin/config get reset_arlo`" != "x0" ];then
+			echo "have reset factory,partition will be will re-format"
+			arlo_nand_partition=`cat /proc/mtd |grep vol_dal | awk -F ': ' '{print $1}'`
+			flash_erase /dev/$arlo_nand_partition 0 0
+			/bin/config set reset_arlo=0 && config commit
+		fi
+		mount -t ubifs $ubidev:vol_dal $mount_point
+	fi
+}

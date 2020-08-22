@@ -1,0 +1,312 @@
+<% http_header("style/form2.css", "/funcs.js", "/basic.js", "/rae_bridge.js", "/advanced.js") %>
+<% body_header("_wladv", "rae_bridge_waiting.htm", "wl_bridge_mode") %>
+<div id="black_over_lay" class="black_overlay">
+</div>
+<style type="text/css">
+<% rae_css() %>
+.ipbox{width: 450px; height: 210px; position:absolute; left:5%; top:320px;z-index:2; }
+</style>
+<div class="page_title headstyle1"><% rae_page_title() %></div>
+<div class="fix_button">
+<TABLE width=100% border=0 cellpadding=0 cellspacing=2>
+<TR>
+	<TD nowrap align=center>
+	<script>
+	var master="<% cfg_get("http_loginname") %>";
+	if( master == "admin" )
+		document.write('<input class="new_cancel_bt ui-corner-all" type="button" name="Cancel" id="cancel" value="$cancel_mark" onClick="location.href=\'rae_main.htm\';"><input class="new_apply_bt ui-corner-all" type="button" name="Apply" id="apply" value="$apply_mark" onClick="checkbridge(document.forms[0]);return false;">');
+	else
+		document.write('<input class="new_greycancel_bt ui-corner-all" type="button" name="Cancel" id="cancel" value="$cancel_mark" disabled><input class="new_greyapply_bt ui-corner-all" type="button" name="Apply" id="apply" value="$apply_mark" disabled>');
+        
+	</script>
+	</TD>
+</TR>
+</TABLE>
+</div>
+<script>
+var ac_router_flag = getTop(window).ac_router_flag;
+var country="<% cfg_get("wl_country") %>";
+var wla_channel="<% cfg_get("wla_channel") %>";
+var wps_progress_status="<% wps_process_status() %>";
+
+//wireless schedule
+var ntp_updated = "<% access_file("/tmp/ntp_updated") %>";
+
+// b/g/n
+var old_wds_endis_fun="<% cfg_get("wds_endis_fun") %>";
+var old_wla_wds_endis_fun="<% cfg_get("wla_wds_endis_fun") %>";
+var old_wds_repeater_basic="<% cfg_get("wds_repeater_basic") %>";
+var old_endis_wl_radio='<% enable_ap_orNot("bgn") %>';
+var old_endis_ssid_broadcast='<% cfg_get("endis_ssid_broadcast") %>';
+var security_mode='<% cfg_get("wl_sectype") %>';
+var wlan_adv_wpspin="<% pin_num() %>";
+var wlendis_pin='<% cfg_get("endis_pin") %>';
+var wlendis_pin_tmp='<% cfg_get("wps_lock_down") %>';
+var wps_status='<% cfg_get("wps_status") %>';
+var wla_wps_status='<% cfg_get("wla_wps_status") %>';
+var endis_wl_wmm="<% cfg_get("endis_wl_wmm") %>";
+
+// a/n
+var old_endis_wla_radio='<% enable_ap_orNot("an") %>';
+var old_wla_endis_ssid_broadcast='<% cfg_get("wla_endis_ssid_broadcast") %>';
+var security_an_mode='<% cfg_get("wla_sectype") %>';
+var endis_wla_wmm="<% cfg_get("endis_wla_wmm") %>";
+var an_router_flag = parent.an_router_flag;
+var qos_router_flag = parent.qos_router_flag;
+var transmit_router_flag = parent.transmit_router_flag;
+var guest_router_flag=parent.guest_router_flag;
+var bridgemode_flag=parent.bridgemode_flag;
+
+var dyn_get_bridge_ip_flag="<% cfg_get("bridge_ether_ip_assign") %>";
+var dyn_get_bridge_dns_flag="<% cfg_get("bridge_ether_dns_assign") %>";
+var opener_apply_click=0;
+var notShow=0;
+
+function loadvalue()
+{
+	var form=document.forms[0];
+
+	//menu_color_change('wlbridge');
+	
+	getTop(window).enabled_wps=<% wps_menu() %>;
+	getTop(window).enabled_wds=<% wds_enable() %>;
+		//getTop(window).enabled_wds=1;  //ma de zhongyu
+		
+		if( getTop(window).location.href.indexOf("adv_index.htm") != -1 )
+					menu_color_change('rae');
+		else //bug23925 in basic page: if the radio is Off, the wireless button will link to wladv page.
+		{
+			getTop(window).endis_wl_radio=old_endis_wl_radio;
+			getTop(window).endis_wla_radio=old_endis_wla_radio;
+			basic_menu_color_change('wireless');
+		} 
+		
+
+	//setIP(form);
+
+	if(dyn_get_bridge_ip_flag == "1")
+		form.dyn_bridge_get_ip.checked = true;
+	else
+		form.dyn_bridge_get_ip.checked = false;
+	if(dyn_get_bridge_dns_flag == "1")
+		form.dyn_dns.checked = true;
+	else
+		form.dyn_dns.checked = false;
+
+	var bridgemode_get_ip="<% bridge_mode_ip() %>";
+	
+	if (bridgemode_get_ip!="")
+	{
+		if(bridgemode_get_ip=="0.0.0.0")
+			form.SPethr1.value=form.SPethr2.value=form.SPethr3.value=form.SPethr4.value="";
+		else
+		{
+			var ip_array=bridgemode_get_ip.split('.');
+			form.SPethr1.value=ip_array[0];
+			form.SPethr2.value=ip_array[1];
+			form.SPethr3.value=ip_array[2];
+			form.SPethr4.value=ip_array[3];
+		}
+	}
+	var bridgemode_get_subnet="<% bridge_mode_netmask() %>";
+	if (bridgemode_get_subnet!="")
+	{
+		if(bridgemode_get_subnet=="0.0.0.0")
+			form.SMask1.value=form.SMask2.value=form.SMask3.value=form.SMask4.value=""; 
+		else
+		{
+			var mask_array=bridgemode_get_subnet.split('.');
+			form.SMask1.value=mask_array[0];
+			form.SMask2.value=mask_array[1];	
+			form.SMask3.value=mask_array[2];
+			form.SMask4.value=mask_array[3]; 
+		}
+	}
+	var bridgemode_get_gateway="<% bridge_mode_gateway() %>";
+	if (bridgemode_get_gateway!="")
+	{
+		if(bridgemode_get_gateway=="0.0.0.0")
+		{
+			form.SGateway1.value=form.SGateway2.value=form.SGateway3.value=form.SGateway4.value="";
+		}
+		else
+		{
+			var gtw_array=bridgemode_get_gateway.split('.');
+			form.SGateway1.value=gtw_array[0];
+			form.SGateway2.value=gtw_array[1];
+			form.SGateway3.value=gtw_array[2];
+			form.SGateway4.value=gtw_array[3];	
+		}
+	}
+	//setDNS(form);
+	var bridgemode_get_dns1="<% bridge_ether_dns() %>";
+	if(notShow == "1")
+		var bridgemode_get_dns1="0.0.0.0";
+	if (bridgemode_get_dns1!="" && bridgemode_get_dns1.indexOf(":")==-1)
+	{
+		if(bridgemode_get_dns1=="0.0.0.0")
+		form.SDAddr1.value=form.SDAddr2.value=form.SDAddr3.value=form.SDAddr4.value="";
+		else
+		{
+			var dns1_array=bridgemode_get_dns1.split('.');
+			form.SDAddr1.value=dns1_array[0];
+			form.SDAddr2.value=dns1_array[1];
+			form.SDAddr3.value=dns1_array[2];
+			form.SDAddr4.value=dns1_array[3];
+		}
+	}
+	var bridgemode_get_dns2="<% bridge_ether_dns("1") %>";
+	if(notShow == "1")
+		var bridgemode_get_dns2="0.0.0.0";
+	if (bridgemode_get_dns2!="" && bridgemode_get_dns2.indexOf(":")==-1)
+	{
+		if(bridgemode_get_dns2=="0.0.0.0")
+		form.SPDAddr1.value=form.SPDAddr2.value=form.SPDAddr3.value=form.SPDAddr4.value="";
+		else
+		{
+			var dns2_array=bridgemode_get_dns2.split('.');
+			form.SPDAddr1.value=dns2_array[0];
+			form.SPDAddr2.value=dns2_array[1];
+			form.SPDAddr3.value=dns2_array[2];
+			form.SPDAddr4.value=dns2_array[3];
+		}
+	}
+	getAddrDynamically();
+}
+function getAddrDynamically(){
+	var cf=document.forms[0];
+	var ip_dyn_flag = cf.dyn_bridge_get_ip.checked;
+	var dns_dyn_flag = cf.dyn_dns.checked;
+	if(ip_dyn_flag == false)
+	{
+		cf.dyn_dns.checked = false;
+		cf.dyn_dns.disabled = true;
+		dns_dyn_flag = false;
+	}
+	else
+		cf.dyn_dns.disabled = false;
+	setDisabled(ip_dyn_flag, cf.SPethr1, cf.SPethr2, cf.SPethr3, cf.SPethr4, cf.SMask1, cf.SMask2, cf.SMask3, cf.SMask4, cf.SGateway1, cf.SGateway2, cf.SGateway3, cf.SGateway4);
+	setDisabled(dns_dyn_flag, cf.SDAddr1, cf.SDAddr2, cf.SDAddr3, cf.SDAddr4, cf.SPDAddr1, cf.SPDAddr2, cf.SPDAddr3, cf.SPDAddr4);
+}
+function window_open_bridge()
+{
+
+	form=document.forms[0];
+	
+	if(ac_router_flag == 1)
+		str="rae_bridge_wireless_settings.html?ac_router_flag=1";
+	else
+		str="rae_bridge_wireless_settings.html?ac_router_flag=0";
+	window.open(str,'net_folder','resizable=0,scrollbars=yes,width=600,height=535,left=400,top=300').focus();
+}
+</script>
+<input type="hidden" name="hid_enable_bridgemode" value="1">
+<input type="hidden" name="hid_dyn_ip">
+<input type="hidden" name="hid_dyn_dns">
+<input type="hidden" name="hid_bridge_ipaddr">
+<input type="hidden" name="hid_bridge_subnet">
+<input type="hidden" name="hid_bridge_gateway">
+<input type="hidden" name="bridge_dnsaddr1">
+<input type="hidden" name="bridge_dnsaddr2">
+<div id="main" class="main_top_button">
+<% pop_help_button() %>
+
+<!--TR><TD nowrap colspan=4><b>&nbsp; Access bridge Mode allows you to add a second router to your network as a wireless bridge point</b></TD></TR--><!--$ap_descript-->
+<% rae_radios("3") %>
+<div style="font-size:14px; margin:0px 20px 30px 30px">
+<TABLE width=100% border=0 cellpadding=0 cellspacing=2>
+<TR><td colspan=4>&nbsp;&nbsp;</td></TR>
+
+<TR id=bridge_seting><TD colspan=4>	
+<div id="long_button" class="overlength_bt el-hide" onClick='window_open_bridge();'>
+	<div class="bt_left"></div>
+	<div class="bt_middle"><span>$bridge_wireless_set</span></div>
+	<div class="bt_right"></div>
+</div>
+<input class="button-sty1 el-show" type="button" name="Set Bridge Mode Wireless Settings" id="setup_bridge" value="$bridge_wireless_set" onClick='window_open_bridge();'>
+</TD></TR>
+<TR><td colspan=4>&nbsp;&nbsp;</td></TR>
+
+<TR><TD nowrap colspan=3>&nbsp; $lan_mark_name: 
+<script>
+var old_name = "<% cfg_get("ap_netbiosname") %>";
+var dev_name = "<% cfg_get("Device_name") %>";
+if( old_name != "" )
+	dev_name = old_name;
+document.write(dev_name);
+</script>
+ &nbsp;&nbsp;&nbsp; <input class="new_edit_bt ui-corner-all" type="button" id="edit_devname_bt" name="edit" value="$edit_mark" onClick="edit_devicename(dev_name)"></TD><TD></td></TR>
+<TR>
+	<TD colspan="3">
+		<input type="checkbox" name="dyn_bridge_get_ip" onclick="getAddrDynamically();" id="dyn_bridge_get_ip"><label for="dyn_bridge_get_ip">$lan_ip_dyn</label>
+	</TD>
+</TR>
+<TR id=bridge_addr>
+	<TD class='el-hide'><img src=/spacer.gif width=20 height=12 border=0></TD>
+	<TD nowrap>$wds_ipaddr</TD>
+	<TD nowrap colspan=2 align=left class="ip-input-row top0">
+		<input type="text" name="SPethr1" id="s_pethr1" size="3" autocomplete="off" maxlength="3" onFocus="this.select();" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);" >.
+		<input type="text" name="SPethr2" id="s_pethr2" size="3" autocomplete="off" maxlength="3" onFocus="this.select();" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">.
+		<input type="text" name="SPethr3" id="s_pethr3" size="3" autocomplete="off" maxlength="3" onFocus="this.select();" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">.
+		<input type="text" name="SPethr4" id="s_pethr4" size="3" autocomplete="off" maxlength="3" onFocus="this.select();" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">
+	</TD>
+</TR>
+<TR id=bridge_mask>
+	<TD class='el-hide'><img src=/spacer.gif width=20 height=12 border=0></TD>
+	<TD nowrap>$lan_mark_subnet</TD>		
+	<TD nowrap colspan=2 align=left class="ip-input-row top0">
+		<input type="text" name="SMask1" id="s_mask1" size="3" autocomplete="off" maxlength="3" onFocus="this.select();" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);" >.
+		<input type="text" name="SMask2" id="s_mask2" size="3" autocomplete="off" maxlength="3" onFocus="this.select();" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">.
+		<input type="text" name="SMask3" id="s_mask3" size="3" autocomplete="off" maxlength="3" onFocus="this.select();" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">.
+		<input type="text" name="SMask4" id="s_mask4" size="3" autocomplete="off" maxlength="3" onFocus="this.select();" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">
+	</TD> 
+</TR>
+<TR id=bridge_gateway>
+	<TD class='el-hide'><img src=/spacer.gif width=20 height=12 border=0></TD>
+	<TD nowrap>$lan_mark_gateway</TD>		
+	<TD nowrap colspan=2 align=left class="ip-input-row top0">
+		<input type="text" name="SGateway1" id="s_gateway1" size="3" autocomplete="off" maxlength="3" onFocus="this.select();" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);" >.
+		<input type="text" name="SGateway2" id="s_gateway2" size="3" autocomplete="off" maxlength="3" onFocus="this.select();" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">.
+		<input type="text" name="SGateway3" id="s_gateway3" size="3" autocomplete="off" maxlength="3" onFocus="this.select();" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">.
+		<input type="text" name="SGateway4" id="s_gateway4" size="3" autocomplete="off" maxlength="3" onFocus="this.select();" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">
+	</TD>
+</TR>
+<TR>
+	<TD colspan="3">
+		<input type="checkbox" name="dyn_dns" onclick="getAddrDynamically();" id="dyn_dns_r"><label for="dyn_dns_r">$dyn_dns</label>
+	</TD>
+</TR>
+<TR id=bridge_daddr>
+	<TD class='el-hide'><img src=/spacer.gif width=20 height=12 border=0></TD>
+	<TD nowrap>$basic_int_primary_dns</TD>
+	<TD nowrap colspan=2 align=left class="ip-input-row top0">
+	<input type="text" name="SDAddr1" id="s_daddr1" size="3" autocomplete="off" maxlength="3" onFocus="this.select();" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);" >.
+	<input type="text" name="SDAddr2" id="s_daddr2" size="3" autocomplete="off" maxlength="3" onFocus="this.select();" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">.
+	<input type="text" name="SDAddr3" id="s_daddr3" size="3" autocomplete="off" maxlength="3" onFocus="this.select();" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">.
+	<input type="text" name="SDAddr4" id="s_daddr4" size="3" autocomplete="off" maxlength="3" onFocus="this.select();" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">
+	</TD>
+</TR>
+<TR id=bridge_pdaddr>
+	<TD class='el-hide'><img src=/spacer.gif width=20 height=12 border=0></TD>
+	<TD nowrap>$basic_int_second_dns</TD>
+	<TD nowrap colspan=2 align=left class="ip-input-row top0">
+	<input type="text" name="SPDAddr1" id="s_pdaddr1" size="3" autocomplete="off" maxlength="3" onFocus="this.select();" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);" >.
+	<input type="text" name="SPDAddr2" id="s_pdaddr2" size="3" autocomplete="off" maxlength="3" onFocus="this.select();" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">.
+	<input type="text" name="SPDAddr3" id="s_pdaddr3" size="3" autocomplete="off" maxlength="3" onFocus="this.select();" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">.
+	<input type="text" name="SPDAddr4" id="s_pdaddr4" size="3" autocomplete="off" maxlength="3" onFocus="this.select();" onkeydown="keydown(event,this);" onKeyPress="return getkey('num',event);" onkeyup="keyup(event,this);">
+	</TD>
+</TR>
+
+<TR class='el-hide'><td colspan=4>&nbsp;&nbsp;</td></TR>
+<TR id=bridge_text_id5>
+	<TD>&nbsp;</TD><TD  colspan=3>$ap_work</TD>
+</TR>
+</TABLE>
+</div>
+</div>
+<% help_box("0","_rae_bridge") %>
+</FORM>
+</BODY>
+</HTML>
+
+

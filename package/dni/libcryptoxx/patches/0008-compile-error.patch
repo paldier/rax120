@@ -1,0 +1,33 @@
+--- libcryptoxx-5.6.0/secblock.h	2009-03-15 09:48:02.000000000 +0800
++++ libcryptoxx-5.6.0.new/secblock.h	2017-04-19 09:08:54.000694247 +0800
+@@ -94,7 +94,7 @@
+ 
+ 	pointer allocate(size_type n, const void * = NULL)
+ 	{
+-		CheckSize(n);
++		this->CheckSize(n);
+ 		if (n == 0)
+ 			return NULL;
+ 
+--- libcryptoxx-5.6.0/panama.cpp	2009-03-02 02:44:00.000000000 +0800
++++ libcryptoxx-5.6.0.new/panama.cpp	2017-04-19 09:14:01.560852497 +0800
+@@ -420,7 +420,7 @@
+ {
+ 	this->ThrowIfInvalidTruncatedSize(size);
+ 
+-	PadLastBlock(this->BLOCKSIZE, 0x01);
++	this->PadLastBlock(this->BLOCKSIZE, 0x01);
+ 	
+ 	HashEndianCorrectedBlock(this->m_data);
+ 
+--- libcryptoxx-5.6.0/algebra.cpp	2009-03-02 02:44:04.000000000 +0800
++++ libcryptoxx-5.6.0.new/algebra.cpp	2017-04-19 09:10:43.520693487 +0800
+@@ -58,7 +58,7 @@
+ 	Element g[3]={b, a};
+ 	unsigned int i0=0, i1=1, i2=2;
+ 
+-	while (!Equal(g[i1], this->Identity()))
++	while (!this->Equal(g[i1], this->Identity()))
+ 	{
+ 		g[i2] = Mod(g[i0], g[i1]);
+ 		unsigned int t = i0; i0 = i1; i1 = i2; i2 = t;

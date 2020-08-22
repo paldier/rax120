@@ -1,0 +1,10 @@
+#!/bin/sh
+
+CONFIG=/bin/config
+
+# Disable link aggregation in factory mode
+[ "$($CONFIG get factory_mode)" = "1" ] && $CONFIG set link_aggregation_sta=0
+[ "$($CONFIG get factory_mode)" = "1" ] && $CONFIG set link_aggregation_wan=0
+
+/usr/sbin/bond-set boot
+

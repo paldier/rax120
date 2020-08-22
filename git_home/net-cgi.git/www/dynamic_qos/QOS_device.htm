@@ -1,0 +1,24 @@
+<% start_netscan() %>
+<HTML>
+	<HEAD>
+		<script language="javascript" type="text/javascript" src="/funcs.js"></script>
+
+<script language="javascript" type="text/javascript">
+getTop(window).back_flag = 0;
+var streamboost_enable="<% cfg_get("streamboost_enable") %>";
+if(streamboost_enable == "1" && getTop(window).enable_ap_flag != 1 && getTop(window).enable_bridge_flag == 0 && getTop(window).use_orbi_style_flag != "1")
+	document.write('<META http-equiv="Refresh" content="1; url=QOS_show_device.htm">');
+else
+	document.write('<META http-equiv="Refresh" content="1; url=QOS_list_device.htm">');
+</script>
+<META http-equiv="content-type" content='text/html; charset=UTF-8'>
+<LINK rel="stylesheet" type="text/css" href="style/hijack_style.css">
+</HEAD>
+<BODY bgcolor=#ffffff>
+<div id="pls_wait_div">
+<div  align="center"><BR><BR><B>$wizard_pls_wait</B><BR><BR></div>
+<div class="waiting_img_div" align="center"><img src="image/wait30.gif" /></div>
+</div>
+</BODY>
+</HTML>
+

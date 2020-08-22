@@ -1,0 +1,33 @@
+#!/bin/sh
+
+T_HIGH=88
+T_LOW=80
+
+oc () { "$@" >> /dev/console 2>&1 ; }
+
+get_temperature()
+{
+	local t=$(cat /proc/pct2075/temp)
+	oc echo "Temperature : $t"
+	echo $t | awk -F. '{print $1}'
+}
+
+oc echo "otpd start !"
+
+OTP_enable=0
+while true; do
+	if [ $OTP_enable -eq 0 ]; then
+		if [ $(get_temperature) -ge $T_HIGH ]; then
+			oc echo "OTP enable"
+			OTP_enable=1
+			thermaltool -i wifi0 -set -e 1 -lo0 -100 -hi0 108 -off0 50
+		fi
+	else
+		if [ $(get_temperature) -lt $T_LOW ]; then
+			oc echo "OTP disable"
+			OTP_enable=0
+			thermaltool -i wifi0 -set -e 1 -lo0 -100 -hi0 108 -off0 0
+		fi
+	fi
+	sleep 60
+done

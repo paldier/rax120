@@ -1,0 +1,19 @@
+--- wget-1.17.1/src/progress.c.old	2017-05-01 09:28:43.111240213 +0800
++++ wget-1.17.1/src/progress.c	2017-05-01 09:30:37.581240590 +0800
+@@ -948,7 +948,7 @@
+   int progress_size = bp->width - (PROGRESS_FILENAME_LEN + PROGRESS_PERCENT_LEN +
+                                    PROGRESS_DECORAT_LEN + PROGRESS_FILESIZE_LEN +
+                                    PROGRESS_DWNLOAD_RATE + PROGRESS_ETA_LEN);
+-
++  int dl_per = 0;
+   /* The difference between the number of bytes used,
+      and the number of columns used. */
+   int bytes_cols_diff = 0;
+@@ -1010,6 +1010,7 @@
+   if (bp->total_length > 0)
+     {
+       int percentage = 100.0 * size / bp->total_length;
++      dl_per = percentage;
+       assert (percentage <= 100);
+       p += sprintf (p, "%3d%%", percentage);
+     }

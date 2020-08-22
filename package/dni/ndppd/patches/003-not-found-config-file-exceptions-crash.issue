@@ -1,0 +1,17 @@
+diff -urN ndppd-0.2.3.bak/src/conf.cc ndppd-0.2.3/src/conf.cc
+--- ndppd-0.2.3.bak/src/conf.cc	2019-08-23 16:38:36.953911211 +0800
++++ ndppd-0.2.3/src/conf.cc	2019-08-23 17:03:46.237910049 +0800
+@@ -76,8 +76,12 @@
+ {
+     try {
+         std::ifstream ifs;
+-        ifs.exceptions(std::ifstream::failbit | std::ifstream::badbit);
++        //ifs.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+         ifs.open(path.c_str(), std::ios::in);
++        if (!ifs.is_open()) {
++            logger::error() << "Failed to load configuration file '" << path << "'";
++            return ptr<conf>();
++        } 
+         ifs.exceptions(std::ifstream::badbit);
+         std::string buf((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+ 

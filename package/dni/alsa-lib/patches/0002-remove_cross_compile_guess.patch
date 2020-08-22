@@ -1,0 +1,32 @@
+From e3e04d254fb6bac49a285775b729e28b0500476c Mon Sep 17 00:00:00 2001
+From: Michael Heimpold <mhei@heimpold.de>
+Date: Sun, 21 Dec 2014 01:03:49 +0100
+Subject: [PATCH] threads: use forward declarations only for glibc (fixes
+ #704908)
+
+The declarations of pthread functions, used to generate weak references
+to them, fail to suppress macros. Thus, if any pthread function has
+been provided as a macro, compiling threads.c will fail.
+--- a/configure.ac
++++ b/configure.ac
+@@ -27,20 +27,6 @@ AC_PREFIX_DEFAULT(/usr)
+ 
+ dnl Checks for programs.
+ 
+-dnl try to gues cross-compiler if not set
+-if test "x$host" != "x$build" -a -z "`echo $CC | grep -e '-gcc'`";
+-then
+-  AC_MSG_CHECKING(for cross-compiler)
+-
+-  which ${program_prefix}gcc >/dev/null 2>&1 && CC=${program_prefix}gcc
+-  which ${host_cpu}-${host_os}-gcc >/dev/null 2>&1 \
+-  && CC=${host_cpu}-${host_os}-gcc
+-  which ${host_cpu}-${host_vendor}-${host_os}-gcc >/dev/null 2>&1 \
+-  && CC=${host_cpu}-${host_vendor}-${host_os}-gcc
+-
+-  AC_MSG_RESULT($CC)
+-fi
+-	    
+ CFLAGS="$CFLAGS -D_GNU_SOURCE"
+ 
+ 

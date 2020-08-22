@@ -1,0 +1,61 @@
+<% http_header("style/form.css", "/funcs.js") %>
+<% func_header("_Wizard_setup", "RU_detcInetType.html", "ru_wizard_detwan") %>
+<div id="black_over_lay" class="black_overlay">
+</div>
+<div class="page_title">$wizard_head</div>
+<div id="main" class="main">
+<% pop_help_button() %>
+
+<% table_header() %>
+$bluebar
+<% cfg_set("view_wizard", "0") %>
+
+<script>
+function click_next()
+{
+	if (document.forms[0].WANDetc[0].checked == true)
+	{
+		if(getTop(window).wizard_wan_preference == "1")
+		{
+			document.forms[0].submit_flag.value="ru_wizard_detwan";
+			document.forms[0].action="/func.cgi?/BRS_wan_preference.html timestamp=<% cfg_get("ru_wizard_detwan")%>";
+			document.forms[0].submit();
+		}
+		else
+		{
+		if(getTop(window).have_broadband == "1")
+			location.href = "WIZ_sel_3g_adsl.htm";
+		else
+			document.forms[0].submit();
+		}
+	}else
+	{
+		if(getTop(window).dsl_enable_flag == 0)
+		   location.href='BAS_basic.htm';
+		else
+		location.href='BAS_basic_dsl.htm';
+	}
+}
+</script>
+
+<TR><TD nowrap><B>$wizard_setup_info1</B></TD></TR>
+<TR><TD nowrap><B>$wizard_setup_info2</B></TD></TR>
+<TR><TD nowrap><INPUT type="radio"  checked name="WANDetc" value="AutoDetc" id="WANDetc_ye"><label for="WANDetc_ye">$yes_mark</label></TD></TR>
+<TR><TD nowrap><INPUT type="radio" name="WANDetc" value="MyDetc" id="WANDetc_no"><label for="WANDetc_no">$wizard_setup_no</label></TD></TR>
+$bluebar
+<TR><TD nowrap align=center>
+<script>
+var master="<% cfg_get("http_loginname") %>";
+if( master == "admin" )
+	document.write('<INPUT class="short_common_bt" type="button" name="Next" value="$next_mark" onClick="click_next()">');
+else
+	document.write('<INPUT class="short_common1_bt" type="button" name="Next" value="$next_mark" disabled>');
+</script>
+</TD></TR>
+</TABLE>
+
+</div>
+<% help_box("1","_Wizard_setup") %>
+</FORM>
+</BODY>
+</HTML>

@@ -1,0 +1,12 @@
+.delete_bt{width:180px; background: url(../image/buttons.gif) no-repeat -129px 0; height: 22px; color: #f2f2f2; font-family: Arial; font-weight: Bold; font-size: 14px; background-color: transparent; border: none; cursor: pointer; padding-bottom: 2px;}
+.button_line{text-align:center;}
+.contents{border: 1px solid; margin: 5px 10px 50px 10px; padding: 5px; 10px 5px 10px;}
+#policy {overflow: auto; text-align:left; border: 1px solid; margin: 5px 10px 30px 10px; padding: 15px 40px; font-family:"Myriad Pro", Helvetica, Arial, sans-serif}
+#policy >span:first-of-type{text-align: right; padding-right: 20px;}
+#policy h1, .title{text-align: center; font-size: 1.2em; color: black; text-decoration: underline}
+#policy h2{font-size: 1.1em; color: black;}
+#policy span {display: block; margin-top: 7px; margin-bottom: 7px;}
+#policy p span span, p span span span {margin-left: 20px;}
+#policy p span span:first-child, p span:first-of-type {margin-top: 7px;}
+#policy .grey-bg {background-color: #D3D3D3}
+#policy a[href] {color: blue; text-decoration: underline}

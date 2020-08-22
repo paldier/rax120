@@ -1,0 +1,17 @@
+diff -Nur transmission-2.76/libtransmission/fdlimit.c.old transmission-2.76/libtransmission/fdlimit.c
+--- transmission-2.76/libtransmission/fdlimit.c.old	2017-04-19 09:40:11.631388688 +0800
++++ transmission-2.76/libtransmission/fdlimit.c	2017-04-19 09:41:19.740694356 +0800
+@@ -24,11 +24,12 @@
+ #ifdef SYS_DARWIN
+  #include <fcntl.h>
+ #endif
+-
++#if 0
+ #ifdef HAVE_FALLOCATE64
+   /* FIXME can't find the right #include voodoo to pick up the declaration.. */
+   extern int fallocate64 (int fd, int mode, uint64_t offset, uint64_t len);
+ #endif
++#endif
+ 
+ #ifdef HAVE_XFS_XFS_H
+  #include <xfs/xfs.h>

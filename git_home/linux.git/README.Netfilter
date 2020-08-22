@@ -1,0 +1,50 @@
+		DNI Netfilter configure options and proc entries
+
+This document records all configure options proc entry interface about
+DNI Netfilter. Project Leader should reference this document to enable
+or disable features add by DNI.
+
+/proc entries
+=============
+
+/proc/sys/dni_netfilter/conntrack_refresh_support
+
+    Symptom:
+	Refresh the timer of the FTP control session when the FTP data
+	session is keeping transmitting data (It is all TCP protocol) by:
+	# echo "1" > /proc/sys/dni_netfilter/conntrack_refresh_support
+
+    Default:
+	Disable this feature and work just like original Linux netfilter by:
+	# echo "0" > /proc/sys/dni_netfilter/conntrack_refresh_support
+
+/proc/sys/dni_netfilter/conntrack_refresh_outbound_only
+
+    Symptom:
+	Supporting established TCP NAT Outbound & UDP NAT Outbound
+	refresh feature by:
+	# echo "1" > /proc/sys/dni_netfilter/conntrack_refresh_outbound_only
+
+    Default:
+	Disable this feature and work just like original Linux netfilter by:
+	# echo "0" > /proc/sys/dni_netfilter/conntrack_refresh_outbound_only
+
+/proc/sys/dni_netfilter/snatp2p_range_port_full_control
+
+    Symptom:
+	Supporting SNATP2P ranged port full control by:
+	# echo "1" > /proc/sys/dni_netfilter/snatp2p_range_port_full_control
+
+    Default:
+	Disable this feature and work just like original Linux netfilter by:
+	# echo "0" > /proc/sys/dni_netfilter/snatp2p_range_port_full_control
+
+/proc/sys/dni_netfilter/enable_conenat_fast_search
+
+    Symptom:
+	Supporting conenat conntrack fast searching used port:
+	# echo "1" > /proc/sys/dni_netfilter/enable_conenat_fast_search
+
+    Default:
+	Disable this feature by:
+	# echo "0" > /proc/sys/dni_netfilter/enable_conenat_fast_search

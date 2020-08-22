@@ -1,0 +1,28 @@
+From 4898a9398043c0b6fa97eae84dda47edd8d732de Mon Sep 17 00:00:00 2001
+From: yulin.chen <yulin.chen@dniserver.dnish.net>
+Date: Thu, 9 Nov 2017 17:19:07 +0000
+Subject: [PATCH] Fix musl compile error
+
+Signed-off-by: yulin.chen <yulin.chen@dniserver.dnish.net>
+---
+ utelnetd.c |    4 ++++
+ 1 files changed, 4 insertions(+), 0 deletions(-)
+
+diff --git a/utelnetd.c b/utelnetd.c
+index e34d74a..740b7b2 100644
+--- a/utelnetd.c
++++ b/utelnetd.c
+@@ -73,6 +73,10 @@
+ #define getpt() posix_openpt(O_RDWR|O_NOCTTY)
+ #endif
+ 
++#ifdef MUSL_LIBC
++#define getpt() posix_openpt(O_RDWR|O_NOCTTY)
++#endif
++
+ #ifdef DEBUG
+ #define TELCMDS
+ #define TELOPTS
+-- 
+1.7.0.4
+

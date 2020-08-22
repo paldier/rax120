@@ -1,0 +1,821 @@
+1) List the model number. If the open source code archive applies to multiple models, list each model individually.
+
+RAX120
+
+2) List the version number of the firmware/software that correlates with the open source code archive.
+
+RAX120-V1.0.1.128
+
+7) List the main HW platform utilized such as CPU, main chipset, RF chipset, DSP, Switch IC…etc.
+
+IPQ8074(CPU) + QCA8075(Switch) + IPQ8074(5GHz) + IPQ8074(2.4GHz)
+
+8) List the name, version, license, and modification status of the OS for the product
+
+Linux kernel 4.4.60, GPL, Yes
+
+9) List the name, version, license, and modification status of the boot loader for the product
+
+u-boot, 2016.01, GPL, Yes
+
+10) List the name, version, license, and modification status of the toolchain for the product
+
+gcc, 4.8, GPL, No
+
+musl, 1.1.16, MIT, Yes
+
+11) List the name, version, license, and modification status of the tools for the product
+
+autoconf, 2.69, GPL, Yes
+
+automake, 1.15, GPL, Yes
+
+b43-tools, 019, GPL, Yes
+
+bc, 1.06.95, GPL, Yes
+
+bison, 3.0.2, GPL, Yes
+
+ccache, 3.1.9, GPL, No
+
+cloog, 0.18.1, GPL, No
+
+cmake, 3.3.2, GPL, Yes
+
+coccinelle, 1.0.0-rc24, GPL, No
+
+dosfstools, 3.0.27, GPL, Yes
+
+e2fsprogs, 1.42.8, GPL, Yes
+
+elftosb, 10.12.01, GPL, Yes
+
+findutils, 4.4.2, GPL, Yes
+
+firmware-utils, 1, GPL, No
+
+flex, 2.5.39, GPL, Yes
+
+flock, 1, GPL, No
+
+gengetopt, 2.22.6, GPL, Yes
+
+gmp, 5.1.3, GPL, No
+
+gperf, 3.0.3, GPL, No
+
+include, 1, GPL, No
+
+libelf, 0.8.13, GPL, No
+
+libtool, 2.4, GPL, Yes
+
+lzma, 4.65, GPL, Yes
+
+lzma-old, 4.32, GPL, Yes
+
+m4, 1.4.17, GPL, Yes
+
+make-ext4fs, 2015-05-01, GPL, No
+
+Makefile, 1, GPL, No
+
+missing-macros, 10, GPL, No
+
+mkimage, 2014.10, GPL, Yes
+
+mklibs, 0.1.35, GPL, Yes
+
+mm-macros, 0.9.7, GPL, No
+
+mpc, 1.0.2, GPL, No
+
+mpfr, 3.1.2, GPL, Yes
+
+mtd-utils, 1.5.1, GPL, Yes
+
+mtools, 4.0.18, GPL, Yes
+
+padjffs2, 1, GPL, No
+
+patch, 2.7.5, GPL, No
+
+patchelf, 0.8, GPL, Yes
+
+patch-image, 1, GPL, No
+
+pkg-config, 0.29, GPL, Yes
+
+ppl, 1.1, GPL, Yes
+
+qemu, 0.14.1, GPL, No
+
+quilt, 0.63, GPL, Yes
+
+ramdump-parser, 2008-12-18, GPL, Yes
+
+scons, 2.3.1, GPL, Yes
+
+sed, 4.2.2, GPL, Yes
+
+sparse, 0.5.0, GPL, No
+
+squashfs, 3.0, GPL, Yes
+
+squashfs4, 4.2, GPL, Yes
+
+sstrip, 1, GPL, No
+
+upslug2, 20071227, GPL, Yes
+
+upx, 3.09, GPL, Yes
+
+wrt350nv2-builder, 2.4, GPL, No
+
+xz, 5.2.1, GPL, Yes
+
+yaffs2, 2008-12-18, GPL, Yes
+
+12) List the name, version, license, and modification status of the application modules for the product
+
+base-files, 1, GPL, No
+
+ookla, 3.5.6-328, Ookla, No
+
+ufsd, 1, Paragon, No
+
+chkntfs, 1, Paragon, No
+
+fconfig, 20080329, GPL, No
+
+uboot-envtools, 2014.10, GPL, Yes
+
+binutils, 2.24, GPL, Yes
+
+gdb, 7.8, GPL, Yes
+
+oprofile, 0.9.9, GPL, Yes
+
+perf, 4.4.6, GPL, No
+
+strace, 4.8, BSD, Yes
+
+trace-cmd, 2.4.2, GPL, Yes
+
+valgrind, 3.13.0, GPL, Yes
+
+alsa-lib, 1.0.28, GPL, Yes
+
+amule, 2.3.1, GPL, Yes
+
+artmtd, 1, DNI, Yes
+
+aws-iot, 30.0, DNI, Yes
+
+aws-iot-device-sdk, 1.0, Apache, No
+
+avahi, 0.6.31, GPL, Yes
+
+bridge-mode, 1, DNI, Yes
+
+confuse, 2.6, GPL, Yes
+
+curl, 7.29.0, GPL, Yes
+
+datalib, 1.0, DNI, Yes
+
+dbus, 1.4.14, GPL, No
+
+detcable, 1, DNI, Yes
+
+detwan, 1.0, GPL, No
+
+disktype, 1, GPL, No
+
+dni-acl, 1, DNI, Yes
+
+dni-bond, 1, DNI, Yes
+
+dnibusybox, 1.24.1, GPL, No
+
+dnidnsmasq, 2.78, GPL, No
+
+dni-libmtd, 1, GPL, No
+
+dni-mtdoops, 1, GPL, No
+
+dni-ntpclient, 1, GPL, No
+
+dni-openvpn-client, 1.0, GPL, Yes
+
+dnippp, 2.4.7, GPL, No
+
+dni-ripd, 0.01, DNI, Yes
+
+dnitoolbox, 0.1, DNI, Yes
+
+ez-ipupdate, 3.0.10, GPL, No
+
+factory-tools, 1, DNI, Yes
+
+gdbm, 1.8.3, GPL, No
+
+heimdal, 1.5.3, GPL, Yes
+
+i2c-pct2075, 1, GPL, No
+
+igmpproxy_dni, 1, GPL, No
+
+ipp, 1, GPL, No
+
+kmod-conenat, 1, DNI, Yes
+
+kmod-dni_enet, 1, DNI, Yes
+
+kmod-dni-qos, 1, DNI, Yes
+
+kmod-dnisip, 1, GPL, No
+
+kmod-dnshijack, 1, DNI, Yes
+
+kmod-ipv6-cone, 1, DNI, Yes
+
+kmod-l2tp, 1, GPL, No
+
+kmod-netgear-reject, 1, GPL, No
+
+kmod-pptp-alg, 1, GPL, No
+
+kmod-spiadvdos, 1, DNI, Yes
+
+kmod-spidos, 1, DNI, Yes
+
+kmod-trigger, 1, GPL, No
+
+kmod-urlblock, 1, DNI, Yes
+
+led-control, 1, DNI, Yes
+
+libantlr3c, 3.2, GPL, No
+
+libcryptoxx, 5.6.0, GPL, Yes
+
+libdaemon, 0.14, GPL, Yes
+
+libgcrypt, 1.5.0, GPL, No
+
+libgpg-error, 1.9, GPL, No
+
+libplist, 1.8, GPL, Yes
+
+libunistring, 0.9.5, GPL, No
+
+libwxwidgets, 2.8.12, GPL, Yes
+
+libxml2, 2.9.2, GPL, Yes
+
+lighttpd, 1.4.45, GPL, Yes
+
+lltd, 0.1, MICROSOFT WINDOWS RALLY PROGRAM LICENSE, No
+
+lvm2, 2.02.119, GPL, Yes
+
+minidlna, 1.1.5, GPL, Yes
+
+miniupnpd, 20070127, BSD, Yes
+
+mtd-utils, 1.5.0, GPL, Yes
+
+mxml, 2.6, GPL, Yes
+
+net6conf, 0.2, GPL, No
+
+netatalk, 2.2.1, GPL, Yes
+
+netatalk-utility, 1.0.0, GPL, No
+
+net-cgi, 1, BSD, Yes
+
+netgear-integration-api, 1, DNI, Yes
+
+net-util, 1, DNI, Yes
+
+net-wall, 1, DNI, Yes
+
+noip2, 1, GPL, No
+
+ntgrddns, 1, DNI, Yes
+
+openvpn_dni, 2.4.5, GPL, Yes
+
+openvpn-easy-rsa_dni, 2013-01-30, GPL, Yes
+
+openvpn-miscprogs_dni, 1, DNI, Yes
+
+parted, 3.2, GPL, Yes
+
+phddns, 1, GPL, No
+
+pot, 1, GPL, Yes
+
+ppp-nas, 1, GPL, No
+
+proccgi, 1, GPL, No
+
+proftpd, 1.3.5, GPL, No
+
+radardetect, 1, DNI, No
+
+radvd, 1.5, GPL, No
+
+ready-genie-cloud, ready-genie-cloud, DNI, No
+
+samba, 4.6.4, GPL, No
+
+samba-scripts, 1.0.0, DNI, No
+
+sqlite3, 3.6.16, GPL, Yes
+
+ssmtp, 2.64, GPL, Yes
+
+tar, 1.23, GPL, No
+
+telnetenable, 1, GPL, No
+
+trafficmeter, 1, DNI, Yes
+
+transmission, 2.76, GPL, Yes
+
+udhcp, 0.9.8, GPL, Yes
+
+utelnetd, 0.1.9, GPL, Yes
+
+wget, 1.17.1, GPL, Yes
+
+wide-dhcpv6, 20080615, GPL, No
+
+wlan-common, 2.5, DNI, No
+
+zebra, 0.95a, GPL, Yes
+
+zip, 2.32, GPL, No
+
+am33x-cm3, 20130304, GPL, No
+
+ath10k-firmware, 2017-03-29-956e2609b7e42c8c710bba10ef925a5be1be5137, GPL, No
+
+b43legacy-firmware, 3.130.20.0, GPL, No
+
+ixp4xx-microcode, 2.4, GPL, No
+
+linux-firmware, 2016-01-25-52442afee9907bc32a058f22bb3295d040677c26, GPL, No
+
+vsc73x5-ucode, 1, GPL, No
+
+acx-mac80211, 20130909, GPL, Yes
+
+ar7-atm, 1, GPL, No
+
+avila-wdt, 1, GPL, No
+
+brcm2708-gpu-fw, 20150210, GPL, No
+
+broadcom-wl, 5.10.56.27.3, GPL, Yes
+
+button-hotplug, 1, GPL, No
+
+ep80579-drivers, 1.0.34, GPL, Yes
+
+gpio-button-hotplug, 1, GPL, No
+
+hostap-driver, 0.4.9, GPL, Yes
+
+ltq-adsl, 3.24.4.4, GPL, Yes
+
+ltq-adsl-fw, 0.1, GPL, No
+
+ltq-adsl-mei, 1, GPL, No
+
+ltq-atm, 1, GPL, No
+
+ltq-deu, 1, GPL, No
+
+ltq-hcd, 1, GPL, No
+
+ltq-ifxos, 1.5.14, GPL, Yes
+
+ltq-ptm, 1, GPL, No
+
+ltq-tapi, 3.13.0, GPL, Yes
+
+ltq-vdsl, vr9-4.11.4, GPL, Yes
+
+ltq-vdsl-fw, 1, GPL, No
+
+ltq-vdsl-mei, 1.2.0, GPL, Yes
+
+ltq-vmmc, 1.9.0, GPL, Yes
+
+mac80211, 2016-01-10, GPL, Yes
+
+mmc_over_gpio, 1, GPL, No
+
+mt76, 2016-03-03, GPL, No
+
+mwlwifi, 10.3.2.0-20161013, GPL, Yes
+
+om-watchdog, 1, GPL, Yes
+
+rotary-gpio-custom, 1, GPL, No
+
+rtc-rv5c386a, 1, GPL, No
+
+spi-gpio-custom, 1, GPL, No
+
+trelay, 0.1, GPL, No
+
+w1-gpio-custom, 1, GPL, No
+
+wrt55agv2-spidevs, 1, GPL, No
+
+firewall, 2015-07-27, ISC, Yes
+
+gre, 1, GPL, Yes
+
+ipip, 1, GPL, No
+
+ltq-adsl-app, 3.24.4.4, BSD, Yes
+
+ltq-vdsl-app, 4.11.4, BSD, Yes
+
+netifd, 2015-12-16, GPL, Yes
+
+qos-scripts, 1.2.1, GPL, No
+
+soloscli, 1.04, GPL, Yes
+
+swconfig, 1, GPL, No
+
+6in4, 21, GPL, No
+
+6rd, 9, GPL, No
+
+6to4, 12, GPL, No
+
+ds-lite, 7, GPL, No
+
+map, 4, GPL, Yes
+
+odhcp6c, 2016-02-08, GPL, No
+
+thc-ipv6, 2.7, GPL, Yes
+
+authsae, 2014-06-09, BSD, Yes
+
+dnsmasq, 2.79, GPL, Yes
+
+dropbear, 2017.75, MIT, Yes
+
+ead, 1, GPL, No
+
+hostapd, 2017-10-17, BSD, Yes
+
+igmpproxy, 0.1, GPL, Yes
+
+ipset-dns, 2013-05-03, GPL, Yes
+
+ipset, 6.24, GPL, No
+
+lldpd, 0.7.15, ISC, Yes
+
+mdns, 2014-11-03, LGPL, No
+
+odhcpd, 2016-10-09, GPL, No
+
+openvpn, 2.3.18, GPL, Yes
+
+openvpn-easy-rsa, 2013-01-30, GPL, Yes
+
+ppp, 2.4.7, BSD, Yes
+
+relayd, 2015-03-13, GPL, No
+
+samba36, samba-3.6.25, GPL, Yes
+
+uhttpd, 2015-11-08, ISC, Yes
+
+wireguard, 0.0.20171017, GPL/Apache, No
+
+arptables, 0.0.4, GPL, Yes
+
+comgt, 0.32, GPL, Yes
+
+conntrack-tools, 1.4.2, GPL, Yes
+
+curl, 7.57.0, MIT, Yes
+
+dante, 1.2.2, BSD, Yes
+
+ebtables, 2.0.10-4, GPL, Yes
+
+iftop, 1.0pre2, GPL, Yes
+
+iperf, 2.0.5, BSD, Yes
+
+iperf3, 3.0.11, BSD, No
+
+iproute2, 4.0.0, GPL, Yes
+
+iptables, 1.4.21, GPL, Yes
+
+iputils, 20101006, GPL, Yes
+
+iw, 4.9, GPL, Yes
+
+iwcap, 1, Apache, No
+
+iwinfo, 2015-06-01, GPL, Yes
+
+linux-atm, 2.5.2, GPL, Yes
+
+maccalc, 1, GPL, No
+
+nftables, 0.4+2015-04-09, GPL, Yes
+
+owipcalc, 1, Apache, No
+
+resolveip, 1, GPL, No
+
+rssileds, 0.2, GPL, No
+
+tcpdump, 4.9.2, BSD, Yes
+
+umbim, 2015-04-09, GPL, No
+
+uqmi, 2014-12-03, GPL, No
+
+wireless-tools, 29, GPL, Yes
+
+wpan-tools, 0.4, GPL, No
+
+wwan, 2014-07-17, GPL, No
+
+xtables-addons, 2.10, GPL, Yes
+
+bridge-utils, 1.5, GPL, Yes
+
+ethtool, 3.18, GPL, No
+
+jansson, 2.7, GPL, Yes
+
+libxml2, 2.9.2, GPL, Yes
+
+nat46, 6, GPL, Yes
+
+python, 2.7.11, PSF, Yes
+
+qca-nss-cfi, qca-nss-cfi, Atheros, Yes
+
+qca-nss-clients, qca-nss-clients, Atheros, Yes
+
+qca-nss-crypto, qca-nss-crypto, Atheros, Yes
+
+qca-nss-dp, qca-nss-dp, Atheros, Yes
+
+qca-nss-drv, qca-nss-drv, Dual BSD/GPL, Yes
+
+qca-nss-ecm, qca-nss-ecm, Dual BSD/GPL, Yes
+
+qca-ssdk, qca-ssdk, Atheros, Yes
+
+qca-ssdk-shell, qca-ssdk-shell, Atheros, Yes
+
+qsdk-wifi-script, 1, DNI, Yes
+
+shortcut-fe, 1, Dual BSD/GPL, Yes
+
+simulated-driver, 1, Dual BSD/GPL, Yes
+
+ca-certificates, 20161130, GPL, No
+
+fstools, 2016-01-10, GPL, No
+
+mountd, 2015-11-22, GPL, No
+
+mtd, 1, GPL, No
+
+opkg, 9c97d5ecd795709c8584e972bfdf3aee3a5b846d, GPL, Yes
+
+procd, 2015-10-29.1, GPL, Yes
+
+rpcd, 2016-06-30, ISC, No
+
+ubox, 2015-11-22, GPL, No
+
+ubus, 2015-05-25, GPL, No
+
+uci, 2015-08-27.1, GPL, No
+
+udev, 173, GPL, Yes
+
+usign, 2015-05-08, GPL, No
+
+zram-swap, 1, GPL, No
+
+admswconfig, 0.1, GPL, Yes
+
+alsa, 1, GPL, No
+
+busybox, 1.25.1,  GPL, Yes
+
+bzip2, 1.0.6, BZIP2, No
+
+bzip2, 1.0.6, GPL, No
+
+e2fsprogs, 1.42.12, GPL, Yes
+
+fbtest, 1, GPL, No
+
+fuse, 2.9.3, LGPL/GPL, Yes
+
+hostap-utils, 0.4.7, GPL, No
+
+jsonfilter, 2014-06-19, GPL, No
+
+lrzsz, 0.12.20, GPL, No
+
+lua, 5.1.5, MIT, Yes
+
+mdadm, 3.2.5, GPL, Yes
+
+mkelfimage, 2.7, GPL, Yes
+
+nvram, 1, GPL, No
+
+otrx, 1, GPL, No
+
+pm-utils, 1.4.1, GPL, No
+
+px5g, 1, GPL, No
+
+px5g-standalone, 1, GPL, No
+
+robocfg, 0.01, GPL, No
+
+spidev_test, 1, GPL, No
+
+stress, 1.0.4, GPL, No
+
+sysupgrade-helper, u-boot-2016, Dual BSD/GPL, No
+
+ubi-utils, 1.5.1, GPL, Yes
+
+ugps, 2015-08-17, GPL, No
+
+usbmode, 2014-08-26, GPL, No
+
+usbreset, 1, GPL, No
+
+usbutils, 007, GPL, No
+
+util-linux, 2.25.2, GPL, Yes
+
+xfsprogs, 3.1.7, GPL, Yes
+
+13) List the name, version, license, and modification status of the library modules for the product
+
+argp-standalone, 1.3, LGPL, Yes
+
+cyassl, 3.8.0, GPL, Yes
+
+db47, 4.7.25.NC, GPL, Yes
+
+elfutils, 0.161, GPL, Yes
+
+expat, 2.1.0, MIT, No
+
+ffmpeg, 2.6.2, GPL, No
+
+flac, 1.3.1, GPL, Yes
+
+gettext, 1, GPL, No
+
+gettext-full, 0.19.6, GPL, Yes
+
+gmp, 6.0.0, GPL, No
+
+libb64, 1.2.1, GPL, No
+
+libbsd, 0.3.0, BSD, Yes
+
+libconfig, 1.4.9, LGPL, No
+
+libevent2, 2.0.22, BSD, No
+
+libexif, 0.6.21, LGPL, Yes
+
+libiconv, 1, LGPL, No
+
+libiconv-full, 1.11.1, GPL, Yes
+
+libid3tag, 0.15.1b, GPL, No
+
+libjpeg, 9a, GPL, No
+
+libjson-c, 0.12, MIT, Yes
+
+libmnl, 1.0.3, LGPL, Yes
+
+libnetfilter-conntrack, 1.0.4, GPL, No
+
+libnetfilter-cthelper, 1.0.0, GPL, No
+
+libnetfilter-cttimeout, 1.0.0, GPL, No
+
+libnetfilter-log, 1.0.1, GPL, Yes
+
+libnetfilter-queue, 1.0.2, GPL, No
+
+libnfnetlink, 1.0.1, GPL, Yes
+
+libnftnl, 1.0.3, GPL, No
+
+libnl, 3.2.21, GPL, Yes
+
+libnl-tiny, 0.1, LGPL, No
+
+libogg, 1.3.2, BSD, No
+
+libpcap, 1.5.3, BSD, Yes
+
+libreadline, 6.3, GPL, Yes
+
+libroxml, 2.3.0, LGPL, No
+
+librpc, 2015-11-04, GPL, No
+
+libtool, 2.4, GPL, No
+
+libubox, 2015-11-08, GPL, No
+
+libunwind, 2015-07-04, GPL, Yes
+
+libusb, 1.0.19, LGPL, Yes
+
+libusb-compat, 0.1.4, LGPL, No
+
+libvorbis, 1.3.5, GPL, No
+
+lzo, 2.10, GPL, No
+
+mbedtls, 2.0.0, GPL, Yes
+
+ncurses, 5.9, MIT, Yes
+
+nettle, 3.1.1, GPL, No
+
+nghttp2, 1.29.0, MIT, No
+
+ocf-crypto-headers, 20110720, GPL, No
+
+openssl, 1.0.2n, GPL, Yes
+
+pcre, 7.6, GPL, Yes
+
+polarssl, 1.3.17, GPL, Yes
+
+popt, 1.16, GPL, No
+
+sysfsutils, 2.1.0, LGPL, Yes
+
+toolchain, 1, GPL, No
+
+uclibc++, 0.2.4, LGPL, Yes
+
+uclient, 2015-04-14, ISC, No
+
+ustream-ssl, 2015-07-09, ISC, No
+
+zlib, 1.2.11, GPL, No
+ndppd, 0.2.5, GPL, No
+
+funjsq, funjsq, Funjsq, No
+
+cryptsetup, 2.0.5, GPL, No
+
+ntgrcrypt, 1.0, Delta, No
+
+armor, armor, Bitdefender, No
+
+attached-devices, attached-devices, DNI, No
+
+dniutil, 1.0, DNI, No
+
+kmod-xhttp, kmod-xhttp, GPL, No
+
+d2, 0.1.0, NETGEAR, No
+
+dil, 0.1.0, Netgear, No
+
+auto-detection-tz, 1.0, DNI, No
+

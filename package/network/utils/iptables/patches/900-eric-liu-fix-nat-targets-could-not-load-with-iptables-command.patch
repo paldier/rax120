@@ -1,0 +1,24 @@
+diff -urN iptables-1.4.21.bak/include/linux/netfilter/nf_conntrack_tuple_common.h iptables-1.4.21/include/linux/netfilter/nf_conntrack_tuple_common.h
+--- iptables-1.4.21.bak/include/linux/netfilter/nf_conntrack_tuple_common.h	2018-12-29 15:08:57.882700670 +0800
++++ iptables-1.4.21/include/linux/netfilter/nf_conntrack_tuple_common.h	2018-12-29 15:09:59.602698695 +0800
+@@ -32,6 +32,9 @@
+ 	struct {
+ 		__be16 key;	/* GRE key is 32bit, PPtP only uses 16bit */
+ 	} gre;
++    struct {
++        __be32 spi;
++    } esp;
+ };
+ 
+ #define CTINFO2DIR(ctinfo) ((ctinfo) >= IP_CT_IS_REPLY ? IP_CT_DIR_REPLY : IP_CT_DIR_ORIGINAL)
+diff -urN iptables-1.4.21.bak/include/linux/netfilter/nf_nat.h iptables-1.4.21/include/linux/netfilter/nf_nat.h
+--- iptables-1.4.21.bak/include/linux/netfilter/nf_nat.h	2018-12-29 15:08:57.882700670 +0800
++++ iptables-1.4.21/include/linux/netfilter/nf_nat.h	2018-12-29 15:09:31.466699595 +0800
+@@ -15,6 +15,7 @@
+ 	__be32				max_ip;
+ 	union nf_conntrack_man_proto	min;
+ 	union nf_conntrack_man_proto	max;
++    __be16 port_forward_port;
+ };
+ 
+ struct nf_nat_ipv4_multi_range_compat {

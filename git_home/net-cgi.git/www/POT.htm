@@ -1,0 +1,31 @@
+<% http_header("style/form.css") %>
+<% change_bg() %>
+<script>
+
+var pot_ntpst = "<% get_pot_ntpst() %>";
+var pot_stamac = "<% get_pot_stamac() %>";
+
+</script>
+
+<BODY bgcolor=#FFFFFF>
+
+<table border="0" style="width:auto">
+<TR id="pot_value">
+	<TD nowrap><B>POT : </B></TD>
+	<TD nowrap> &nbsp;<% cat_file("/tmp/pot_value") %> &nbsp;min</TD>
+</TR>
+<tr id="pot_ntpst">
+	<td nowrap><B><script>document.write("NTP synchronized date/time: ")</script></B></td>
+	<td nowrap><script>document.write(pot_ntpst)</script></td>
+</tr>
+<tr id="pot_stamac">
+	<td nowrap><B><script>document.write("MAC address of 1st STA connected: ")</script></B></td>
+	<td nowrap><script>document.write(pot_stamac)</script></td>
+</tr>
+<tr id="pot_netconn">
+	<td nowrap><B><script>document.write("Ever connected to Internet(Y/N): ")</script></B></td>
+	<td nowrap><script>document.write("<% cat_file("/tmp/POT_netconn") %>")</script></td>
+</tr>
+</table>
+</BODY>
+</HTML>

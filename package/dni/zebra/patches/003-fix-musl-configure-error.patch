@@ -1,0 +1,18 @@
+--- zebra-0.95a/config.sub	2001-04-23 04:19:51.000000000 +0800
++++ zebra-0.95a/config.sub.org	2017-07-25 18:01:37.814441375 +0800
+@@ -214,6 +214,7 @@
+ 		| we32k | ns16k | clipper | i370 | sh | sh[34] \
+ 		| powerpc | powerpcle \
+ 		| 1750a | dsp16xx | pdp11 | mips16 | mips64 | mipsel | mips64el \
++		| aarch64-openwrt \
+ 		| mips64orion | mips64orionel | mipstx39 | mipstx39el \
+ 		| mips64vr4300 | mips64vr4300el | mips64vr4100 | mips64vr4100el \
+ 		| mips64vr5000 | miprs64vr5000el | mcore \
+@@ -257,6 +258,7 @@
+ 	      | sparclite-* | pdp11-* | sh-* | powerpc-* | powerpcle-* \
+ 	      | sparc64-* | sparcv9-* | sparc86x-* | mips16-* | mips64-* | mipsel-* \
+ 	      | mips64el-* | mips64orion-* | mips64orionel-* \
++	      | aarch64-openwrt-* \
+ 	      | mips64vr4100-* | mips64vr4100el-* | mips64vr4300-* | mips64vr4300el-* \
+ 	      | mipstx39-* | mipstx39el-* | mcore-* \
+ 	      | f301-* | armv*-* | s390-* | sv1-* | t3e-* \

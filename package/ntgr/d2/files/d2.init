@@ -1,0 +1,102 @@
+#!/bin/sh /etc/rc.common
+START=17
+
+set_if_empty() {
+    SYM="$1"
+    
+    # read value, make sure d2d is up.
+    until VAL=$(d2 -s ${SYM}); do sleep .1; done
+    if [ "${VAL}empty" == "empty" ]; 
+    then
+        d2 -c ${SYM} -- "$2"; 
+    fi
+}
+
+start() {
+      # Start d2
+
+      # We may need to chmod following in future.
+      mkdir -p /tmp/d2
+
+      # TODO:
+      # We should source a config file that defines where R/W
+      # filesystem is mounted.
+      # Hard-coded for now
+      PERSISTDIR=/tmp/dal/d2d
+
+      mkdir -p ${PERSISTDIR}
+      
+      #BETA_XTRA="-d /etc/d2" //will be use in future if required for qa env
+
+      #d2d ${BETA_XTRA} ${PERSISTDIR} &
+
+      d2d ${PERSISTDIR} &
+
+        #set some default value
+
+# This is must for all the SKU those are going to use this script. As the router boots up internet should be Unknown until ODM will detect any # network connectivity on the target machine. Do not remove the below line without any further discussion with DAL Team.
+
+# Also the General table in DAL is persistence. So it will always have the latest value whatever it has before the reboot. So to make sure it
+# always reset to default as "Unknown" after the router boots up.
+
+    d2 -c general.internetstatus Unknown
+	model=`cat /module_name`
+	firmware=`cat /firmware_version`
+	#sleep for d2d init
+	sleep 3
+	d2 -c general.devicemodel $model
+	d2 -c general.devicename $model
+	d2 -c general.fwrevision $firmware
+	d2 -c general.fsn "`artmtd -r sn|head -1 |cut -d ':' -f 2-`"											
+        d2 -c general.region "`artmtd -r region|head -1 |cut -d 'x' -f 2-`"
+	d2 -c general.defaultmac "`artmtd -r mac | grep "lan mac" | awk '{print $3}'`"
+	d2 -c general.wan_ifname         "$(nvram get wan_ifname)"
+	d2 -c general.lan_ifname         "$(nvram get lan_ifname)"
+	#//tmp set internetstatus always up
+	d2 -c general.Internetstatus up 
+
+	#Set x_force_connection, So xAgent can reach xCloud
+	d2 -c xagentcfg.x_force_connection 1
+
+	if [ "`/bin/config get allow_arlo_env_change`" != "1"  ];then	
+	XAGENT_CLAIMED_URL=https://registration.ngxcld.com/registration/status
+	XAGENT_REGISTER_URL=https://registration.ngxcld.com/registration/register			
+	XAGENT_ADVISOR_URL=https://advisor.ngxcld.com/advisor/direct
+	XAGENT_DISCOVERY_URL=https://presence.ngxcld.com/presence/presence
+	RGENIE_REMOTE_URL=https://genieremote.netgear.com/genie-remote/claimDevice
+
+	UP_BACKEND_BASE=https://devcom.up.netgear.com/UpBackend/
+	d2 -c UpCfg[0].UpBaseURL ${UP_BACKEND_BASE}
+	if [ "`d2 -s xagentcfg[0].x_register_url`" != "$XAGENT_REGISTER_URL" ];then
+		d2 -c xagentcfg[0].x_agent_claim_code ""
+		d2 -c xagentcfg[0].x_agent_id ""
+		d2 -c xagentcfg[0].x_agent_claimed ""
+	fi
+	d2 -c xagentcfg[0].x_register_url  "${XAGENT_REGISTER_URL}"
+	d2 -c xagentcfg[0].x_claimed_url   "${XAGENT_CLAIMED_URL}"
+	d2 -c xagentcfg[0].x_discovery_url "${XAGENT_DISCOVERY_URL}"
+	d2 -c xagentcfg[0].x_advisor_url   "${XAGENT_ADVISOR_URL}"
+	d2 -c rgeniecfg[0].genie_remote_url "${RGENIE_REMOTE_URL}"
+	fi
+
+	/etc/init.d/d2_countryname.sh &
+}
+
+stop() {
+        killall d2d
+}
+
+boot() {
+    factory_mode_flag=`/bin/config get factory_mode`
+    if [ "x$factory_mode_flag" = "x1" ]; then
+    	exit 0
+    fi
+    
+    start
+}
+
+restart() {
+        stop
+        start
+}
+

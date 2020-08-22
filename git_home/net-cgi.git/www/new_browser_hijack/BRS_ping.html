@@ -1,0 +1,17 @@
+<html>
+<head>
+<% hijack_netDetecting() %>
+<script>
+if(parent.parent.support_wan_preference == "1" && parent.wan_preference == "1")
+	setTimeout("check_result()",15000);
+else
+	setTimeout("check_result()",3000);
+function check_result()
+{
+	this.location.href = "BRS_ping_result.html";
+}
+</script>
+</head>
+<body>
+</body>
+</html>

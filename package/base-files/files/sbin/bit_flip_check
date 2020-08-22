@@ -1,0 +1,22 @@
+#!/bin/sh
+# According to Spec14 (section 34 NAND FLASH MANAGEMENT):
+# ODMs MUST design a test program at last test station
+# to make sure there is no bit-flipping in bootloader blocks
+
+# Get uboot partition number (mtd0 - mtd18) from uboot team
+uboot_part=$(seq 0 18)
+
+bitflip=0
+bitflip_sum=0
+outfile=/tmp/uboot_bitflip_count
+tmpfile=/tmp/mtd_bf
+
+for i in $uboot_part
+do
+	partition="/dev/mtd$i"
+	bitflip=$(nanddump $partition -f $tmpfile 2>&1 | grep -c "corrected bitflip(s)")
+	bitflip_sum=$(($bitflip_sum + $bitflip))
+done
+
+rm $tmpfile
+echo $bitflip_sum > $outfile

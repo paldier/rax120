@@ -1,0 +1,15 @@
+if TARGET_HW29765589P0P512P1024P4X4P8X8
+
+config SYS_BOARD
+	default "hw29765589p0p512p1024p4x4p8x8"
+
+config SYS_VENDOR
+	default "qca"
+
+config SYS_SOC
+	default "qca_hw29765589p0p512p1024p4x4p8x8"
+
+config SYS_CONFIG_NAME
+	default "hw29765589p0p512p1024p4x4p8x8"
+
+endif

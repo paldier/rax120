@@ -1,0 +1,20 @@
+#!/bin/sh /etc/rc.common
+START=30 ## And it will also trigger in wan script when wan-up.
+
+start()
+{
+	[ -f "/tmp/orbi_type" ] && [ "x`cat /tmp/orbi_type`" = "xSatellite" ] && return
+    /usr/sbin/adt_start &
+}
+
+stop()
+{
+	killall auto-detection-tz
+	killall adt_start
+}
+
+restart()
+{
+	stop
+	start
+}

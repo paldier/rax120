@@ -1,0 +1,15 @@
+#!/bin/sh /etc/rc.common
+
+START=11
+
+boot()
+{
+	if ! ubinfo /dev/ubi0 -N vol_ntgrcryptD; then
+		ubimkvol /dev/ubi0 -s 3MiB -N vol_ntgrcryptD
+	fi
+	if ! ubinfo /dev/ubi0 -N vol_ntgrcryptK; then
+		ubimkvol /dev/ubi0 -s 512KiB -N vol_ntgrcryptK
+	fi
+	Nencmgr init
+}
+

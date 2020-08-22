@@ -1,0 +1,132 @@
+#!/bin/sh
+. /etc/net6conf/6data.conf
+
+start()
+{
+	#ds_type=`$CONFIG get my_internet`
+	#if [ "x$ds_type" = "x0" ]; then
+	#	${BASEDIR}/6dhcpc start
+	#elif [ "x$ds_type" = "x1" ]; then
+	#	${BASEDIR}/6pppoe start
+	#fi
+
+	wan6_type=`$CONFIG get ipv6_type`
+	if [ "x$wan6_type" = "xfixed" ]; then
+		run &
+	#elif [ ]; then
+	fi
+}
+
+check_JP_ISP_ip_range()
+{
+	# 2409:10::/30 and 2409:250::/30
+	ip_1=`echo $1 | awk -F ":" '{print $1}'`
+	ip_2=`echo $1 | awk -F ":" '{print $2}'`
+	ip_mask_2=`echo "0x$ip_2" | awk '{printf("%d", $0)}' | awk '{print rshift($0, 2)}'`
+
+	if [ "x$ip_1" = "x2409" ]; then
+		if [ "x$ip_mask_2" = "x4" -o "x$ip_mask_2" = "x148" ]; then
+			return 1
+		fi
+	fi
+	return 0
+}
+
+run()
+{
+	echo "$$" > /var/run/dslite.pid
+	if [ "x`$CONFIG get enable_ds`" != "x1" ]; then
+		rm /var/run/dslite.pid
+		return
+	fi
+
+	wan_cable_type=`$CONFIG get wan_preference`
+	wan6_type=`$CONFIG get ipv6_type`
+	IPV6_ADDR=""
+	if [ "x$wan6_type" = "xdhcp" -o "x$wan6_type" = "xautoConfig" -o "x$wan6_type" = "xpppoe" ]; then #autoConfig fixed pppoe autoDetect 
+		while [ -z $IPV6_ADDR ];
+		do
+			if [ "x$wan_cable_type" = "x0" ]; then
+				port_status=`cat /tmp/port_status | grep 0`
+			else
+				port_status=`cat /tmp/port_status | grep down`
+			fi
+
+			if [ -z $port_status ]; then
+				IPV6_ADDR=$(/sbin/ifconfig $WAN | grep 'Scope:Global' | awk -F/ '{print$1}' | awk -F'inet6 addr:' '{print$2}');
+			fi
+			if [ -z $IPV6_ADDR ]; then
+				sleep 5
+			fi
+		done
+
+	fi
+	aftr_type=`$CONFIG get aftr_ipv6`
+	if [ "x$aftr_type" = "x0" ]; then
+		check_JP_ISP_ip_range $IPV6_ADDR
+		result=$?
+		if [ "x$result" = "x1" ]; then
+			$CONFIG set manual_aftr_ipv6="gw.transix.jp"
+		fi
+	fi
+	aftr_addr=`$CONFIG get manual_aftr_ipv6`
+	while [ -z "$aftr_addr" ];
+	do
+		#echo "aftr ip is null, continue" > /dev/console;
+		aftr_addr=`$CONFIG get manual_aftr_ipv6`
+		sleep 1
+	done
+
+	result=`echo $aftr_addr | grep ":"`
+	if [ -n "$result" ]; then
+		aftr_ip=$aftr_addr
+	fi
+		
+	while [ -z "$result" ];
+	do
+		aftr_ip=`ping6 $aftr_addr -c 1| grep PING | cut -d '(' -f 2 | cut -d ')' -f 1`
+		if [ -n "$aftr_ip" ]; then
+			echo "aftr ip="$aftr_ip > /dev/console
+			break
+		fi
+		echo "cannot resolve aftr domain name, wait 1s" > /dev/console
+		sleep 1
+	done
+	IPV6_ADDR=$(/sbin/ifconfig $WAN | grep 'Scope:Global' | awk -F/ '{print$1}' | awk -F'inet6 addr:' '{print$2}');
+	/usr/sbin/ip -6 tunnel add dslite_tun mode ipip6 local  $IPV6_ADDR remote $aftr_ip
+	/usr/sbin/ip -6 link set dslite_tun up
+	/usr/sbin/ip route delete default
+	/usr/sbin/ip route add default dev dslite_tun
+	rm /var/run/dslite.pid
+}
+
+reload()
+{
+	if [ -f /var/run/dslite.pid ]; then
+		kill -9 `cat /var/run/dslite.pid`
+		rm  /var/run/dslite.pid
+	fi
+	/usr/sbin/ip -6 link set dslite_tun down
+	/usr/sbin/ip -6 tunnel del dslite_tun
+	run &
+}
+
+stop()
+{
+	/usr/sbin/ip -6 link set dslite_tun down
+	/usr/sbin/ip -6 tunnel del dslite_tun
+	rm /var/run/dslite.pid
+	killall dslite
+}
+
+case "$1" in
+	stop)
+	stop
+	;;
+	start)
+	start
+	;;
+	run)
+	run
+	;;
+esac

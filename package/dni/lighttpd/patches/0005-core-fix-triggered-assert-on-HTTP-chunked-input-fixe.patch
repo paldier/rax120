@@ -1,0 +1,30 @@
+From a156fdbc7bb00f1ead9df41038062efd7b829105 Mon Sep 17 00:00:00 2001
+From: Glenn Strauss <gstrauss@gluelogic.com>
+Date: Wed, 27 Sep 2017 22:58:55 -0400
+Subject: [PATCH] [core] fix triggered assert on HTTP chunked input (fixes
+ #2822)
+
+(thx AlxT)
+
+x-ref:
+  "Segmentation fault on HTTP chunked input"
+  https://redmine.lighttpd.net/issues/2822
+---
+ src/connections-glue.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/src/connections-glue.c b/src/connections-glue.c
+index 9f451e3..171a36b 100644
+--- a/src/connections-glue.c
++++ b/src/connections-glue.c
+@@ -393,6 +393,7 @@ static handler_t connection_handle_read_post_chunked(server *srv, connection *co
+         while (0 == te_chunked) {
+             char *p;
+             chunk *c = cq->first;
++            if (NULL == c) break;
+             force_assert(c->type == MEM_CHUNK);
+             p = strchr(c->mem->ptr+c->offset, '\n');
+             if (NULL != p) { /* found HTTP chunked header line */
+-- 
+1.9.1
+

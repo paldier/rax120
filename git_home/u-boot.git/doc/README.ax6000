@@ -1,0 +1,39 @@
+How to build:
+=============
+
+Developed based on QCA "qsdk-ipq807x.ilq.7.0-spf.7.0.ed1".
+
+# ToolChain
+1. got from "$qsdk/staging_dir/toolchain-arm_cortex-a7_gcc-4.8-linaro_musl-1.1.9_eabi/
+
+# Please set following according to your toolchain
+$ export PATH="/PATH/TO/toolchain-arm_cortex-a7_gcc-4.8-linaro_musl-1.1.9_eabi/bin:$PATH"
+
+# (optional) Supress "STAGING_DIR" warning messages only
+$ export STAGING_DIR="/PATH/TO/toolchain-arm_cortex-a7_gcc-4.8-linaro_musl-1.1.9_eabi/.."
+
+# build ax6000 u-boot :
+$ make hw29765589p0p256p1024p4x4p8x8_defconfig
+$ VERSION_CODE='Chaos Calmer 15.05.1' REVISION='r48067' make V=1 HOSTSTRIP=true CROSS_COMPILE=arm-openwrt-linux-muslgnueabi- CONFIG_QCA_SINGLE_IMG_GIT="/PATH/TO/git-home/qsdk-chipcode.git" all
+
+
+U-Boot images are : uboot-hw29765589p0p256p1024p4x4p8x8.img
+
+Steps to upgrade uboot "uboot-xxx.img" :
+=============================================
+IPQ807x# setenv machid 8010000
+IPQ807x# setenv ipaddr 192.168.1.1 && setenv serverip 192.168.1.10
+IPQ807x# tftpboot 0x42000000 uboot-xxx.img
+IPQ807x# crc32 0x42000000 ${filesize}
+IPQ807x# imgaddr=0x42000000 && source $imgaddr:script
+IPQ807x# reset
+IPQ807x# delenv
+
+Steps to upgrade uboot by DNI command
+======================================
+IPQ807x# setenv uboot_name FILE_NAME
+IPQ807x# setenv ipaddr 192.168.1.1 && setenv serverip 192.168.1.10
+IPQ807x# upgrade_uboot
+IPQ807x# reset
+IPQ807x# delenv
+

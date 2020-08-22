@@ -1,0 +1,39 @@
+<html>
+<head>
+</head>
+<body>
+<script>
+/* 22281: add sn after success href */
+var sn="";
+var security_enhance_flag= "<% security_enhance_support() %>";
+var game_router_flag = "<% show_game_router_flag() %>";
+var weak_passwd_flag = "<% cfg_get("weak_password_check") %>";
+var origin_blank_state_flag = "<% cfg_get("origin_blank_state_flag") %>";
+if((security_enhance_flag == 1)  && (game_router_flag == 1) && (weak_passwd_flag == 1)&& (origin_blank_state_flag == 1))
+{
+	<% cfg_set("return_secure_passwd_page_flag", "1") %>
+	var return_secure_passwd_page_flag="<% cfg_get("return_secure_passwd_page_flag") %>";
+}
+
+/* to fix bug 29273 */
+if( "<%cfg_get("dns_hijack") %>" == "1" && "<%cfg_get("hijack_process") %>" == "2" )
+{
+		if((security_enhance_flag == 1)  && (game_router_flag == 1) && (weak_passwd_flag == 1) && (origin_blank_state_flag == 1))
+		{
+			top/*don't remove*/.location.href='change_secure_password.htm';
+		}
+		else
+		setTimeout("top/*don't remove*/.location.href='/desktop/index.html?forceTourStart=true';", 2000);
+}
+else
+{
+		if((security_enhance_flag == 1)  && (game_router_flag == 1) && (weak_passwd_flag == 1) && (origin_blank_state_flag == 1))
+		{
+			top/*don't remove*/.location.href='change_secure_password.htm';
+		}	
+		else
+		top/*don't remove*/.location.href='/desktop/index.html?forceTourStart=true';
+}
+</script>
+</body>
+</html>

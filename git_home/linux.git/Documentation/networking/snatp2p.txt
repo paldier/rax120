@@ -1,0 +1,49 @@
+SNATP2P, hole punching, and hairpin
+
+It is well-known that NAT is not P2P-friendly. To solve the problems causing
+by NAT, several NAT traversal techniques are developed, but all of them has
+its own limitations and drawbacks. For example,
+1. Universal Plug and Play (UPnP)
+2. Simple Traversal UDP Through Network Address Translators (STUN)
+3. Application Level Gateway (ALG)
+4. UDP/TCP hole punching (HOLEPUNCH)
+
+                              UPnP     STUN      ALG       HOLEPUNCH
+NAT server support            need       no     need            need
+other device needed             no     need       no            need
+traverse symmetric NAT         yes       no      yes              no
+traverse multiple level NAT     no      yes      yes    yes(hairpin)
+cost                           low     high     high              -
+vulnerabilities                yes       -        -               -
+
+This series patch are implemented a netfilter target SNATP2P for supporting
+UDP/TCP hole punching and hairpin by Jessen Peng according to Bryan's article:
+"Peer-to-Peer Communication Across Network Address Translators"
+[http://www.brynosaurus.com/pub/net/p2pnat/]
+
+In this article, it describes the UDP/TCP hole punching and hairpin techniques
+for peers traversing NAT under three kinds of scenarios:
+1. Peers behind a common NAT.
+2. Peers behind different NATs.
+3. Peers behind multiple level of NAT.
+
+The implementation can be verified via the tools: natserver and natcheck in
+[http://midcom-p2p.sourceforge.net/]
+It can test NAT's behavior under the topology as shown in Section 6.1.1 in
+Bryan's article.
+
+
+See also:
+Peer-to-Peer Communication Across Network Address Translators
+http://www.brynosaurus.com/pub/net/p2pnat/
+
+NAT Traversal Techniques and Peer-to-Peer Applications
+http://www.tml.tkk.fi/Publications/C/18/hu.pdf
+
+NAT behave - hairpinning
+http://lists.netfilter.org/pipermail/netfilter-devel/2006-March/023585.html
+
+NAT and Peer-to-peer networking
+http://alumnus.caltech.edu/~dank/peer-nat.html
+
+http://en.wikipedia.org/wiki/NAT_traversal

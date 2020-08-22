@@ -1,0 +1,98 @@
+#!/bin/sh
+
+
+#
+# Fixup invalid user configurations in "datalib" config
+#
+# Examine user configurations in "datalib" config and change invalid ones to
+# appropriate value.
+#
+# @retval 0 Some configs have been changed by "$CONFIG set".
+# @retval 1 No config is changed, or an error is encountered.
+#
+
+
+#
+# Is this script allowed to run "$CONFIG commit"?
+#
+# 1: "$CONFIG commit" is allowed (default).
+# 0: "$CONFIG commit" is not allowed.
+#
+allow_config_commit="${1:-1}"
+
+#
+# Has any config been changed by "$CONFIG set" in this script?
+#
+# 1: Some configs have been changed by "$CONFIG set".
+# 0: No config is changed.
+#
+is_config_changed=0
+
+CONFIG=/bin/config
+
+#
+# Change user configuration and flag configuration change
+#
+# @param $1 "<CONFIG_VARIABLE>=<NEW_VALUE>"
+#
+set_config_and_flag_change() {
+    "$CONFIG" set "$@"
+    is_config_changed=1
+}
+
+#
+# Validate whether CONFIG program can be used or not
+#
+# @ret 0 CONFIG program can be used.
+# @ret 1 CONFIG program cannot be used.
+#
+validate_config_prog() {
+    if [ ! -f "$CONFIG" ]; then
+        echo >&2 "ERROR: fixup_invalid_config: $CONFIG is not a file!"
+        return 1
+    elif [ ! -x "$CONFIG" ]; then
+        echo >&2 "ERROR: fixup_invalid_config: $CONFIG is not executable!"
+        return 1
+    fi
+    return 0
+}
+
+# config fixup actions specific to current board
+board_fixup() {
+    local tpscale_var_list='wl_tpscale wla_tpscale'
+    local tpscale_var
+
+    #
+    # Fix up 75% Wi-Fi Tx-power scaling as 100% because 75% TPC is not
+    # implemented for now.
+    #
+    for tpscale_var in $tpscale_var_list; do
+        if [ "$("$CONFIG" get "$tpscale_var")" = "75" ]; then
+            set_config_and_flag_change "${tpscale_var}=100"
+        fi
+    done
+
+    #
+    # Fix up currently unallowed region VN + 160 MHz channel bandwidth as
+    # region VN + 80 MHz channel bandwidth.
+    #
+    if [ "$("$CONFIG" get wl_country)" = "23" ] &&
+       [ "$("$CONFIG" get wla_htmode)" = "HT160" ]; then
+        set_config_and_flag_change "wla_simple_mode=9"
+        set_config_and_flag_change "wla_htmode=HT80"
+    fi
+}
+
+if ! validate_config_prog; then
+    exit 1
+fi
+
+board_fixup
+
+if [ "$is_config_changed" = "0" ]; then
+    exit 1
+fi
+
+if [ "$allow_config_commit" != "0" ]; then
+    "$CONFIG" commit
+fi

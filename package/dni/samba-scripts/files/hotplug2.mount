@@ -1,0 +1,181 @@
+#! /bin/sh
+
+DISK_FIND_TABLE=/tmp/find_disk_abcxzy
+download_state="$(/bin/config get green_download_enable)"
+download_start() {
+	sleep 2
+	green_download=`ps -w| grep -v grep |grep -c green_download.sh`
+	download_entry=`ps -w| grep -v grep |grep -c greendownload`
+	[ "x$green_download" != "x0" ] && return
+	[ "x$download_entry" != "x0" ] && return
+	[ "x$download_state" == "x1" ] && echo "hotplug starting green_download ........" > /dev/console && /usr/sbin/green_download.sh start
+}
+
+get_vendor_from_disk()
+{
+	dev=`echo "$1" | cut -c 1-3`
+	vendor=`cat /sys/block/$dev/device/vendor`
+	model=`cat /sys/block/$dev/device/model`
+
+	vendor=$(echo ${vendor} | sed 's/[[:space:]]*$//')
+	model=$(echo ${model} | sed 's/[[:space:]]*$//')
+
+	device_vendor="$vendor $model"
+	device_vendor=`echo $device_vendor | sed 's/[[:space:]]*$//'`
+	echo "$device_vendor"
+}
+
+get_volume_from_disk()
+{
+	disk_name=`echo $1 | sed 's/[0-9]//g'`
+	partition_num=`echo $1 | cut -c 4-`
+	volume=`/usr/sbin/vol_id -L /dev/$1`
+	if [ "x$volume" = "x" ];then
+		volume=`/usr/sbin/blkid $1 -s LABEL |awk -F'LABEL=' '{print $2}' |awk -F'"' '{print $2}'`
+	fi
+	if [ "x$volume" = "x" ];then
+		volume=`echo $(/usr/sbin/parted -s /dev/$disk_name print | grep "Number" -A16 | sed -n '2,16p' | awk 'NF>=6{for(n=6;n<=NF;n++)printf $n" ";print     ""}' | sed -n $partition_num"p")`
+		if [ "x$volume" = "x" ];then
+			volume="$1"
+		fi
+	fi
+	echo "$volume"
+}
+# $---> sda1
+print_log()
+{
+        if [ `expr length $1` != '4' ];then
+                return
+        fi
+
+	sata_disk_name=`/bin/config get sata_diskname`
+
+        device_name=`cat $DISK_FIND_TABLE | grep $1 | awk -F* '{print $2}'`
+	[ "x$device_name" = "x" ] && device_name=`get_vendor_from_disk "$1"`
+	volume_name=`cat $DISK_FIND_TABLE | grep $1 | awk -F* '{{{i=NF-3; a="*";while(i!=0) {printf $(NF-i); if(i!=1) printf a; i--}}}}'`
+	[ "x$volume_name" = "x" ] && volume_name=`get_volume_from_disk "$1"`
+
+	if [ "x$device_name" = "x" -a "x$volume_name" = "x" ]; then
+		return
+	fi
+	if [ "x$sata_disk_name" = "x$1" ]; then
+		logger "[External disk attached] The External disk attached $device_name($volume_name) is attached to the router"
+                return
+	else
+		logger "[USB device attached] The USB device $device_name($volume_name) is attached to router"
+                return
+	fi
+
+	volume_name=`/usr/sbin/blkid /dev/$1 | grep -o 'LABEL=.*' | awk -F\" '{print $2}'`
+	if [ ! -n "$volume_name" ]; then
+	       volume_name=$1
+	fi
+	logger "[USB device attached] The USB storage device $1($volume_name) is attached to the router"
+}
+
+/sbin/usb_disk_event
+
+if [ $# -eq 0 ];then
+	echo "Must run with devicename."
+	exit 1
+fi
+mkdir /mnt/$1
+
+fs_type=$(blkid /dev/$1 | grep 'TYPE=' | awk -F ' TYPE=' '{print $2}' | awk '{print $1}' | cut -d '"' -f2)
+if [ "x$fs_type" = "x" ]; then
+	fs_type=$(blkid -p /dev/$1 | grep -o 'VERSION=.*' | awk '{print $2}' | tr 'A-Z' 'a-z')
+fi
+echo This partition type is $fs_type !
+partition_tb=$(blkid  /dev/`echo $1 | sed 's/[0-9]//g'` | grep "PTTYPE=.*" | awk '{print $2}')
+if [ "x$(parted -s /dev/`echo $1 | sed 's/[0-9]//g'` print noshare | grep $1)" = "x" -o "x$partition_tb" = "xloop" ]; then
+	case $fs_type in
+       ntfs)
+            echo "do chkntfs..." > /dev/console
+            chkntfs -a -f /dev/$1 > /dev/console
+            sleep 1
+            mount -t ufsd -o nls=utf8,rw,nodev,noexec,noatime,uid=0,gid=0,fmask=0,dmask=0 --force /dev/$1 /mnt/$1
+		;;
+		ext4)
+			mount -t ext4 -o nodev,noexec,noatime,barrier=0,data=writeback /dev/$1 /mnt/$1
+		;;
+		ext3)
+			mount -t ext3 -o nodev,noexec,noatime,barrier=0,data=writeback /dev/$1 /mnt/$1
+			if [ $? -ne 0 ];then
+				mount -t ext4 -o nodev,noexec,noatime,barrier=0,data=writeback /dev/$1 /mnt/$1
+			fi
+		;;
+		ext2)
+			mount -t ext2 -o nodev,noexec,noatime  /dev/$1 /mnt/$1
+		;;
+		xfs)
+			mount -t xfs  /dev/$1 /mnt/$1
+			chmod -R 777 /mnt/$1
+		;;
+		hfs)
+			mount -t hfs -o nodev,noexec,noatime --force /dev/$1 /mnt/$1
+			chmod -R 777 /mnt/$1
+		;;
+		hfsplus)
+			mount -t hfsplus -o nodev,noexec,noatime --force /dev/$1 /mnt/$1
+			chmod -R 777 /mnt/$1
+		;;
+		vfat)
+			mount -o usefree,utf8=yes,fmask=0000,dmask=0000 /dev/$1 /mnt/$1
+		;;
+		*)
+		if [ "x$fs_type" = "x" ];then
+			rmdir /mnt/$1
+			return
+		fi
+		mount  /dev/$1 /mnt/$1
+		if [ $? -ne 0 ];then
+			rmdir /mnt/$1
+            return
+		else
+			echo "mount /mnt/$1 success"
+		fi
+		;;
+	esac
+fi
+
+if [ "$fs_type" = "ext2" -o "$fs_type" = "ext3" -o "$fs_type" = "ext4" ];then
+	chmod 777 /mnt/$1
+fi
+
+usb_deviceName=$(config get usb_deviceName)
+config set usb_deviceName_bak="$usb_deviceName"
+
+diskname=$(echo $1 | sed 's/[0-9].*//')
+lastpartition=$(cat /proc/partitions | grep $diskname | awk '{print $4}' | tail -1)
+echo "disk name is $diskname last partition is $lastpartition"
+[ -f /tmp/hotplug2.umount_list  ] && rm -rf /tmp/hotplug2.umount_list
+
+if [ $1 = $lastpartition ]; then
+	if [ `cat /proc/sys/vm/min_free_kbytes` -ne 61440 -a "`mount | grep $1 | awk '{print $1}' | awk -F "/" '{print $NF}'`" == "$1" ];then
+		sysctl -w vm.min_free_kbytes=61440
+	fi
+
+	echo noop > /sys/block/$diskname/queue/scheduler
+	echo 1024 > /sys/block/$diskname/queue/nr_requests
+
+	/usr/sbin/detectSATA start
+	if [ "x$(pidof update_smb)" != "x" ]; then
+		echo "update_smb is running, sleep 2" > /dev/console
+		sleep 2
+	fi
+
+	update_smb $diskname # remove only support factory mode.
+
+    if [ "x$(/bin/config get factory_mode)" != "x1" ];then
+        /usr/sbin/update_afp $diskname
+        #/usr/sbin/usb_cfg approve $1
+        /sbin/cmdftp restart
+        /sbin/cmddlna restart &
+        #if download is ennable  start download
+#        download_start
+    fi
+fi
+
+print_log $1
+rm /tmp/umount_result
+

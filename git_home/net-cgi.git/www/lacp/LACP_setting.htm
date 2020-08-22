@@ -1,0 +1,109 @@
+<% http_header("style/form.css", "/funcs.js") %>
+<% body_header("", "LACP_setting.htm", "aggregation") %>
+<div id="black_over_lay" class="black_overlay">
+</div>
+<div class="page_title">$lacp_head</div>
+<script>
+var aggre_option = "<% cfg_get("link_aggregation_sta")%>";
+var enable_lan_aggregation="<% cfg_get("enable_lan_aggregation") %>";
+var refresh_timer;
+function get_aggre_request()
+{
+	var xmlhttp;
+	if (window.XMLHttpRequest)
+		xmlhttp = new XMLHttpRequest();
+	else
+		xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+	xmlhttp.onreadystatechange = function() {
+		if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+			eval(xmlhttp.responseText);
+			console.log("aggre_sta:[",aggre_sta,"]");
+			if(aggre_sta == "active")
+			{
+				document.getElementById("lacp_status").innerHTML = '<a style="color:green">$lacp_active</a>';
+				document.getElementById("lacp_status_icon").innerHTML = '<img src="image/lacp_active.png" width="50%">';
+			}
+			else {
+				document.getElementById("lacp_status").innerHTML = '<a>$lacp_inactive</a>';
+				document.getElementById("lacp_status_icon").innerHTML = '<img src="image/lacp_inactive.png" width="50%">';
+			}
+			clearTimeout(refresh_timer);
+			refresh_timer = setTimeout("get_aggre_request()",3000);
+		}
+	};
+	xmlhttp.open("GET", "get_aggre_status.txt", true);
+	xmlhttp.send();
+}
+
+function loadvalue()
+{
+	var cf = document.forms[0];
+
+	if(aggre_option == "2")
+		cf.Aggregationsta[1].checked = true;
+	else if(aggre_option == "1")
+		cf.Aggregationsta[2].checked = true;
+	else
+		cf.Aggregationsta[0].checked = true;
+
+	if(enable_lan_aggregation == "0")
+	{
+		cf.Aggregationsta[1].disabled = true;
+		cf.Aggregationsta[2].disabled = true;
+		document.getElementById("vlan_alert").style.display="block";
+	}
+	if(aggre_option == "2" || aggre_option == "1")
+		get_aggre_request();
+}
+</script>
+<div class="fix_button">
+<TABLE width=100% border=0 cellpadding=0 cellspacing=2>
+<script>
+var master="<% cfg_get("http_loginname") %>";
+if( master == "admin" )
+	document.write('<TR><TD nowrap colspan=2 align=center><input class="cancel_bt" type="button" name="Cancel" id="cancel" value="$cancel_mark" onClick="location.href=\'LACP_setting.htm\';">&nbsp;&nbsp;<input class="apply_bt" type="submit" name="Apply" id="apply" value="$apply_mark"></TD></TR>');
+else
+	document.write('<TR><TD nowrap colspan=2 align=center><input class="cancel1_bt" type="button" name="Cancel" id="cancel" value="$cancel_mark" disabled>&nbsp;&nbsp;<input class="apply1_bt" type="submit" name="Apply" id="apply" value="$apply_mark" disabled></TD></TR>');
+</script>
+</TABLE>
+
+</div>
+<div id="main" class="main_top_button">
+<% pop_help_button() %>
+
+<div>
+<TABLE cellspacing=5 cellPadding=0 width=100% border=0>
+<TR>
+	<TD colspan="2" nowrap class="btm0">
+		<input type="radio" name="Aggregationsta" id="Aggregationsta1" value="0"><label for="Aggregationsta1">$r_disable</label>
+	</TD>
+</TR>
+<TR>
+	<TD colspan="2" nowrap class="btm0">
+		<input type="radio" name="Aggregationsta" id="Aggregationsta2" value="2" ><label for="Aggregationsta2">$lacp_enable</label>
+	</TD>
+</TR>
+<TR>
+	<TD colspan="2" nowrap class="btm0">
+		<input type="radio" name="Aggregationsta" id="Aggregationsta3" value="1" ><label for="Aggregationsta3">Enable static LAG</label>
+	</TD>
+</TR>
+<TR id="vlan_alert" style="display:none;"><TD style="color:red;">Disable VLAN or set same VLAN tag for port 1 and port 2 to enable Ethernet Port Aggregation</TD><TR>
+$bluebar
+<TR>
+	<TD colspan="2" nowrap>$lacp_status:
+	<span id="lacp_status"><a>$lacp_inactive</a></span>
+	
+	</TD>
+</TR>
+</table>
+</div>
+<div align="center" id="lacp_status_icon">
+<img src="image/lacp_inactive.png" width="50%">
+</div>
+</div>
+<% help_box("0","_lacp") %>
+</FORM>
+</BODY>
+</HTML>
+

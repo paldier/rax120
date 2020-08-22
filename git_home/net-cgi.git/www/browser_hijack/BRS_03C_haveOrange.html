@@ -1,0 +1,137 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+
+<head>
+<% hijack_title() %>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+<link rel="stylesheet" type="text/css" href="style/hijack_style.css" />
+<link rel="stylesheet" type="text/css" href="style/hijack_03C_haveOrange.css" />
+<script language="javascript" type="text/javascript" src="script/brs_hijack.js"></script>
+<script language="javascript" type="text/javascript" src="script/brs_hijack_03C_haveOrange.js"></script>
+<script language="javascript" type="text/javascript" src="script/funcs.js"></script>
+<% hijack_language() %>
+</head>
+
+<body>
+<% form_submit("apply", "BRS_security.html", "hijack_orange") %>
+<script>	
+var master="<% cfg_get("http_loginname") %>";
+var is_for_RU=getTop(window).is_ru_version;
+var con_endis_wl_radio="<% cfg_get("endis_wl_radio") %>";
+var con_endis_wla_radio="<% cfg_get("endis_wla_radio") %>";
+var get_endis_guestNet="<% cfg_get("wlg1_endis_guestNet") %>";
+var get_endis_guestNet_an="<% cfg_get("wla1_endis_guestNet") %>";
+var ad_router_flag = getTop(window).ad_router_flag;
+var lan_ports_num = getTop(window).lan_ports_num;
+function change_type()
+{
+	var form=document.forms[0];
+
+	document.getElementById("passwd_line").style.display = "";
+	document.getElementById("enable_orange_line").style.display = "";
+	document.getElementById("login_line").style.display = "";
+	document.getElementById("enable_iptv_ports").style.display = "";
+	if(form.Orange_type.value == "orange_dhcp" || form.Orange_type.value == "orange_spain_dhcp")
+	{
+		document.getElementById("passwd_line").style.display = "none";
+		document.getElementById("enable_iptv_ports").style.display = "none";
+		if(form.Orange_type.value == "orange_dhcp")
+			document.getElementById("iptv_label").innerHTML = "Orange France IPTV";
+		else if(form.Orange_type.value == "orange_spain_dhcp")
+			document.getElementById("iptv_label").innerHTML = "Orange Spain IPTV";
+	}
+	else if(form.Orange_type.value == "singtel_singa_dhcp" || form.Orange_type.value == "unifi_malaysia_dhcp" || form.Orange_type.value == "maxis_malaysia_dhcp")
+	{
+		document.getElementById("passwd_line").style.display = "none";
+		document.getElementById("login_line").style.display = "none";
+		if(form.Orange_type.value == "singtel_singa_dhcp")
+			document.getElementById("iptv_label").innerHTML = "SingTel Singapore IPTV";
+		else if(form.Orange_type.value == "unifi_malaysia_dhcp")
+			document.getElementById("iptv_label").innerHTML = "Unifi Malaysia IPTV";
+		else if(form.Orange_type.value == "maxis_malaysia_dhcp")
+			document.getElementById("iptv_label").innerHTML = "Maxis Malaysia IPTV";
+	
+	}
+	else if(form.Orange_type.value == "orange_pppoe" || form.Orange_type.value == "movistar_spain_pppoe" || form.Orange_type.value == "vodafone_spain_pppoe")
+	{
+		document.getElementById("enable_orange_line").style.display = "none";
+		document.getElementById("enable_iptv_ports").style.display = "none";
+	}
+	else if(form.Orange_type.value == "unifi_malaysia_pppoe" || form.Orange_type.value == "maxis_malaysia_pppoe")
+	{
+		if(form.Orange_type.value == "unifi_malaysia_pppoe")
+			document.getElementById("iptv_label").innerHTML = "Unifi Malaysia IPTV";
+		else if(form.Orange_type.value == "maxis_malaysia_pppoe")
+			document.getElementById("iptv_label").innerHTML = "Maxis Malaysia IPTV";
+	}
+
+}
+
+</script>
+<input type="hidden" name="hidden_enable_orange">
+<input type="hidden" name="hid_wired_port" value="0" />
+<input type="hidden" name="hid_wireless_port" value="0" />
+<div class="wizard_content_div">
+	<div class="wizard_words_div">
+		<table>
+			<tbody>
+				<tr><td><script>document.write(bh_my_isp)</script></td>
+				<td><select class="Orange_sel" name="Orange_type" size="1" onchange="change_type()">
+				<script>
+					if(getTop(window).support_orange_flag ==1)
+						document.write('<option value="orange_dhcp" selected>'+bh_orange_dhcp+'</option><option value="orange_pppoe">'+bh_orange_pppoe+'</option>');
+					if(getTop(window).support_spain_isp_flag ==1){
+						//document.write('<option value="orange_spain_dhcp">'+bh_orange_spain_dhcp+'</option>');
+						document.write('<option value="movistar_spain_pppoe">'+bh_movi_spain_dhcp+'</option>');
+						document.write('<option value="vodafone_spain_pppoe">'+bh_voda_spain_dhcp+'</option>');
+					}
+					if(getTop(window).support_singapore_isp_flag ==1)
+						document.write('<option value="singtel_singa_dhcp">'+bh_singtel_singa_dhcp+'</option>');
+					if(getTop(window).support_malaysia_isp_flag ==1)
+						document.write('<option value="unifi_malaysia_dhcp">'+bh_unifi_malaysia_dhcp+'</option><option value="maxis_malaysia_dhcp">'+bh_maxis_malaysia_dhcp+'</option>');
+					if(getTop(window).support_malaysia_pppoe_isp_flag ==1)
+						document.write('<option value="unifi_malaysia_pppoe">'+bh_unifi_malaysia_pppoe+'</option><option value="maxis_malaysia_pppoe">'+bh_maxis_malaysia_pppoe+'</option>');
+
+				</script>
+				</tr>
+				<tr name="login_line" id="login_line"><td><script>document.write(bh_login_name)</script></td>
+				<td><input type="text" id="orange_login" name="orange_login" maxlength="64" align="right" autocomplete="off" onKeyPress="return getkey('ssid', event)"></td>
+				</tr>
+				<tr name="passwd_line" id="passwd_line" style="display:none"><td><script>document.write(bh_ddns_passwd)</script></td>
+				<td><input type="text" id="orange_passwd" name="orange_passwd" maxlength="64" align="right" size="16" autocomplete="off" onKeyPress="return getkey('ssid', event)"></td>
+				</tr>
+				<tr id="enable_orange_line">
+					<td><input type="checkbox" name="enable_orange" id="enable_orange"><label for="enable_orange" id="iptv_label"><script>document.write(bh_enable_orange_tv)</script></label></td></tr>
+			</tbody></table>
+			<table><tbody>
+				<tr name="enable_iptv_ports" id="enable_iptv_ports" style="display:none">
+					<script>	
+						for(var count = 0; count < lan_ports_num; count++){
+						var port_num = count+1;
+						document.write('<td align="center" class="btm0"><input type="checkbox" id="iptv_ports_'+count+'" name="iptv_ports_'+count+'"><label for="iptv_ports_'+count+'">Port'+port_num+'</td>');}
+					document.getElementById("iptv_ports_2").checked = true;
+					</script>
+
+				<td>&nbsp;</td>
+				<td align="center" class="btm0"><input type="checkbox" id="iptv_ports_10" name="iptv_ports_10"><label for="iptv_ports_10">WiFi-2.4G</label></td>
+				<td align="center" class="btm0"><input type="checkbox" id="iptv_ports_11" name="iptv_ports_11"><label for="iptv_ports_11">WiFi-5G</label></td>
+				<td style="display:none" align="center"><input type="checkbox" id="iptv_ports_12" name="iptv_ports_12"><label for="iptv_ports_12">Guest-2.4G</label></td>
+				<td style="display:none" align="center"><input type="checkbox" id="iptv_ports_13" name="iptv_ports_13"><label for="iptv_ports_13">Guest_5G</label></td>
+				<td align="center" id="60G_td"><input type="checkbox" id="iptv_ports_14" name="iptv_ports_14"><label for="iptv_ports_14">WiFi-60G</label></td>
+				<tr>
+			</tbody>
+		</table>
+	</div>
+	<div id="allBtns_div" class="wizard_buttons_div" align="center">
+		<div id="btnsContainer_div1" class="buttons_img_div" align="center">
+			<input type="button" name="Back" id="back" class="purple_short_btn"><!--back_mark-->
+		</div>
+		<div class="buttons_split"></div>
+		<div id="btnsContainer_div2" class="buttons_img_div" align="center">
+			<input type="button" name="Next" id="next" class="purple_short_btn"><!--next_mark-->
+		</div>
+	</div>
+</div>
+</form>
+</body>
+</html>

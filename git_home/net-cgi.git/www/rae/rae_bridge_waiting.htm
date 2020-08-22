@@ -1,0 +1,105 @@
+<HTML>
+<HEAD>
+<META http-equiv="content-type" content='text/html; charset=UTF-8'>
+<style type="text/css">
+.wizard_words_div{ width:80%; padding:5% 10% 0px 10%; font-family:Arial; font-size:10pt; font-weight:normal; color:#404040; }
+.wizard_words_div h1 { font-family:Arial; font-size:12pt; font-weight:bold; color:#9D98FF; }
+.wait_main_content {text-align:center; position:relative;top:-26px}
+.bluebar_div {z-index:999; display:inline-block; width:258px; *display:inline; zoom:1}
+.bluebar_div .bluebar_left{width:10px; height:8px; float:left; background: url(../image/blue_bar.png) no-repeat 0 0;}
+.bluebar_div .bluebar_middle{ width:0px;height:8px; float:left; background: url(../image/blue_bar.png) no-repeat -10px 0;}
+.bluebar_div .bluebar_right{width:10px; height:8px; float:left; background: url(../image/blue_bar.png) no-repeat -248px 0;}
+</style>
+</HEAD>
+<BODY onload="loadvalue();" bgcolor=#ffffff>
+<script>
+/*function loadvalue()
+{*/
+var dyn_bridge_get_ip = "<% cfg_get("bridge_ether_ip_assign") %>";
+var bridge_ipaddr = "<% bridge_mode_ip() %>";
+  
+var delay_time=100000;
+var use_orbi_style_flag = parent.use_orbi_style_flag;
+if(use_orbi_style_flag == 1)
+{	var pchar = "||"; // progress char
+	var maxchars = 38;
+	var charcount = 0;
+	function makeStr(strSize, fillChar)
+	{
+		var temp = "";
+		for (i=0; i < strSize ; i ++)
+			temp = temp + fillChar;
+		return temp;
+	}
+	var wait_time_count = 238;
+	var time_increment = delay_time/238;
+	var middle_bar_length = 0;
+}
+
+function updateProgress()
+{
+	var cf = document.forms[0];
+	if(charcount < maxchars)
+	{
+		charcount ++;
+		cf.progress.value = makeStr(charcount,pchar);
+		setTimeout("updateProgress()",time_increment*6);
+	}
+	else
+		timeout();
+}
+
+function loadvalue()
+{
+	if(use_orbi_style_flag == 1)
+		setTimeout("updateProgress()",time_increment);
+	else
+	setTimeout("timeout()",delay_time);
+}
+
+function timeout()
+{
+	var host= window.location.host;
+	//alert(host);
+
+/*the below code.no matter ap_mode is 0 or 1,after return from apply, need to show ap page,but we also need ro refresh menu bar.if we use the previous host,the dns catche will keep the old ip, so the menu will not refresh. and the catche will be keeped for a little while.so the below code is to change the host, in order to force the menu be refreshed*/	
+	if(dyn_bridge_get_ip == "1"){
+		if(host.indexOf("www") != -1)
+		{
+			if( host.indexOf("net") != -1)
+				top/**/.location.href="http://routerlogin.com/";
+			else
+				top/**/.location.href="http://routerlogin.net/";
+		}
+		else
+		{
+			if(host.indexOf("net") != -1)
+				top/**/.location.href="http://www.routerlogin.com/";
+			else
+				top/**/.location.href="http://www.routerlogin.net/";
+		}
+	}else{
+		top/**/.location.href="http://"+bridge_ipaddr+"/";
+	}
+}
+</script>
+<script>
+if(use_orbi_style_flag == 1){
+	document.write("<form>");
+	document.write("<div align=\"center\" class=\"waiting\"><BR><BR><B>");
+	document.write('$bas_plz_wait_process');		
+	document.write("</B></BR></BR></div>");
+	document.write("<div align=\"center\"><input type=\"text\" size=\"35\" name=\"progress\" class=\"prgbar\" value=\"\" /></div><br />");
+	document.write("</form>");
+}
+else{
+	document.write('<div  class="wizard_words_div" align="center"><BR><BR><h1>');
+	document.write('$bas_plz_wait_process');		
+	document.write('</h1><BR><BR></div>');
+	document.write('<div class="waiting_img_div" align="center"><img src="image/wait30.gif" alt="waiting" /></div>');
+}
+ //<h1>$bas_plz_wait_process</h1>
+</script>
+</BODY>
+</HTML>
+

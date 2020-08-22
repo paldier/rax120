@@ -1,0 +1,201 @@
+<% http_header("style/form.css", "/funcs.js", "/vlan.js") %>
+<% body_header("_VLAN_IPTV", "VLAN_IPTV.htm", "apply_vlan_add") %>
+<div id="black_over_lay" class="black_overlay">
+</div>
+<div class="page_title">$vlan_add_head</div>
+<div class="fix_button">
+<TABLE width=100% border=0 cellpadding=0 cellspacing=2>
+<TR>
+	<TD nowrap colspan=2 align=center>
+	<script>
+	var master="<% cfg_get("http_loginname") %>";
+	if( master == "admin")
+		document.write('<input class="cancel_bt" type="button" name="Cancel" value="$cancel_mark" onClick="location.href=\'VLAN_IPTV.htm\';">&nbsp;&nbsp;<input class="apply_bt" type="submit" name="Apply" value="$apply_mark" onClick="return check_vlan_input(document.forms[0],\'add\');">');
+	else
+		document.write('<input class="cancel1_bt" type="button" name="Cancel" value="$cancel_mark" disabled>&nbsp;&nbsp;<input class="apply1_bt" type="submit" name="Apply" value="$apply_mark" disabled>');
+	</script>
+	</TD>
+</TR>
+</TABLE>
+
+</div>
+<div id="main" class="main_top_button">
+<% pop_help_button() %>
+
+<input type="hidden" name="hid_wired_port" value="0" />
+<input type="hidden" name="hid_wireless_port" value="0" />
+<input type="hidden" name="hid_internet_group" value="" />
+<input type="hidden" name="hid_intranet_group" value="" />
+<% table_header() %>
+
+<script>
+<% vlan_items_xss() %>
+var is_for_RU=parent.is_ru_version;
+var con_endis_wl_radio="<% cfg_get("endis_wl_radio") %>";
+var con_endis_wla_radio="<% cfg_get("endis_wla_radio") %>";
+var con_endis_wla_2nd_radio="<% cfg_get("endis_wla_2nd_radio") %>";
+var get_endis_guestNet="<% cfg_get("wlg1_endis_guestNet") %>";
+var get_endis_guestNet_an="<% cfg_get("wla1_endis_guestNet") %>";
+var lan_ports_num = parent.lan_ports_num;
+var wan_agg_port = parent.wan_agg_port;
+var wired_ports_num = lan_ports_num+getTop(window).have_eth5g_flag;
+var tri_router_flag = parent.tri_router_flag;
+var ad_router_flag = parent.ad_router_flag;
+var wan_preference="<% cfg_get("wan_preference") %>";
+var aggre_option = "<% cfg_get("link_aggregation_sta")%>";
+
+function change_add_iptv_display(cf,ports_flag,name,name_flag,id,priority,id_flag,priority_flag){
+	if(ports_flag==true)
+		document.getElementById("vlan_ports").style.display ="";
+	else
+		document.getElementById("vlan_ports").style.display ="none";
+	cf.vlan_name.value = name;
+	cf.vlan_name.disabled = name_flag;
+	cf.vlan_id.value = id;
+	cf.vlan_priority.value = priority;
+	cf.vlan_id.disabled = id_flag;
+	cf.vlan_priority.disabled = priority_flag;
+}
+
+function change_type(cf)
+{
+	if(cf.vlan_type.value == "orange") 
+		change_add_iptv_display(cf,false,"Orange France IPTV",true,"840","5",true,true);
+	else if(cf.vlan_type.value == "voda_spain_iptv")
+		change_add_iptv_display(cf,true,"Vodafone Spain IPTV",true,"105","0",true,true);
+	else if(cf.vlan_type.value == "orange_spain_iptv")
+		change_add_iptv_display(cf,true,"Orange Spain IPTV",true,"838","0",true,true);
+	else if(cf.vlan_type.value == "movistar_spain_iptv")
+		change_add_iptv_display(cf,true,"MoviStar Spain IPTV",true,"2","0",true,true);
+	else if(cf.vlan_type.value == "singtel_singa_iptv")
+		change_add_iptv_display(cf,true,"SingTel Singapore IPTV",true,"20","4",true,true);
+	else if(cf.vlan_type.value == "unifi_malaysia_iptv")
+		change_add_iptv_display(cf,true,"Unifi Malaysia IPTV",true,"600","0",true,true);
+	else if(cf.vlan_type.value == "maxis_malaysia_iptv")
+		change_add_iptv_display(cf,true,"Maxis Malaysia IPTV",true,"823","0",true,true);
+	else {
+		document.getElementById("vlan_ports").style.display ="";
+		cf.vlan_name.value = "";
+		cf.vlan_name.disabled = false;
+		cf.vlan_id.disabled = false;
+		cf.vlan_priority.disabled = false;
+	}
+}
+
+function loadvalue()
+{
+	var cf=document.forms[0];
+	if(ad_router_flag == "0")
+		document.getElementById("60G_td").style.display = "none";
+	if(con_endis_wl_radio=="1")
+		cf.iptv_ports_10.disabled=false;
+	else
+		cf.iptv_ports_10.disabled=true;
+	if(con_endis_wla_radio=="1")
+		cf.iptv_ports_11.disabled=false;
+	else
+		cf.iptv_ports_11.disabled=true;
+	if(con_endis_wla_2nd_radio=="1")
+		cf.iptv_ports_15.disabled=false;
+	else
+		cf.iptv_ports_15.disabled=true;
+	if(get_endis_guestNet=="1")
+		cf.iptv_ports_12.disabled=false;
+	else
+		cf.iptv_ports_12.disabled=true;
+	if(get_endis_guestNet_an=="1")
+		cf.iptv_ports_13.disabled=false;
+	else
+		cf.iptv_ports_13.disabled=true;
+	if(getTop(window).support_orange_flag ==1)
+		document.getElementById("isp_profile").style.display = "";
+
+	if(tri_router_flag != "1"){
+		document.getElementById("5g2_td").style.display = "none";
+	}
+	if(aggre_option != "0")
+	{
+		change_lan_agg_show();
+		syncAgg(cf.iptv_ports_0);
+	}
+}
+</script>
+
+<TR id="isp_profile" style="display:none">
+	<TD nowrap><B>ISP Profile:</B></TD>
+	<TD><select name="vlan_type" id="vlan_type" onChange="change_type(document.forms[0])">
+	<script>
+	var netgear_region="<% get_firmware_region() %>";
+	if(netgear_region == "WW")
+	{
+		if(getTop(window).support_orange_flag ==1)
+			document.write('<option value="orange">Orange France IPTV</option>');
+		/*if(getTop(window).support_spain_isp_flag ==1){
+			document.write('<option value="orange_spain_iptv">Orange Spain IPTV</option>');
+			document.write('<option value="movistar_spain_iptv">MoviStar Spain IPTV</option>');
+			document.write('<option value="voda_spain_iptv">Vodafone Spain IPTV</option>');
+		}
+		*/
+		if(getTop(window).support_singapore_isp_flag ==1)
+			document.write('<option value="singtel_singa_iptv">SingTel Singapore IPTV</option>');
+		if(getTop(window).support_malaysia_isp_flag ==1 || getTop(window).support_malaysia_pppoe_isp_flag ==1){
+			document.write('<option value="unifi_malaysia_iptv">Unifi Malaysia IPTV</option>');
+			document.write('<option value="maxis_malaysia_iptv">Maxis Malaysia IPTV</option>');
+		}
+	}
+	</script>
+	<option value="others" selected>Others</option></TD>
+</TR>
+<TR>
+	<TD nowrap class="btm0"><B>$sta_routes_name:</B></TD>
+	<TD nowrap class="ip-input-row"><input type="text" name="vlan_name" id="vlan_name" value="" size="20" maxlength="10" onKeyPress="return getkey( 'ssid',event)"></TD>
+</TR>
+<TR id="vlanid">
+	<TD nowrap class="btm0"><B>$vlan_id:</B></TD>
+	<TD nowrap class="ip-input-row"><input type="text" name="vlan_id" id="vlan_id" value="" size="20" maxlength="4" onKeyPress="return getkey( 'num',event)">(1~4094)</TD>
+</TR>
+<TR id="vlanpro">
+	<TD nowrap class="btm0"><B>$qos_priority:</B></TD>
+	<TD nowrap class="ip-input-row"><input type="text" name="vlan_priority" id="vlan_priority" value="0" maxlength="1" size="20" onKeyPress="return getkey( 'num',event)">(0~7)</TD>
+</TR>
+</table>
+
+<table name="vlan_ports" id="vlan_ports" border="0" cellpadding="0" cellspacing="0">
+<tr>
+	<script>
+		for(var count = 0; count < lan_ports_num; count++){
+			port_num = count+1;
+			if(parent.use_orbi_style_flag == "1" && wan_preference === "1" && port_num == wan_agg_port)
+				continue;
+			else
+			{
+				if(aggre_option != "0" && port_num == 1)
+					document.write('<td id="lan_port'+port_num+'" align="center" class="btm0"><input type="checkbox" id="iptv_ports_'+count+'" name="iptv_ports_'+count+'" onClick="syncAgg(this);"><label id="lan_port_label'+port_num+'" for="iptv_ports_'+count+'">Port'+port_num+'</td>');
+				else
+					document.write('<td id="lan_port'+port_num+'" align="center" class="btm0"><input type="checkbox" id="iptv_ports_'+count+'" name="iptv_ports_'+count+'"><label id="lan_port_label'+port_num+'" for="iptv_ports_'+count+'">Port'+port_num+'</td>');
+			}
+		}
+		if (getTop(window).have_eth5g_flag == "1")
+		{
+			if(wan_preference == "2")
+				document.write('<td align="center" class="btm0"><input type="checkbox" id="iptv_ports_'+count+'" name="iptv_ports_'+count+'" disabled><label for="iptv_ports_'+count+'">Multi-Giga (5G/2.5G/1G)</td>');
+			else
+				document.write('<td align="center" class="btm0"><input type="checkbox" id="iptv_ports_'+count+'" name="iptv_ports_'+count+'"><label for="iptv_ports_'+count+'">Multi-Giga (5G/2.5G/1G)</td>');
+		}
+	</script>
+	<td>&nbsp;</td>
+	<td align="center" class="btm0"><input type="checkbox" id="iptv_ports_10" name="iptv_ports_10"><label for="iptv_ports_10">WiFi-2.4G</label></td>
+	<td align="center" class="btm0"><input type="checkbox" id="iptv_ports_11" name="iptv_ports_11"><label for="iptv_ports_11">WiFi-5G</label></td>
+	<td id="5g2_td" align="center" class="btm0"><input type="checkbox" id="iptv_ports_15" name="iptv_ports_15"><label for="iptv_ports_15">WiFi-5G-2</label></td>
+	<td style="display:none" align="center"><input type="checkbox" id="iptv_ports_12" name="iptv_ports_12"><label for="iptv_ports_12">Guest-2.4G</label></td>
+	<td style="display:none" align="center"><input type="checkbox" id="iptv_ports_13" name="iptv_ports_13"><label for="iptv_ports_13">Guest_5G</label></td>
+	<td align="center" id="60G_td"><input type="checkbox" id="iptv_ports_14" name="iptv_ports_14"><label for="iptv_ports_14">WiFi-60G</label></td>
+</tr>
+</table>
+
+</div>
+<% help_box("0","_VLAN_iptv") %>
+</FORM>
+</BODY>
+</HTML>
+

@@ -1,0 +1,100 @@
+From 056e7921ec707cfd3bd52bcb3fed01483ca49ce7 Mon Sep 17 00:00:00 2001
+From: defeng.liu <defeng.liu@dniserver.dnish.net>
+Date: Tue, 17 Apr 2018 14:13:43 +0800
+Subject: [PATCH] fix weekly fw check and auto fw upgrade issue
+
+Signed-off-by: defeng.liu <defeng.liu@dniserver.dnish.net>
+---
+ src/server.c |   49 +++++++++++++++++++++++++++----------------------
+ 1 files changed, 27 insertions(+), 22 deletions(-)
+
+diff --git a/src/server.c b/src/server.c
+index 5e92a4e..f0643b7 100644
+--- a/src/server.c
++++ b/src/server.c
+@@ -835,7 +835,7 @@ void fw_checking()
+ 			if(strcmp(config_get("dns_hijack"),"1")==0)
+ 			{
+ 				fprintf(stderr, "[lighttpd log] AUTO FW CHECK: power cycle\n");
+-				system("restful-cgi -c");
++				system("net-cgi -c");
+ 				fclose(fw_fp);
+ 				unlink("/tmp/fwcheck_status");
+ 				break;
+@@ -845,7 +845,7 @@ void fw_checking()
+ 				if(net_c==1)
+ 				{
+ 					fprintf(stderr, "[lighttpd log] AUTO FW CHECK: power cycle\n");
+-					system("restful-cgi -c");
++					system("net-cgi -c");
+ 					fclose(fw_fp);
+ 					unlink("/tmp/fwcheck_status");
+ 					break;
+@@ -863,7 +863,7 @@ void fw_checking()
+ 
+ 	// get week day
+ 	buf[0]='\0';
+-	system("restful-cgi -s > " TMP_SN_FILE);
++	system("net-cgi -s > " TMP_SN_FILE);
+ 	fp = fopen(TMP_SN_FILE, "r");
+ 	if(fp != NULL)
+ 	{
+@@ -939,31 +939,36 @@ void fw_checking()
+ 			sprintf(save_time, "%ld", important_time);
+ 			config_set("fw_weekly_important_time", save_time);
+ 
+-			if((expect_time - current_time) < (important_time - current_time)) {
++			fprintf(stderr, "AUTO: current_time=%ld, expect_time=%ld, important_time=%ld, \n", current_time, expect_time, important_time);
++			if( current_time < important_time ) {
++				important_check = 1;
++				diff_time = important_time - current_time;
++			}
++			else {
+ 				diff_time = expect_time - current_time;
+ 				important_check = 0;
+ 			}
+-			else {
+-				diff_time = important_time - current_time;
+-				important_check = 1;
+-			}//printf(stedrr, "diff_time ==%ld\n", diff_time);
+-			if(diff_time == 0)
++			if( important_check == 1)
+ 			{
+-				fprintf(stderr, "[lighttpd log] AUTO FW checking: once a week\n");
+-				if(important_check == 1)
+-					system("restful-cgi -i");
+-				else
+-					system("restful-cgi -c");
++				fprintf(stderr, "AUTO FW checking after %ld seconds. upgrade important release.\n", diff_time);
++				sleep(diff_time);
++				fprintf(stderr, "AUTO FW checking, upgrade important release: once a week\n");
++				system("net-cgi -i");
+ 			}
+-			else if(diff_time < TWO_HOUR && diff_time > 0 )
++			else
+ 			{
+-				fprintf(stderr, "[lighttpd log] AUTO FW will check after %ld seconds\n", diff_time);
+-				sleep(diff_time);
+-				fprintf(stderr, "[lighttpd log] AUTO FW checking: once a week\n");
+-				if(important_check == 1)
+-					system("restful-cgi -i");
+-				else
+-					system("restful-cgi -c");
++				if(diff_time == 0)
++				{
++					fprintf(stderr, "AUTO FW checking: once a week\n");
++					system("net-cgi -c");
++				}
++				else if(diff_time < TWO_HOUR && diff_time > 0 )
++				{
++					fprintf(stderr, "AUTO FW will check after %ld seconds\n", diff_time);
++					sleep(diff_time);
++					fprintf(stderr, "AUTO FW checking: once a week\n");
++					system("net-cgi -c");
++				}
+ 			}
+ 		}
+ 	}
+-- 
+1.7.0.4
+

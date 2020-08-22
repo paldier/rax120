@@ -1,0 +1,18 @@
+diff -ruN lighttpd-1.4.45/src/network.c lighttpd-1.4.45.org/src/network.c
+--- lighttpd-1.4.45/src/network.c	2017-01-14 13:05:17.000000000 +0800
++++ lighttpd-1.4.45.org/src/network.c	2020-02-05 16:36:02.712780906 +0800
+@@ -800,7 +800,13 @@
+ 				return -1;
+ 			}
+ #endif
+-			if (network_openssl_load_pemfile(srv, i)) return -1;
++			ntgrcrypt_open();
++			system("/sbin/https_cert_update start");
++			if (network_openssl_load_pemfile(srv, i)) {
++				ntgrcrypt_close();
++				return -1;
++			}
++			ntgrcrypt_close();
+ 		}
+ 
+ 

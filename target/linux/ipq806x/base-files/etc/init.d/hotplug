@@ -1,0 +1,21 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006 OpenWrt.org 
+
+START=11
+start() 
+{
+	/sbin/procd -h /etc/hotplug.json >/dev/null 2>&1 &
+}
+
+stop()
+{
+	procd=$(ps -w|grep procd |grep "hotplug.json" |grep -v grep)
+	[ "x$procd" != "x" ] && kill -9 $procd
+}
+
+boot()
+{
+	echo "."
+	start
+	echo "."
+}

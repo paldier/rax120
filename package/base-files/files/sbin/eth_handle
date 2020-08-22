@@ -1,0 +1,27 @@
+#!/bin/sh
+
+stop()
+{
+    	/usr/sbin/ssdk_sh debug phy set 0x0 0x0 0x1840   # set register 0x0  bit[11] to 1
+    	/usr/sbin/ssdk_sh debug phy set 0x1 0x0 0x1840   # set register 0x0  bit[11] to 1
+    	/usr/sbin/ssdk_sh debug phy set 0x2 0x0 0x1840   # set register 0x0  bit[11] to 1
+    	/usr/sbin/ssdk_sh debug phy set 0x3 0x0 0x1840   # set register 0x0  bit[11] to 1
+}
+
+start()
+{
+    	/usr/sbin/ssdk_sh debug phy set 0x0 0x0 0x1040  # set register 0x0  bit[11] to 0
+    	/usr/sbin/ssdk_sh debug phy set 0x1 0x0 0x1040  # set register 0x0  bit[11] to 0
+    	/usr/sbin/ssdk_sh debug phy set 0x2 0x0 0x1040  # set register 0x0  bit[11] to 0
+    	/usr/sbin/ssdk_sh debug phy set 0x3 0x0 0x1040  # set register 0x0  bit[11] to 0
+}
+
+restart()
+{
+    stop
+    sleep 8
+    start
+}
+
+
+restart

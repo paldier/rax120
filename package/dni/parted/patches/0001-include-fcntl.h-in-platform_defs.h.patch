@@ -1,0 +1,10 @@
+--- a/libparted/fs/xfs/platform_defs.h-org	2017-08-10 19:47:56.407209432 +0800
++++ b/libparted/fs/xfs/platform_defs.h	2017-08-10 19:48:32.167209504 +0800
+@@ -42,6 +42,7 @@
+ #include <stdlib.h>
+ #include <string.h>
+ #include <unistd.h>
++#include <fcntl.h>
+ #include <sys/param.h>
+ #include <sys/types.h>
+ 

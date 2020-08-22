@@ -1,0 +1,26 @@
+From 0d5c61e4590706802a956e00235416f29cdac489 Mon Sep 17 00:00:00 2001
+From: defeng.liu <defeng.liu@dniserver.dnish.net>
+Date: Tue, 10 Oct 2017 11:42:36 +0800
+Subject: [PATCH] allow root change cgi
+
+Signed-off-by: defeng.liu <defeng.liu@dniserver.dnish.net>
+---
+ configure.ac |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/configure.ac b/configure.ac
+index e0f134b..1970ec8 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -113,7 +113,7 @@ AC_HEADER_SYS_WAIT
+ AC_CHECK_HEADERS([arpa/inet.h fcntl.h netinet/in.h stdlib.h string.h \
+ sys/socket.h sys/time.h unistd.h sys/sendfile.h sys/uio.h \
+ getopt.h sys/epoll.h sys/select.h poll.h sys/poll.h sys/devpoll.h sys/filio.h \
+-sys/mman.h sys/event.h port.h pwd.h \
++sys/mman.h sys/event.h port.h \
+ sys/resource.h sys/un.h syslog.h sys/prctl.h uuid/uuid.h])
+ 
+ dnl Checks for typedefs, structures, and compiler characteristics.
+-- 
+1.7.0.4
+

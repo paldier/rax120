@@ -1,0 +1,41 @@
+diff -Nur wireless_tools.29.org/iwmulticall.c wireless_tools.29/iwmulticall.c
+--- wireless_tools.29.org/iwmulticall.c	2018-06-01 11:43:25.611988413 +0800
++++ wireless_tools.29/iwmulticall.c	2018-06-01 11:51:50.899986485 +0800
+@@ -90,14 +90,12 @@
+ #undef iw_usage
+ #undef main
+ 
+-#ifndef WE_ESSENTIAL
+ /* Do we really need iwgetid ? Well, it's not like it's a big one */
+ #define main(args...) main_iwgetid(args)
+ #define iw_usage(args...) iwgetid_usage(args)
+ #include "iwgetid.c"
+ #undef iw_usage
+ #undef main
+-#endif
+ 
+ /* iwevent is useless for most people, don't grab it ? */
+ 
+@@ -136,10 +134,8 @@
+ #endif
+   if(!strcmp(call_name, "iwpriv"))
+     return(main_iwpriv(argc, argv));
+-#ifndef WE_ESSENTIAL
+   if(!strcmp(call_name, "iwgetid"))
+     return(main_iwgetid(argc, argv));
+-#endif
+ 
+   /* Uh oh... Not supposed to come here. */
+   printf("iwmulticall : you are not supposed to call me this way...\n");
+diff -Nur wireless_tools.29.org/Makefile wireless_tools.29/Makefile
+--- wireless_tools.29.org/Makefile	2018-06-01 11:43:25.611988413 +0800
++++ wireless_tools.29/Makefile	2018-06-01 11:55:34.479985632 +0800
+@@ -197,7 +197,7 @@
+ 	  ln -f -s iwconfig iwlist ; \
+ 	  $(if $(BUILD_WE_ESSENTIAL),,ln -f -s iwconfig iwspy ;) \
+ 	  ln -f -s iwconfig iwpriv ; \
+-	  $(if $(BUILD_WE_ESSENTIAL),,ln -f -s iwconfig iwgetid ) )
++	  ln -f -s iwconfig iwgetid )
+ 
+ clean::
+ 	$(RM_CMD) 

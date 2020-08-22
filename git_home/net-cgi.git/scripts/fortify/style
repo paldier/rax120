@@ -1,0 +1,108 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.style_8 { padding-right: 3pt; padding-bottom: 11pt; padding-left: 0pt;}
+.style_9 { font-size: 8pt; margin-top: auto; margin-bottom: 12pt; padding: 0pt;}
+.style_6 { font-size: 8pt; margin-bottom: 3pt; padding: 0pt;}
+.style_7 { font-size: 8pt; padding: 0pt;}
+.style_0 { font-family: Arial; font-style: normal; font-variant: normal; font-weight: normal; font-size: 11pt; color: black; text-indent: 0em; letter-spacing: normal; word-spacing: normal; text-transform: none; white-space: normal; line-height: normal;}
+.style_65 { border-bottom: thin solid rgb(192, 192, 192);}
+.style_114 { font-variant: normal; margin: 0pt; padding: 1pt; border: medium none black; text-indent: 0em; letter-spacing: normal; word-spacing: normal; text-transform: none; white-space: normal; line-height: normal;}
+.style_1 { font-family: Arial; font-size: 11pt;}
+.style_64 { font-family: Arial; font-size: 11pt; margin-top: 10pt; border-top: thin solid rgb(192, 192, 192); width: 100%;}
+.style_115 { font-family: "Courier New"; font-style: normal; font-variant: normal; font-weight: normal; font-size: 10pt; color: black; margin: 0pt; padding: 5pt; border: medium none black; background-color: white; text-indent: 0em; letter-spacing: normal; word-spacing: normal; text-transform: none; white-space: normal; line-height: normal;}
+.style_67 { margin-top: 5pt; width: 100%;}
+.style_112 { font-family: Arial; font-style: normal; font-variant: normal; font-weight: normal; font-size: 10pt; color: rgb(0, 0, 0); margin: 5pt 0pt 0pt 20pt; padding: 1pt; border: medium none black; background-color: white; text-indent: 0em; letter-spacing: normal; word-spacing: normal; text-transform: none; line-height: normal;}
+.style_66 { border-left: thin solid rgb(255, 255, 255);}
+.style_113 { font-family: "Courier New"; font-size: 9pt;}
+.style_4 { padding-bottom: 11pt; padding-left: 5pt;}
+.style_61 { font-weight: bold; border: none black;}
+.style_110 { font-family: "Courier New";}
+.style_5 { height: 38px; width: 38px;}
+.style_60 { border-top: thin solid rgb(192, 192, 192);}
+.style_111 { font-family: "Courier New"; padding: 5pt;}
+.style_2 { font-family: Arial; font-size: 7pt; color: rgb(135, 137, 139); margin: 0pt 0in; height: 0.594in; width: 100%;}
+.style_63 { border-top: thin solid rgb(192, 192, 192);}
+.style_3 { font-family: Arial; font-size: 7pt; color: rgb(135, 137, 139); height: 0.594in;}
+.style_62 { font-weight: bold;}
+.style_79 { font-family: Arial; font-weight: bold; color: rgb(0, 0, 0); background-color: rgb(237, 28, 36);}
+.style_70 { font-family: Arial; font-style: italic; font-weight: bold; font-size: 11pt; color: rgb(135, 137, 139); margin-left: 20pt; padding-left: 1pt;}
+.style_76 { font-family: Arial; font-size: 11pt; margin: 0pt;}
+.style_75 { font-weight: bold; color: rgb(128, 255, 0);}
+.style_78 { font-family: Arial; font-weight: bold; color: rgb(0, 0, 0); border-right: none black; border-left: thin solid rgb(255, 255, 255); background-color: rgb(237, 28, 36);}
+.style_77 { font-family: Arial; font-size: 9pt; white-space: nowrap;}
+.style_72 { font-family: Arial; font-weight: bold; font-size: 11pt; color: rgb(255, 255, 255); padding-top: 2pt; padding-bottom: 2pt; padding-left: 3pt; background-color: rgb(135, 137, 139);}
+.style_71 { font-family: Arial; font-weight: bold; font-size: 11pt; color: rgb(255, 255, 255); padding-top: 3pt; padding-bottom: 3pt; padding-left: 3pt; background-color: rgb(0, 150, 214);}
+.style_73 { border-left: thin solid rgb(255, 255, 255);}
+.style_81 { font-family: Arial; font-weight: bold; color: rgb(0, 0, 0); background-color: rgb(255, 120, 0);}
+.style_80 { font-family: Arial; font-weight: bold; color: rgb(0, 0, 0); border-left: thin solid rgb(255, 255, 255); background-color: rgb(255, 120, 0);}
+.style_87 { font-family: Arial; font-size: 9pt; white-space: normal;}
+.style_86 { font-family: Arial; font-size: 9pt; margin: 0pt;}
+.style_88 { white-space: nowrap;}
+.style_83 { font-family: Arial; font-weight: bold; color: rgb(0, 0, 0); background-color: rgb(246, 170, 88);}
+.style_82 { font-family: Arial; font-weight: bold; color: rgb(0, 0, 0); border-left: thin solid rgb(255, 255, 255); background-color: rgb(246, 170, 88);}
+.style_85 { font-family: Arial; font-weight: bold; color: rgb(0, 0, 0); background-color: rgb(238, 200, 69);}
+.style_84 { font-family: Arial; font-weight: bold; color: rgb(0, 0, 0); border-left: thin solid rgb(255, 255, 255); background-color: rgb(238, 200, 69);}
+.style_18 { height: 100%; width: 100%;}
+.style_19 { margin-top: 0.5in; margin-right: 1.1in; margin-left: 0.75in;}
+.style_14 { height: 100px; width: 100px;}
+.style_13 { padding: 0pt;}
+.style_16 { height: 38px; width: 38px;}
+.style_15 { font-family: Arial; font-weight: bold; font-size: 12pt;}
+.style_90 { font-weight: bold; color: rgb(0, 128, 0);}
+.style_10 { font-family: Arial; font-weight: bold; font-size: 12pt; margin-top: 0pt; width: 690px;}
+.style_98 { font-family: Arial; font-size: 9pt; width: 7.062in;}
+.style_12 { padding: 0pt;}
+.style_11 { font-family: Arial; font-weight: bold; font-size: 12pt; height: 100px;}
+.style_94 { font-family: Arial; font-weight: bold; font-size: 14pt; color: rgb(0, 0, 0); margin-top: 10pt; margin-bottom: 7pt;}
+.style_96 { height: 2in; width: 7in;}
+.style_29 { padding-top: 10pt;}
+.style_28 { margin-right: 0in; margin-left: 0in;}
+.style_25 { font-size: 14pt;}
+.style_24 { font-weight: bold; font-size: 14pt; color: rgb(0, 150, 214);}
+.style_27 { font-family: Arial; font-size: 9pt; color: rgb(0, 0, 0); margin: 1pt;}
+.style_26 { font-family: Arial; font-weight: bold; font-size: 16pt; color: rgb(0, 0, 0); margin-top: 10pt; margin-bottom: 7pt;}
+.style_21 { font-family: Arial; font-style: normal; font-size: 28pt; color: rgb(0, 150, 214);}
+.style_20 { font-family: Arial; font-size: 11pt; color: rgb(0, 150, 214); border-bottom: thin solid rgb(221, 222, 221);}
+.style_23 { margin-top: 0.5in;}
+.style_22 { font-family: Arial; font-size: 16pt; color: rgb(0, 150, 214); border-top: thin solid rgb(221, 222, 221);}
+.style_39 { height: 0.302in;}
+.style_36 { padding-top: 10pt;}
+.style_38 { margin-top: 0pt; height: 2.604in; width: 3.021in;}
+.style_37 { height: 2.604in; width: 3.021in;}
+.style_32 { padding-top: 3pt; padding-bottom: 3pt;}
+.style_31 { margin-top: 0pt; margin-bottom: 5pt; padding-top: 5pt; padding-bottom: 5pt; width: 100%;}
+.style_33 { font-weight: bold;}
+.style_30 { font-family: Arial; font-size: 11pt; width: 4.094in;}
+.style_47 { font-family: Arial; font-weight: bold; color: rgb(0, 0, 0); border: medium solid rgb(128, 128, 128); background-color: rgb(246, 170, 88);}
+.style_46 { font-family: Arial; font-weight: bold; color: rgb(0, 0, 0); border: medium solid rgb(128, 128, 128); background-color: rgb(238, 200, 69);}
+.style_49 { padding: 0pt;}
+.style_48 { height: 27px;}
+.style_43 { font-family: Arial; font-size: 11pt; margin: 0pt; padding: 0pt;}
+.style_42 { height: 0.7in;}
+.style_45 { font-family: Arial; font-weight: bold; color: rgb(0, 0, 0); border: medium solid rgb(128, 128, 128); background-color: rgb(237, 28, 36);}
+.style_44 { font-family: Arial; font-weight: bold; color: rgb(0, 0, 0); border: medium solid rgb(128, 128, 128); background-color: rgb(255, 120, 0);}
+.style_41 { font-family: Arial; font-weight: bold; font-size: 11pt; color: rgb(0, 0, 0); margin: 0pt 0pt 2pt 30pt; padding: 0pt;}
+.style_40 { padding: 0pt;}
+.style_58 { padding-top: 3pt; padding-bottom: 3pt;}
+.style_57 { font-weight: bold;}
+.style_59 { margin-left: 20pt; width: 6.885in;}
+.style_109 { margin-right: 40pt; margin-left: 40pt; width: 100%;}
+.style_107 { font-family: Arial; font-style: normal; font-variant: normal; font-weight: normal; font-size: 10pt; color: rgb(0, 0, 0); margin: 5pt 0pt 0pt 20pt; padding: 1pt; border: medium none black; background-color: white; text-indent: 0em; letter-spacing: normal; word-spacing: normal; text-transform: none; white-space: normal; line-height: normal;}
+.style_108 { font-family: Arial; font-style: normal; font-variant: normal; font-weight: normal; font-size: 10pt; color: rgb(0, 0, 0); margin: 5pt 0pt 0pt 20pt; padding: 1pt; border: medium none black; text-indent: 0em; letter-spacing: normal; word-spacing: normal; text-transform: none; white-space: normal; line-height: normal;}
+.style_105 { font-family: Arial; font-weight: bold; font-size: 11pt; padding-left: 3pt; background-color: rgb(185, 184, 187);}
+.style_54 { font-family: Arial; font-size: 11pt;}
+.style_103 { font-family: Arial; font-weight: bold; font-size: 11pt; color: rgb(255, 255, 255); padding-top: 2pt; padding-bottom: 2pt; padding-left: 3pt; border-top: solid rgb(255, 255, 255); border-bottom: solid rgb(255, 255, 255); background-color: rgb(135, 137, 139);}
+.style_53 { font-family: sans-serif; font-style: normal; font-variant: normal; font-weight: normal; font-size: 11pt; color: black; margin: 0pt; padding: 1pt; border: medium none black; text-indent: 0em; letter-spacing: normal; word-spacing: normal; text-transform: none; white-space: normal; line-height: normal; height: 3.854in; width: 7.156in;}
+.style_104 { margin: 0pt;}
+.style_56 { margin-top: 0pt; margin-bottom: 0pt; padding-top: 5pt; padding-bottom: 5pt; height: 1.014in; width: 100%;}
+.style_101 { font-family: Arial; font-weight: bold; font-size: 11pt; color: rgb(255, 255, 255); padding-top: 3pt; padding-bottom: 3pt; padding-left: 3pt; border-top: thick solid rgb(255, 255, 255); background-color: rgb(0, 150, 214);}
+.style_55 { font-family: Arial; font-weight: bold; font-size: 11pt; color: rgb(0, 0, 0); margin-top: 10pt; margin-bottom: 7pt;}
+.style_102 { border-left: thin solid rgb(255, 255, 255);}
+.style_50 { height: 0.25in;}
+.style_100 { font-family: Arial; font-size: 9pt;}
+.style_52 { font-family: sans-serif; font-style: normal; font-variant: normal; font-weight: normal; font-size: 11pt; color: black; margin: 0pt; padding: 1pt; border: medium none black; text-indent: 0em; letter-spacing: normal; word-spacing: normal; text-transform: none; white-space: normal; line-height: normal; height: 3.844in; width: 7.146in;}
+.style_51 { font-family: Arial; font-size: 11pt; margin: 0pt; padding: 0pt 1pt;}
+</style>

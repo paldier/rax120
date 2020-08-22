@@ -1,0 +1,20 @@
+#!/bin/sh
+
+ds_enable=$(config get enable_ds)
+
+case $1 in
+	"start")
+		if [ "x$ds_enable" = "x1" ]; then
+			iptables -I FORWARD -i dslite_tun -j ACCEPT
+			iptables -I FORWARD -o dslite_tun -j ACCEPT
+			iptables -I INPUT -i dslite_tun -j ACCEPT
+			iptables -I OUTPUT -o dslite_tun -j ACCEPT
+		fi
+		;;
+	"stop")
+		iptables -D FORWARD -i dslite_tun -j ACCEPT
+		iptables -D FORWARD -o dslite_tun -j ACCEPT
+		iptables -D INPUT -i dslite_tun -j ACCEPT
+		iptables -D OUTPUT -o dslite_tun -j ACCEPT
+		;;
+esac

@@ -1,0 +1,236 @@
+--- wget-1.17.1/src/http.c.old	2017-05-01 09:11:22.140928474 +0800
++++ wget-1.17.1/src/http.c	2017-05-01 09:12:24.390774119 +0800
+@@ -3796,6 +3796,7 @@
+   bool send_head_first = true;
+   bool force_full_retrieve = false;
+ 
++  print_stat("(CONNECTING)");
+ 
+   /* If we are writing to a WARC file: always retrieve the whole file. */
+   if (opt.warc_filename != NULL)
+@@ -4079,6 +4080,7 @@
+           break;
+ #endif
+         default:
++	  print_stat("(ERROR)");
+           /* All possibilities should have been exhausted.  */
+           abort ();
+         }
+@@ -4297,6 +4299,7 @@
+                          number_to_static_string (hstat.len),
+                          number_to_static_string (hstat.contlen),
+                          hstat.local_file, count);
++	      print_stat("(COMPLETED %s)",tmrate);
+             }
+           ++numurls;
+           total_downloaded_bytes += hstat.rd_size;
+@@ -4400,6 +4403,8 @@
+     }
+   free_hstat (&hstat);
+ 
++  if (ret != RETROK)
++	print_stat("(ERROR)");
+   return ret;
+ }
+ 
+--- wget-1.17.1/src/ftp.c.old	2017-05-01 09:11:10.210925423 +0800
++++ wget-1.17.1/src/ftp.c	2017-05-01 09:12:39.200928450 +0800
+@@ -1492,15 +1492,19 @@
+   else
+     fp = output_stream;
+ 
++  wgint tolen;  
+   if (passed_expected_bytes)
+     {
+       print_length (passed_expected_bytes, restval, true);
++      tolen = passed_expected_bytes;
+       expected_bytes = passed_expected_bytes;
+         /* for fd_read_body's progress bar */
+     }
+   else if (expected_bytes)
++  {
++    tolen = expected_bytes;
+     print_length (expected_bytes, restval, false);
+-
++   }
+ #ifdef HAVE_SSL
+   if (u->scheme == SCHEME_FTPS && using_data_security)
+     {
+@@ -1813,6 +1817,7 @@
+         locf = opt.output_document;
+     }
+ 
++   print_stat("(CONNECTING)");
+   /* If the output_document was given, then this check was already done and
+      the file didn't exist. Hence the !opt.output_document */
+ 
+@@ -1944,6 +1949,7 @@
+             logputs (LOG_NOTQUIET, "Server does not like implicit FTPS connections.\n");
+ #endif
+           /* Fatal errors, give up.  */
++	  print_stat("(ERROR)");
+           if (warc_tmp != NULL)
+               fclose (warc_tmp);
+           return err;
+@@ -1975,6 +1981,7 @@
+           break;
+         default:
+           /* Not as great.  */
++	  print_stat("(ERROR)");
+           abort ();
+         }
+       tms = datetime_str (time (NULL));
+@@ -2001,6 +2008,7 @@
+                      tms, tmrate,
+                      write_to_stdout ? "" : quote (locf),
+                      number_to_static_string (qtyread));
++	 print_stat("(COMPLETED %s)",tmrate);
+         }
+       if (!opt.verbose && !opt.quiet)
+         {
+--- wget-1.17.1/src/main.c.old	2017-05-01 09:11:27.720925052 +0800
++++ wget-1.17.1/src/main.c	2017-05-01 09:12:29.650927720 +0800
+@@ -88,6 +88,36 @@
+ 
+ struct options opt;
+ 
++#include <fcntl.h>
++#include <stdarg.h>
++#include <sys/types.h>
++#include <sys/stat.h>
++#include <errno.h>
++char statfile[32];
++int stat_fd = -1;
++void print_stat(char * stat,...)
++{
++	va_list ap;
++	char buf[128];
++	int fd,nwrite;
++	if(stat_fd == -1){
++		if((fd = open(statfile,O_WRONLY|O_NONBLOCK))< 0){
++			printf("open error\n");
++			return;
++		}
++		stat_fd = fd;
++	}
++	va_start(ap,stat);
++	vsprintf(buf,stat,ap);
++	va_end(ap);
++
++	if((nwrite = write(stat_fd,buf,strlen(buf)))<0){
++		if(errno == EAGAIN){
++			printf("fifo has not been read yeat\n");
++		}
++	}
++}
++
+ /* defined in version.c */
+ extern char *system_getrc;
+ /* Used for --version output in print_version */
+@@ -350,6 +380,7 @@
+     { "parent", 0, OPT__PARENT, NULL, optional_argument },
+     { "passive-ftp", 0, OPT_BOOLEAN, "passiveftp", -1 },
+     { "password", 0, OPT_VALUE, "password", -1 },
++    { "statfile", 0, OPT_VALUE, "statfile", -1 },
+     { "post-data", 0, OPT_VALUE, "postdata", -1 },
+     { "post-file", 0, OPT_VALUE, "postfile", -1 },
+     { "prefer-family", 0, OPT_VALUE, "preferfamily", -1 },
+@@ -663,6 +694,8 @@
+                                      one of IPv6, IPv4, or none\n"),
+ #endif
+     N_("\
++       --statfile=PATH           set both ftp and http status file path.\n"),
++    N_("\
+        --user=USER                 set both ftp and http user to USER\n"),
+     N_("\
+        --password=PASS             set both ftp and http password to PASS\n"),
+@@ -1288,6 +1321,11 @@
+       switch (cmdopt->type)
+         {
+         case OPT_VALUE:
++	  if(strcmp(cmdopt->data,"statfile") == 0)
++	  {
++		strcpy(statfile,optarg);
++		break;
++	  }	
+           setoptval (cmdopt->data, optarg, cmdopt->long_name);
+           break;
+         case OPT_BOOLEAN:
+@@ -1683,6 +1721,9 @@
+   if (opt.background)
+     fork_to_background ();
+ #endif
++  char cmd[32];
++  sprintf(cmd,"echo '%d' > %s-pid",getpid(),statfile);
++  system(cmd);
+ 
+   /* Initialize progress.  Have to do this after the options are
+      processed so we know where the log file is.  */
+--- wget-1.17.1/src/url.c.old	2017-05-01 09:11:48.890774629 +0800
++++ wget-1.17.1/src/url.c	2017-05-01 09:13:09.510927816 +0800
+@@ -1359,8 +1359,9 @@
+ };
+ 
+ #define FILE_CHAR_TEST(c, mask) \
+-    ((opt.restrict_files_nonascii && !c_isascii ((unsigned char)(c))) || \
+-    (filechr_table[(unsigned char)(c)] & (mask)))
++    (((opt.restrict_files_nonascii && !c_isascii ((unsigned char)(c))) || \
++    (filechr_table[(unsigned char)(c)] & (mask)))\
++    && !((c|0x0fffffff) == 0xffffffff)) /*do not change the chinese character*/
+ 
+ /* Shorthands for the table: */
+ #define U filechr_not_unix
+--- wget-1.17.1/src/wget.h.old	2017-05-01 09:11:42.680927633 +0800
++++ wget-1.17.1/src/wget.h	2017-05-01 09:12:54.460928505 +0800
+@@ -311,6 +311,8 @@
+    0-pad the address.)  */
+ #define PTR_FORMAT(p) (int) (2 * sizeof (void *)), (unsigned long) (p)
+ 
++extern char statfile[];
++extern void print_stat(char * stat,...);
+ /* Find the maximum buffer length needed to print an integer of type `x'
+    in base 10. 24082 / 10000 = 8*log_{10}(2).  */
+ #define MAX_INT_TO_STRING_LEN(x) ((sizeof(x) * 24082 / 10000) + 2)
+--- wget-1.17.1/src/progress.c.old	2017-05-01 09:11:35.600928078 +0800
++++ wget-1.17.1/src/progress.c	2017-05-01 09:13:02.800928340 +0800
+@@ -280,6 +280,7 @@
+ {
+   const wgint ROW_BYTES = opt.dot_bytes * opt.dots_in_line;
+ 
++  int dl_per = 0;
+   /* bytes_displayed is the number of bytes indicated to the user by
+      dots printed so far, includes the initially "skipped" amount */
+   wgint bytes_displayed = dp->rows * ROW_BYTES + dp->dots * opt.dot_bytes;
+@@ -294,6 +295,7 @@
+          been retrieved.  12.8% will round to 12% because the 13% mark
+          has not yet been reached.  100% is only shown when done.  */
+       int percentage = 100.0 * bytes_displayed / dp->total_length;
++      dl_per = percentage;
+       logprintf (LOG_PROGRESS, "%3d%%", percentage);
+     }
+ 
+@@ -315,6 +317,8 @@
+                rate >= 99.95 ? 0 : rate >= 9.995 ? 1 : 2,
+                rate, names[units]);
+     dp->last_timer_value = dltime;
++    if(((dp->rows)%4) == 0)
++    	print_stat("(DOWNLOADING %s %4.*f%c %d%%)",number_to_static_string(dp->total_length),rate >= 99.95 ? 0 : rate >= 9.995 ? 1 : 2,rate, names[units],dl_per);
+   }
+ 
+   if (!last)
+@@ -334,6 +338,7 @@
+     }
+   else
+     {
++      //print_stat("(COMPLETED)");
+       /* When done, print the total download time */
+       if (dltime >= 10)
+         logprintf (LOG_PROGRESS, "=%s",
+@@ -1093,6 +1098,7 @@
+       wgint dlquant = hist->total_bytes + bp->recent_bytes;
+       double dltime = hist->total_time + (dl_total_time - bp->recent_start);
+       double dlspeed = calc_rate (dlquant, dltime, &units);
++      print_stat("(DOWNLOADING %s %4.*f%s %d%%)",number_to_static_string(bp->total_length), dlspeed >= 99.95 ? 0 : dlspeed >= 9.995 ? 1 : 2, dlspeed, short_units[units],dl_per);	
+       p += sprintf (p, "  %4.*f%s", dlspeed >= 99.95 ? 0 : dlspeed >= 9.995 ? 1 : 2,
+                dlspeed,  !opt.report_bps ? short_units[units] : short_units_bits[units]);
+     }

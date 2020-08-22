@@ -1,0 +1,34 @@
+#!/bin/sh
+
+bond_id=$1
+
+[ ! -e "/proc/net/bonding/bond$bond_id" ] && exit 0
+
+prev_status=""
+status=""
+
+while [ 1 ]
+do
+status=$(/usr/sbin/bond-show $bond_id)
+if [ "$status" != "$prev_status" ]
+then
+
+######################### For Lag Log ##############################
+if [ "$status" = "active" ]; then
+	if [ "$prev_status" = "no" -o "x$prev_status" = "x" ]; then
+		[ "$bond_id" = "2" ] && logger -- "[LAG] Active lag now,"
+		[ "$bond_id" = "3" ] && logger -- "[WAN aggregation] Active,"
+	fi
+elif [ "$prev_status" = "active" ]; then
+    if [ "$status" = "no" -o "$status" = "Invalid bond id" ]; then
+            [ "$bond_id" = "2" ] && logger -- "[LAG] Inctive lag now,"
+            [ "$bond_id" = "3" ] && logger -- "[WAN aggregation] Inactive,"
+    fi
+fi
+prev_status=$status
+########################### End Log ###################################
+
+fi
+sleep 1
+done
+

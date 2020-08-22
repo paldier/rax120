@@ -1,0 +1,23 @@
+#!/bin/sh
+# (Only for RAX120)
+# According to NTGR's request, add this script to improve wifi connection.
+# Please refer 80-yb481-16_a_qca_networking_2017.spf.8.0_fcu2_release_notes.pdf
+# - Use this command to recover the performance loss:
+# - wifitool ath0 setUnitTestCmd 67 3 19 0 2
+# - wifitool ath1 setUnitTestCmd 67 3 19 1 2
+#
+# Modified by Tao.XM.Li on 20180627
+# For spf.8.0.CS, change the WAR command to
+# - wifitool ath0 setUnitTestCmd 67 5 16 0 -5 40 40
+# - iwpriv wifi1 ani_enable 0
+# - iwpriv wifi1 ani_enable 1
+
+CONFIG=/bin/config
+WIFITOOL=/usr/sbin/wifitool
+IWPRIV=/usr/sbin/iwpriv
+
+if [ "$($CONFIG get improve_wl_con)" = "1" ]; then
+	$WIFITOOL ath0 setUnitTestCmd 67 5 16 0 -5 40 40
+	$IWPRIV wifi1 ani_enable 0
+	$IWPRIV wifi1 ani_enable 1
+fi

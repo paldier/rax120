@@ -1,0 +1,21 @@
+<% help_head() %>
+<script>
+var support_wan_preference = parent.parent.support_wan_preference;
+var use_orbi_style_flag = parent.parent.use_orbi_style_flag;
+</script>
+</HEAD>
+$h_BAS_pppoe
+<script>
+	if(support_wan_preference == 1) {
+	var newNode = document.createElement("p");
+	newNode.innerHTML = "<b>$wan_preference:</b>";
+	var ques = document.getElementsByName("question")[0];
+	ques.insertAdjacentElement("afterEnd", newNode);
+
+	var newNode2 = document.createElement("p");
+	newNode2.innerHTML = "$wan_preference_help";
+	newNode.insertAdjacentElement("afterEnd", newNode2);}
+	if(use_orbi_style_flag == 1)
+		document.getElementsByName("question")[0].insertAdjacentHTML("afterEnd", "$wan_aggregation_help");
+</script>
+</HTML>

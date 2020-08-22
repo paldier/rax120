@@ -1,0 +1,131 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+
+<head>
+<% new_hijack_flow_head() %>
+<% hijack_language() %>
+</head>
+<style>
+	.word_wrap{ word-wrap:break-word; word-break:break-all;}
+	td{padding:0; width:50%}
+	.row .col.a4{width:50%;}
+	.row .col.a3{margin-left:25%; }
+	.row .col.a2{margin-left:13%;}
+	.row .col.s3{width:33%;}
+	.row .col.s3.a5{width:100%;}
+</style>
+<body>
+<% form_submit("func", "BRS_orbi_check_fw.html", "download_confile") %>
+<script language="javascript" type="text/javascript">
+<% cfg_set("hijack_config_status", "4") %>
+var manual_setting = "<% cfg_get("manual_set_wan") %>";
+var security_enhance_flag= "<% security_enhance_support() %>";
+<% hijack_support_flag() %>
+function printSucessPage()
+{
+	if (window.print)
+		window.print();
+	else
+	{
+		alert(bh_not_support_print);
+	}
+}
+</script>
+<div id="container">
+	<div class="dialog-content">
+		<!-- Orbi Configuration complete -->
+		<div id="card-orbi-config-complete" class="install-card clearfix">
+			<div class="logos">
+				<img class="netgear-logo" src="images/svg/netgear.svg">
+				<% hijack_logo_title() %>
+			</div>
+		      <div class="content">
+			<div class="desc-title"><script>document.write(bh_orbi_complete);</script></div>
+			<div class="desc-text"><script>
+			if(security_enhance_flag)
+				document.write("Your new WiFi credentials are displayed below.");
+			else
+				document.write(bh_orbi_complete_msg1);
+			</script></div>
+
+			<div class="row">
+              <div class="col s3 " id="wifi_first_icon" >
+                <div class="icon">
+                  <i class="material-icons prefix">person</i>
+                </div>
+                <div class="pin-title word_wrap"><p id="admin_name_info"><% cfg_get("http_username") %></p></div>
+                <div class="pin-desc word_wrap"><p id="admin_pwd_info"><% cfg_sed_xss("http_passwd") %></p></div>
+              </div>
+              <div class="col s3 " id="ssid">
+                <div class="icon">
+                  <i class="material-icons prefix">signal_wifi_4_bar</i>
+                </div>
+                <div class="pin-title word_wrap"><p id="wifi_ssid_info"><% cfg_get_ssid_html("wl_ssid") %></p></div>
+                <div class="pin-desc word_wrap"><p id="wifi_pwd_info"><% passphrase_bg_msg() %></p></div>
+              </div>
+	     <div class="col s3 " id="ssid_1">
+                <div class="icon">
+                  <i class="material-icons prefix">signal_wifi_4_bar</i>
+                </div>
+                <div class="pin-title word_wrap"><p id="wifi_5g_ssid_info"><% cfg_get_ssid_html("wla_ssid") %></p></div>
+                <div class="pin-desc word_wrap"><p id="wifi_5g_pwd_info"><% passphrase_ag_msg() %></p></div>
+              </div>
+	      <div class="col s3 " id="ssid_2">
+                <div class="icon">
+                  <i class="material-icons prefix">signal_wifi_4_bar</i>
+                </div>
+	      <div class="pin-title word_wrap"><p id="wifi_5g_ssid_info"><% cfg_get_ssid_html("wla_2nd_ssid") %></p></div>
+	      <div class="pin-desc word_wrap"><p id="wifi_5g_pwd_info"><% passphrase_tri_msg() %></p></div>
+	      </div>
+            </div>
+			<input type="hidden" name="hid_save_time" value="7">
+		      </div>
+		      <div class="buttons">
+				<button id="config_com_next" class="waves-effect waves-light btn button-nav btn-icon icon-right" >
+					<span><script>document.write(bh_orbi_next_mark);</script></span><i class="material-icons">navigate_next</i>
+				</button>
+				<button id="print_cred" class="waves-effect btn-flat button-nav-skip" type="button" onclick="printSucessPage();">
+					<span><script>document.write(bh_orbi_print);</script></span>
+				</button>
+		      </div>
+		</div>
+	</div>
+</div>
+<script>
+if(hijack_use_orbi_style_flag)
+var get_smart_connect="<% cfg_get("lbd_enable") %>";
+else
+var get_smart_connect="<% cfg_get("enable_smart_connect") %>";
+if(security_enhance_flag)
+{
+	document.getElementById("wifi_first_icon").style.display="none";
+	if(get_smart_connect=="1")
+	{
+		document.getElementById("ssid_1").style.display="none";
+		document.getElementById("ssid_2").style.display="none";
+		document.getElementById("ssid").className+="a5";
+	}else{
+		document.getElementById("ssid_1").style.display="";
+		document.getElementById("ssid_2").style.display="";
+		document.getElementById("ssid").className+="a4";
+		document.getElementById("ssid_1").className+="a4";
+		document.getElementById("ssid_2").className+="a4";
+	}
+}else{
+	if(get_smart_connect=="1"){
+		document.getElementById("ssid_1").style.display="none";
+		document.getElementById("ssid_2").style.display="none";
+		document.getElementById("wifi_first_icon").className+="a3";
+	}
+	else{
+		document.getElementById("ssid_1").style.display="";
+		document.getElementById("ssid_2").style.display="";
+        	document.getElementById("wifi_first_icon").className+="a2";
+
+	}
+}
+</script>
+</form>
+</body>
+
+</html>

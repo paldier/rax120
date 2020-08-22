@@ -1,0 +1,13 @@
+#!/bin/sh
+AFP_PASSWD=$1
+SHADOW_PASSWD=/tmp/config/shadow
+CONFIG=/bin/config
+
+#Update admin shadow passwd crypted from clear text passwd.
+/usr/bin/passwd admin << EOF
+$AFP_PASSWD
+$AFP_PASSWD
+EOF
+
+#Save new shadow passwd in config.
+$CONFIG set dhx2_passwd=$(cat $SHADOW_PASSWD | grep admin | cut -d ":" -f2)

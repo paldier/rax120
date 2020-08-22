@@ -1,0 +1,147 @@
+From f35c43c266911faeb14aa056e7d90109fd1cdaec Mon Sep 17 00:00:00 2001
+From: "Qiaoling.Huang" <qiaoling.huang@dniserver.dnish.net>
+Date: Thu, 19 Mar 2020 16:23:28 +0800
+Subject: [PATCH] Bug 100539 - Support Control Firmware(CFU) function refer to
+ Orbi
+
+Daily check (Auto check):
+Device must daily check the new firmware status in below time period.
+Time: 1:00am to 4:00am local time zone (1:00am + a random number of sec between 0 to of 10799). The random number should be regenerated every time when system boot up.
+
+Signed-off-by: Qiaoling.Huang <qiaoling.huang@dniserver.dnish.net>
+---
+ src/server.c | 111 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
+ 1 file changed, 109 insertions(+), 2 deletions(-)
+
+diff --git a/src/server.c b/src/server.c
+index f0dc41d..6fd672d 100644
+--- a/src/server.c
++++ b/src/server.c
+@@ -798,6 +798,113 @@ int internet_check()
+ 	return result;
+ }
+ 
++unsigned int dni_urandom(){
++	unsigned int randnum = 0;
++	int fd_rand = open("/dev/urandom",O_RDONLY);
++
++	if(fd_rand < 0) return 0;
++	if(read(fd_rand,(char*)&randnum,sizeof(randnum))<0){
++		close(fd_rand);
++		return 0;
++	}
++	close(fd_rand);
++	return randnum;
++}
++
++void print_upgrade_log(const char *fmt, ...)
++{
++	va_list ap;
++	static FILE *filp_fw;
++	char strtime[64] = {0};
++	char *filename;
++	FILE *fp;
++	char check_fw_log[32]="/tmp/auto_fw_upgrade_log", old_check_fw_log[32]="/tmp/auto_fw_upgrade_log.old";
++	struct stat fstat;
++	time_t t;
++
++	filename = config_get("upgrade_log_to_file");
++	if(config_match("upgrade_log_to_file",""))
++		filename = "/dev/console";
++	if ((filp_fw == NULL) && (filp_fw = fopen(filename, "a")) == NULL)
++		return;
++
++	t = time(NULL);
++	strftime(strtime, sizeof(strtime), "[%Y-%m-%d %H:%M:%S]", localtime(&t));
++	fprintf(filp_fw,"[FW UPGRADE]%s:",strtime);
++	va_start(ap, fmt);
++	vfprintf(filp_fw, fmt, ap);
++	fputs("\n", filp_fw);
++	va_end(ap);
++
++	if (stat(check_fw_log, &fstat) == 0 && fstat.st_size > 3145728) {
++		rename(check_fw_log, old_check_fw_log);
++	}
++
++	if((fp=fopen(check_fw_log, "a")) != NULL){
++		strftime(strtime, sizeof(strtime), "[%Y-%m-%d %H:%M:%S]", localtime(&t));
++		fprintf(fp,"[FW UPGRADE]%s:",strtime);
++		va_start(ap, fmt);
++		vfprintf(fp, fmt, ap);
++		fputs("\n", fp);
++		fclose(fp);
++	}
++}
++
++void daily_checking()
++{
++	long expect_time = 0;
++	long current_time = 0;
++	long diff_time = 0;
++
++	time_t now;
++	struct tm *tm;
++	char *p;
++
++	if( fork() != 0)
++	{
++		return;
++	}
++
++	//expect time is 01:00(am) + random number between 0-179
++	expect_time = 1*60*60+ (dni_urandom()%10799);
++	long c_time=0;
++
++	while(1)
++	{/* check current time every half hour. */
++		#define HALF_HOUR	30*60
++		#define THREE_HOUR        180*60
++		print_upgrade_log("[Daily Check FW]count time:%ld\n",c_time++);
++		if(config_match("check_fw_test","1"))
++			sleep(120);
++		else
++			sleep(HALF_HOUR);
++
++		p = config_get("time_zone");
++		time(&now);
++		setenv("TZ", p, 1);
++		tm = localtime(&now);
++		current_time = (long)tm->tm_hour*60*60+(long)tm->tm_min*60+(long)tm->tm_sec;
++
++		diff_time = expect_time - current_time;
++		print_upgrade_log("[Daily Check FW]expect_time == %ld seconds, current_time == %ld seconds\n", expect_time, current_time);
++		print_upgrade_log("[Daily Check FW]expect_time_hms=%ld:%ld:%ld\n", expect_time/3600, expect_time%3600/60, (expect_time%3600)%60);
++		if(diff_time == 0)
++		{
++			print_upgrade_log("[Daily Check FW]Daily Checking FW...\n");
++			system("net-cgi -i");
++		}
++		else if(diff_time < THREE_HOUR && diff_time > 0 )
++		{
++			print_upgrade_log("[Daily Check FW]Daily will check after %ld seconds", diff_time);
++			sleep(diff_time);
++			print_upgrade_log("[Daily Check FW]Daily Checking FW...\n");
++			system("net-cgi -i");
++		}
++		else
++			print_upgrade_log("[Daily Check FW]Wait another 30 minutes to generate a new expect_time\n");
++	}
++}
++
+ //FW checking
+ void fw_checking()
+ {
+@@ -1025,8 +1132,8 @@ int main (int argc, char **argv) {
+ 	srv->srvconf.dont_daemonize = 0;
+ 	srv->srvconf.preflight_check = 0;
+ 
+-	// FW checking each power cycle
+-	fw_checking();
++	// Daily checking each power cycle
++	daily_checking();
+ 
+ 	while(-1 != (o = getopt(argc, argv, "f:m:i:hvVD1pt"))) {
+ 		switch(o) {
+-- 
+2.7.4
+

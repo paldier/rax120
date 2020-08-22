@@ -1,0 +1,75 @@
+diff -Nur mtd-utils-1.5.0_bak/flash_erase.c mtd-utils-1.5.0/flash_erase.c
+--- mtd-utils-1.5.0_bak/flash_erase.c	2012-05-07 07:19:39.000000000 +0000
++++ mtd-utils-1.5.0/flash_erase.c	2017-07-20 13:58:51.029813565 +0000
+@@ -20,6 +20,7 @@
+ 
+ #define PROGRAM_NAME "flash_erase"
+ 
++#define _GNU_SOURCE
+ #include <inttypes.h>
+ #include <stdio.h>
+ #include <unistd.h>
+diff -Nur mtd-utils-1.5.0_bak/lib/libfec.c mtd-utils-1.5.0/lib/libfec.c
+--- mtd-utils-1.5.0_bak/lib/libfec.c	2012-05-07 07:19:39.000000000 +0000
++++ mtd-utils-1.5.0/lib/libfec.c	2017-07-20 13:58:37.225813739 +0000
+@@ -42,9 +42,11 @@
+ #define GF_BITS  8	/* code over GF(2**GF_BITS) - change to suit */
+ #endif
+ 
++#define _GNU_SOURCE
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
++#include <sys/types.h>
+ 
+ /*
+  * stuff used for testing purposes only
+diff -Nur mtd-utils-1.5.0_bak/lib/libmtd.c mtd-utils-1.5.0/lib/libmtd.c
+--- mtd-utils-1.5.0_bak/lib/libmtd.c	2012-05-07 07:19:39.000000000 +0000
++++ mtd-utils-1.5.0/lib/libmtd.c	2017-07-20 13:57:24.181814663 +0000
+@@ -21,6 +21,7 @@
+  * MTD library.
+  */
+ 
++#define _GNU_SOURCE
+ #include <limits.h>
+ #include <stdlib.h>
+ #include <stdio.h>
+diff -Nur mtd-utils-1.5.0_bak/lib/libmtd_legacy.c mtd-utils-1.5.0/lib/libmtd_legacy.c
+--- mtd-utils-1.5.0_bak/lib/libmtd_legacy.c	2012-05-07 07:19:39.000000000 +0000
++++ mtd-utils-1.5.0/lib/libmtd_legacy.c	2017-07-20 13:57:39.333814471 +0000
+@@ -23,6 +23,7 @@
+  * not possible to get sub-page size.
+  */
+ 
++#define _GNU_SOURCE
+ #include <limits.h>
+ #include <fcntl.h>
+ #include <unistd.h>
+diff -Nur mtd-utils-1.5.0_bak/recv_image.c mtd-utils-1.5.0/recv_image.c
+--- mtd-utils-1.5.0_bak/recv_image.c	2012-05-07 07:19:39.000000000 +0000
++++ mtd-utils-1.5.0/recv_image.c	2017-07-20 14:00:15.253812500 +0000
+@@ -2,9 +2,10 @@
+ #define PROGRAM_NAME "recv_image"
+ #define _XOPEN_SOURCE 500
+ #define _BSD_SOURCE	/* struct ip_mreq */
++#define _GNU_SOURCE
+ 
+ #include <errno.h>
+-#include <error.h>
++//#include <error.h>
+ #include <stdio.h>
+ #include <netdb.h>
+ #include <stdlib.h>
+diff -Nur mtd-utils-1.5.0_bak/serve_image.c mtd-utils-1.5.0/serve_image.c
+--- mtd-utils-1.5.0_bak/serve_image.c	2012-05-07 07:19:39.000000000 +0000
++++ mtd-utils-1.5.0/serve_image.c	2017-07-20 13:59:44.901812884 +0000
+@@ -3,7 +3,7 @@
+ 
+ #include <time.h>
+ #include <errno.h>
+-#include <error.h>
++//#include <error.h>
+ #include <netdb.h>
+ #include <stdio.h>
+ #include <stdlib.h>

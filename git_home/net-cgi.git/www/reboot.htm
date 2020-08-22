@@ -1,0 +1,32 @@
+<% http_header("style/form.css", "/funcs.js", "/backup.js") %>
+<% noload_header("", "reboot_waiting.htm", "reboot") %>
+<div class="page_title">$reboot</div>
+<div id="main" class="main inner-main">
+<% table_header() %>
+
+<tr>
+	<td nowrap colspan=2><B>$reboot_warning</B></td>
+</tr>
+$bluebar
+<tr>
+	<td nowrap colspan=2 align=center>
+	<script>
+	var master="<% cfg_get("http_loginname") %>";
+	var page = "RST_status.htm";
+	if(IsGameRouter())
+	{
+		page = "FW_reboot.htm"	
+	}
+	if( master == "admin" )
+		document.write('<input class="short_common_bt apply_bt" type="submit" name="yes" id="yes" value="$yes_mark"><input class="short_common_bt" type="button" name="No" id="no" value="$no_mark" onclick="location.href=\''+page+'\'">');
+	else
+		document.write('<input class="short_common1_bt apply_bt" type="submit" name="yes1" id="yes" value="$yes_mark" disabled><input class="short_common_bt" type="button" name="No" id="no" value="$no_mark" onclick="location.href=\''+page+'\'">');
+	</script>
+	</td>
+</tr>
+</table>
+</div>
+
+</form>
+</body>
+</html>

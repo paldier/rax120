@@ -1,0 +1,527 @@
+<% http_header("style/form.css","funcs.js") %>
+<script>
+<% refresh_timestamp("debug_info","collect_log","debug_save","apply_beacon_dtim") %>
+var ts="<% cfg_get("debug_info") %>";
+<% get_support_flag() %>
+function loadvalue()
+{
+	if("<% cfg_get("debug_boot_up") %>" == "1")
+		document.forms[0].log_capture.checked = true;
+	else
+		document.forms[0].log_capture.checked = false;
+
+	if("<% cat_file("/tmp/wanlan_capture") %>" == "1")
+	{
+		document.forms[1].wanlan_capture.checked = true;
+		document.forms[3].store_location.disabled = false;
+	}
+	else
+	{
+		document.forms[1].wanlan_capture.checked = false;
+		document.forms[3].store_location.disabled = true;
+	}
+
+	var locate= "<% cat_file("/tmp/debug_store_locate") %>";
+	if(locate == "")
+		locate = "0";
+	document.forms[3].store_location.value = locate;
+	rewrite_list_value(document.forms[3], "store_location");
+	if(support_rae1_5==1){
+		document.getElementById("ra_btn").style.display="";
+		if("<% cfg_get("collect_ra_log") %>" == "1")
+			document.forms[2].collect_ra_log.checked = true;
+		else
+			document.forms[2].collect_ra_log.checked = false;
+	}
+
+	if(disable_telnet_flag == 1)
+		document.forms[6].style.display="none";
+	else{
+	if("<% cat_file("/tmp/enable_telnet") %>" == "1")
+		document.forms[6].enable_telnet.checked = true;
+	else
+		document.forms[6].enable_telnet.checked = false;
+	}
+
+	if(tri_band_router == 1)
+		document.forms[7].style.display="none";
+	else
+	{
+		if("<% cat_file("/tmp/debug_mirror_on") %>" == "1")
+			document.forms[7].mirrortolan.checked = true;
+		else
+			document.forms[7].mirrortolan.checked = false;
+	}
+
+	if("<% cat_file("/tmp/allow_ipv6_ping") %>" == "1")
+		document.forms[8].allow_ipv6_ping.checked = true;
+	else
+		document.forms[8].allow_ipv6_ping.checked = false;
+
+	if(always_enable_fan_flag == 1)
+	{
+		document.forms[9].style.display="";
+		if("<% cat_file("/tmp/always_enable_fan") %>" == "1")
+			document.forms[9].always_enable_fan.checked = true;
+		else
+			document.forms[9].always_enable_fan.checked = false;
+	}
+
+	if(temperature_flag == 1)
+	{
+		document.getElementById("temperature_tr1").style.display = "";
+		document.getElementById("temperature_tr2").style.display = "";
+		document.getElementById("temperature_tr3").style.display = "";
+		document.getElementById("temperature_tr4").style.display = "";
+		document.getElementById("temperature_tr5").style.display = "";
+	}
+
+	if(hostapd_debug_flag == 1)
+	{
+		document.forms[10].style.display="";
+		if("<% cfg_get("enable_hostapd_debug") %>" === "1")
+			document.forms[10].enable_hostapd_debug.checked = true;
+	}
+
+        if(enable_improve_conn_flag == 1)
+        {
+                document.forms[11].style.display="";
+                if("<% cfg_get("improve_wl_con") %>" == "1")
+                        document.forms[11].enable_improve_conn.checked = true;
+                else
+                        document.forms[11].enable_improve_conn.checked = false;
+        }
+	if(disable_channel_switch == 1)
+	{
+		document.forms[12].style.display = "";
+		if("<% cfg_get("dfs_detect") %>" == "0")
+			document.forms[12].disable_channel_switch.checked = true;
+		else
+			document.forms[12].disable_channel_switch.checked = false;
+	}
+	if(fan_algorithm_flag == 1)
+	{
+		document.getElementById("algorithm").style.display = "";
+		document.forms[13].fan_speed.value = "<% cfg_get("fan_speed") %>";
+	}
+
+	if(wireless_driver_flag == 1)
+		document.getElementById("wireless_driver").style.display = "";
+
+	if(use_orbi_style_flag == 1)
+	{
+		document.getElementById("beacon_dtim").style.display = "";
+		document.forms[14].style.display = "";
+		var beacon_2g = "<% cfg_get("wlg_beacon_intval") %>";
+		var dtim_2g = "<% cfg_get("wlg_dtim") %>";
+		var beacon_5g = "<% cfg_get("wla_beacon_intval") %>";
+		var dtim_5g = "<% cfg_get("wla_dtim") %>";
+		if(beacon_2g != "")
+			document.getElementById("beacon_int_2g").value = beacon_2g;
+		if(dtim_2g != "")
+			document.getElementById("dtim_2g").value = dtim_2g;
+		if(beacon_5g != "")
+			document.getElementById("beacon_int_5g").value = beacon_5g;
+		if(dtim_5g != "")
+			document.getElementById("dtim_5g").value = dtim_5g;
+		if(tri_band_router == 1)
+		{
+			var beacon_5g2 = "<% cfg_get("wla_2nd_beacon_intval") %>";
+			var dtim_5g2 = "<% cfg_get("wla_2nd_dtim") %>";
+			if(beacon_5g2 != "")
+				document.getElementById("beacon_int_5g2").value = beacon_5g2;
+			if(dtim_5g2 != "")
+				document.getElementById("dtim_5g2").value = dtim_5g2;
+		}
+		else
+			document.getElementById("5g2Beacon").style.display = "none";
+	}
+
+	refresh_start();
+}
+
+function click_logcapture()
+{
+	var cf = document.forms[0];
+	if(cf.log_capture.checked == true)
+		cf.hid_boot_up.value = "1";
+	else
+		cf.hid_boot_up.value = "0";
+	cf.action="/apply.cgi?/debug_detail.htm timestamp="+ts;
+	cf.submit();
+}
+
+function click_wanlan()
+{
+	var cf = document.forms[1];
+	if(cf.wanlan_capture.checked == true)
+		cf.hid_wanlan_capture.value = "1";
+	else
+		cf.hid_wanlan_capture.value = "0";
+	cf.action="/apply.cgi?/debug_detail.htm timestamp="+ts;
+	cf.submit();
+}
+
+function click_ra_log()
+{
+	var cf = document.forms[2];
+	if(cf.collect_ra_log.checked == true)
+		cf.hid_collect_ra_log.value = "1";
+	else
+		cf.hid_collect_ra_log.value = "0";
+	cf.action="/apply.cgi?/debug_detail.htm timestamp="+ts;
+	cf.submit();
+}
+
+function click_location()
+{
+	var cf = document.forms[3];
+	cf.hid_store_location.value=convert_value_to_original(cf, "store_location");
+	if(cf.hid_store_location.value == "1" && "<% cat_file("/tmp/debug-usb") %>" != "1")
+	{
+		alert("There are no USB devices connected to the router!");
+		cf.hid_store_location.value = "0";
+	}
+	cf.action="/apply.cgi?/debug_detail.htm timestamp="+ts;
+	cf.submit();
+}
+
+function click_start()
+{
+	var cf = document.forms[4];
+	cf.action="/apply.cgi?/debug_detail.htm timestamp="+ts;
+	cf.submit();
+}
+
+function click_telnet()
+{
+	var cf = document.forms[6];
+	if(cf.enable_telnet.checked == true)
+		cf.hid_telnet.value = "1";
+	else
+		cf.hid_telnet.value = "0";
+	cf.action="/apply.cgi?/debug_detail.htm timestamp="+ts;
+	cf.submit();
+}
+
+function click_mirror()
+{
+	var cf = document.forms[7];
+	if(cf.mirrortolan.checked == true)
+		cf.hid_mirrortolan.value = "1";
+	else
+		cf.hid_mirrortolan.value = "0";
+	cf.action="/apply.cgi?/debug_detail.htm timestamp="+ts;
+	cf.submit();
+}
+function click_ipv6()
+{
+	var cf = document.forms[8];
+	if(cf.allow_ipv6_ping.checked == true)
+		cf.hid_ipv6.value = "1";
+	else
+		cf.hid_ipv6.value = "0";
+	cf.action="/apply.cgi?/debug_detail.htm timestamp="+ts;
+	cf.submit();
+}
+
+function click_enable_fan()
+{
+	var cf = document.forms[9];
+	if(cf.always_enable_fan.checked == true)
+		cf.hid_fan.value = "1";
+	else
+		cf.hid_fan.value = "0";
+	cf.action="/apply.cgi?/debug_detail.htm timestamp="+ts;
+	cf.submit();
+}
+
+function click_hostapd()
+{
+	var cf = document.forms[10];
+	if(cf.enable_hostapd_debug.checked == true)
+		cf.hid_hostapd.value = "1";
+	else
+		cf.hid_hostapd.value = "0";
+	cf.action="/apply.cgi?/debug_detail.htm timestamp="+ts;
+	cf.submit();
+}
+function click_improve_conn()
+{
+        var cf = document.forms[11];
+        if(cf.enable_improve_conn.checked == true)
+                cf.hid_improve_conn.value = "1";
+        else
+                cf.hid_improve_conn.value = "0";
+        cf.action="/apply.cgi?/debug_detail.htm timestamp="+ts;
+        cf.submit();
+}
+function click_channel_switch()
+{
+	var cf = document.forms[12];
+	if(cf.disable_channel_switch.checked == true)
+		cf.hid_channel_switch.value = "0";
+	else
+		cf.hid_channel_switch.value = "1";
+	cf.action="/apply.cgi?/debug_detail.htm timestamp="+ts;
+	cf.submit();
+}
+
+function click_fan()
+{
+	var cf = document.forms[13];
+	cf.action="/apply.cgi?/debug_detail.htm timestamp="+ts;
+	cf.submit();
+}
+
+function refresh_start()
+{
+        var file="/collect_debug.txt";
+        var xmlHttp = createXMLHttpRequest();
+        var result;
+
+	var disable_str="<input type='button' name='Start' id='start_capture' class='common_gray_bt' value='Start Capture' disabled/>    Debug Log capturing in progress";
+	var enable_str="<input type='button' name='Start' id='start_capture' class='common_bt' value='Start Capture' onclick='click_start();'/>";
+
+        xmlHttp.onreadystatechange=function()
+        {
+                if(xmlHttp.readyState==4 && xmlHttp.status==200)
+                {
+                        result=xmlHttp.responseText;
+			getObj("start_button").innerHTML='';
+                        if(result == 1)
+				getObj("start_button").innerHTML=disable_str;
+                        else
+				getObj("start_button").innerHTML=enable_str;
+                }
+        }
+        xmlHttp.open("GET", file, true);
+        xmlHttp.send();
+
+}
+
+function click_beacon_dtim()
+{
+	var cf = document.forms[14];
+	cf.action="/apply.cgi?/debug_detail.htm timestamp="+ts;
+	cf.submit();
+}
+
+</script>
+
+<BODY onLoad="loadvalue();" bgcolor=#ffffff class="debug_body">
+<div id="main">
+<div>
+<table width="100%" border="0" cellpadding="0" cellspacing="10">
+<tr><td colspan=3><img src=/liteblue.gif width=100% height=12></td></tr>
+<tr><td colspan=3><b>Basic Information</b></td></tr>
+<% show_cpu() %>
+<tr><td></td><td><b>Memory Usage(Used/Total)</b></td><td><% cat_file("/tmp/debug_mem") %></td></tr>
+<tr><td></td><td><b>Flash Usage(Used/Total)</b></td><td><% cat_file("/tmp/debug_flash") %></td></tr>
+<tr><td></td><td><b>Network Session(Active/Total)</b></td><td><% cat_file("/tmp/debug_session") %></td></tr>
+<tr id="temperature_tr1" style="display:none"><td></td><td><b>CPU Temperature</b></td><td><% cat_file("/tmp/debug_cpu_temperature") %></td></tr>
+<tr id="temperature_tr2" style="display:none"><td></td><td><b>2G WiFi Temperature</b></td><td><% cat_file("/tmp/debug_2g_temperature") %></td></tr>
+<tr id="temperature_tr3" style="display:none"><td></td><td><b>5G WiFi Temperature</b></td><td><% cat_file("/tmp/debug_5g_temperature") %></td></tr>
+<tr id="temperature_tr4" style="display:none"><td></td><td><b>60G 11ad baseband temperature</b></td><td><% cat_file("/tmp/debug_11ad_temperature") %></td></tr>
+<tr id="temperature_tr5" style="display:none"><td></td><td><b>60G 11ad antenna array temperature</b></td><td><% cat_file("/tmp/debug_antenna_temperature") %></td></tr>
+<tr>
+	<td></td><td><b>System Uptime</b></td>
+	<td>
+	<script>
+	var uptime= "<% show_uptime() %>";
+	var new_time=change_sec_to_time(uptime);
+	document.write(new_time);
+	</script>
+</td></tr>
+<tr id="wireless_driver" style="display:none"><td></td><td><b>Wireless driver version</b></td><td><% cat_file("/tmp/debug_wlan") %></td></tr>
+</table>
+</div>
+
+<div style="margin-left:5px">
+<b>Debug Log Capture</b>
+<div style="margin-left:50px">
+<form method="post" action="/apply.cgi?/debug_detail.htm" target="formframe">
+<input type="hidden" name="submit_flag" value="debug_info" />
+<input type="hidden" name="hid_boot_up" />
+<input type="checkbox" name="log_capture" onclick="click_logcapture();" id="log_capture_st"><label for="log_capture_st"><b>Start Debug Log Capture when boot up</b></label>
+</form>
+<br/>
+<form method="post" action="/apply.cgi?/debug_detail.htm" target="formframe">
+<input type="hidden" name="submit_flag" value="debug_info" />
+<input type="hidden" name="hid_wanlan_capture" />
+<input type="checkbox" name="wanlan_capture" onchange="click_wanlan();" id="wanlan_capture_en"><label for="wanlan_capture_en"><b>Enable LAN/WAN Packet Capture</b></label>
+</form>
+<br/>
+<form id="ra_btn" method="post" action="/apply.cgi?/debug_detail.htm" target="formframe" style="display:none;">
+<input type="hidden" name="submit_flag" value="debug_info" />
+<input type="hidden" name="hid_collect_ra_log" />
+<input type="checkbox" name="collect_ra_log" onChange="click_ra_log();" id="collect_ra_log"><label for="collect_ra_log"><b>Collect Router Analytic log</b></label>
+</form>
+<br/>
+<div style="margin-left:30px">
+<form method="post" action="/apply.cgi?/debug_detail.htm" target="formframe">
+<input type="hidden" name="submit_flag" value="debug_info" />
+<input type="hidden" name="hid_store_location">
+<b>Store location</b>&nbsp;&nbsp;&nbsp;&nbsp;
+	<select name="store_location" onchange="click_location();">
+		<option value="0">System Memory</option>
+		<option value="1">USB Device</option>
+	</select>
+</form>
+</div>
+<br/>
+<form method="post" action="/apply.cgi?/debug_detail.htm" target="formframe">
+<input type="hidden" name="submit_flag" value="collect_log" />
+<div id="start_button"></div>
+</form>
+<br/>
+<form action="/debug.cgi? timestamp=<% cfg_get("debug_save") %>" method="post" enctype="multipart/form-data" target="formframe">
+<input type="submit" name="Save" id="save_log" class="common_bt" value="Save Debug Log" onclick="setTimeout('refresh_start()',5000);return true;"/>
+</form>
+</div>
+<br/>
+<form method="post" action="/apply.cgi?/debug_detail.htm" target="formframe">
+<input type="hidden" name="submit_flag" value="debug_info" />
+<input type="hidden" name="hid_telnet" />
+<input type="checkbox" name="enable_telnet" onclick="click_telnet();" id="enable_telnet_ra"><label for="enable_telnet_ra"><b>Enable Telnet</b></label>
+</form>
+<br/>
+<form method="post" action="/apply.cgi?/debug_detail.htm" target="formframe">
+<input type="hidden" name="submit_flag" value="debug_info" />
+<input type="hidden" name="hid_mirrortolan" />
+<input type="checkbox" name="mirrortolan" onclick="click_mirror();" id="mirrortolan_wan"><label for="mirrortolan_wan"><b>WAN Port mirror to LAN port1</b></label>
+</form>
+<br/>
+<form method="post" action="/apply.cgi?/debug_detail.htm" target="formframe">
+<input type="hidden" name="submit_flag" value="debug_info" />
+<input type="hidden" name="hid_ipv6" />
+<input type="checkbox" name="allow_ipv6_ping" onclick="click_ipv6();" id="allow_ipv6_ping_ch"><label for="allow_ipv6_ping_ch"><b>Allow external IPv6 hosts ping internal IPv6 hosts</b></label>
+</form>
+<br/>
+<form method="post" action="/apply.cgi?/debug_detail.htm" target="formframe" style="display:none">
+<input type="hidden" name="submit_flag" value="debug_info" />
+<input type="hidden" name="hid_fan" />
+<input type="checkbox" name="always_enable_fan" onclick="click_enable_fan();" id="always_enable_fan"><label for="always_enable_fan"><b>Always enable Fan</b></label>
+</form>
+<form method="post" action="/apply.cgi?/debug_detail.htm" target="formframe" style="display:none">
+<br/>
+<input type="hidden" name="submit_flag" value="debug_info" />
+<input type="hidden" name="hid_hostapd" />
+<input type="checkbox" name="enable_hostapd_debug" onclick="click_hostapd();" id="enable_hostapd_debug"><label for="enable_hostapd_debug"><b>Enable hostapd debug</b></label>
+</form>
+<form method="post" action="/apply.cgi?/debug_detail.htm" target="formframe" style="display:none">
+<br/>
+<input type="hidden" name="submit_flag" value="debug_info" />
+<input type="hidden" name="hid_improve_conn" />
+<input type="checkbox" name="enable_improve_conn" onclick="click_improve_conn();" id="enable_improve_conn"><label for="enable_improve_conn"><b>Improve 2.4GHz connection</b></label>
+</form>
+<form method="post" action="/apply.cgi?/debug_detail.htm" target="formframe" style="display:none">
+<br/>
+<input type="hidden" name="submit_flag" value="debug_info" />
+<input type="hidden" name="hid_channel_switch" />
+<input type="checkbox" name="disable_channel_switch" onclick="click_channel_switch();" id="disable_channel_switch"><label for="disable_channel_switch"><b>Disable Channel Switching</b></label>
+</form>
+<br/>
+</div>
+
+<style>
+.t_title td{ width:10%; border:solid #D2DEE9; border-width:0px 1px 1px 0px; }
+.t_title{ font-weight:bold; height:25px; }
+.t_title td, .t_middle td{ width:10%; border:solid #D2DEE9; border-width:0px 1px 1px 0px; }
+.t_last td{ width:10%; border:solid #D2DEE9; border-width:0px 1px 0px 0px; }
+.t_title .no_rigth, .t_middle .no_rigth{ border-width:0px 0px 1px 0px; }
+.t_last .no_rigth{ border-width:0px 0px 0px 0px; }
+.border_input{border:solid 1px !important; height:2rem !important;}
+</style>
+<div id="algorithm" style="margin-left:5px; display:none">
+<img src=/liteblue.gif width=100% height=12>
+<b>Fan Algorithm</b><br/><br/>
+<form method="post" action="/apply.cgi?/debug_detail.htm" target="formframe">
+<input type="hidden" name="submit_flag" value="debug_info" />
+<div style="margin-left:30px">
+<table width=80% border=0 cellpadding=0 cellspacing=2 border=0>
+<tr class="t_title">
+	<td>&nbsp;</td>
+	<td>CPU</td>
+	<td>2.4G WiFi</td>
+	<td>5G WiFi</td>
+	<td>60G 11ad T_mac</td>
+	<td class="no_rigth">60G 11ad T_radio</td>
+</tr>
+<tr class="t_middle">
+	<td><b>T(High-H):</b></td>
+	<td><input type="text" name="high_h" size="3" value="<% cfg_get("temp_high_h") %>"></td>
+	<td><input type="text" name="2g_high_h" size="3" value="<% cfg_get("wlan_2g_high") %>"></td>
+	<td><input type="text" name="5g_high_h" size="3" value="<% cfg_get("wlan_5g_high") %>"></td>
+	<td><input type="text" name="60g_m_high_h" size="3" value="<% cfg_get("wig_tmac_high") %>"></td>
+	<td class="no_rigth"><input type="text" name="60g_r_high_h" size="3" value="<% cfg_get("wig_tradio_high") %>"></td>
+</tr>
+<tr  class="t_middle">
+	<td><b>T(High-L):</b></td>
+	<td><input type="text" name="high_l" size="3" value="<% cfg_get("temp_high_l") %>"></td>
+	<td></td>
+	<td></td>
+	<td></td>
+	<td class="no_rigth"></td>
+</tr>
+<tr  class="t_middle">
+	<td><b>T(Low-H):</b></td>
+	<td><input type="text" name="low_h" size="3" value="<% cfg_get("temp_low_h") %>"></td>
+	<td></td>
+	<td></td>
+	<td></td>
+	<td class="no_rigth"></td>
+</tr>
+<tr class="t_last">
+	<td><b>T(Low-L):</b></td>
+	<td><input type="text" name="low_l" size="3" value="<% cfg_get("temp_low_l") %>"></td>
+	<td><input type="text" name="2g_low_l" size="3" value="<% cfg_get("wlan_2g_low") %>"></td>
+	<td><input type="text" name="5g_low_l" size="3" value="<% cfg_get("wlan_5g_low") %>"></td>
+	<td><input type="text" name="60g_m_low_l" size="3" value="<% cfg_get("wig_tmac_low") %>"></td>
+	<td class="no_rigth"><input type="text" name="60g_r_low_l" size="3" value="<% cfg_get("wig_tradio_low") %>"></td>
+</tr>
+</table>
+<br/><b>Fan speed</b>&nbsp;&nbsp;&nbsp;&nbsp;
+	<select name="fan_speed" >
+		<option value="2000">2000rpm</option>
+		<option value="3000">3000rpm</option>
+		<option value="3500">3500rpm</option>
+		<option value="4000">4000rpm</option>
+	</select><br/><br/>
+<input type='button' name='Save Fan' id="save_fan" class='common_bt' value='Save' onclick='click_fan();'/>
+</div>
+</form>
+</div>
+<div id='beacon_dtim' style="margin-left:40px; display:none">
+<img src=/liteblue.gif width=100% height=12 style="margin-left:-40px;">
+<form method="post" action="/apply.cgi?/debug_detail.htm" target="formframe">
+<input type="hidden" name="submit_flag" value="apply_beacon_dtim" />
+	<b>2.4GHz Beacon Interval&nbsp;&nbsp;&nbsp;&nbsp;
+	<input type="text" name="beacon_int_2g" class="border_input w80" id="beacon_int_2g" size="3" maxlength="3" value="100" onKeyPress="return getkey('num', event)">&nbsp;ms(20-100)</b>
+	<br/>
+	<b>2.4GHz DTIM&nbsp;&nbsp;&nbsp;&nbsp;
+	<input type="text" name="dtim_2g" class="border_input w80" id="dtim_2g" size="3" maxlength="3" value="3" onKeyPress="return getkey('num', event)">&nbsp;(1-255)</b>
+	<br/>
+	<b>5GHz Beacon Interval&nbsp;&nbsp;&nbsp;&nbsp;
+	<input type="text" name="beacon_int_5g" class="border_input w80" id="beacon_int_5g" size="3" maxlength="3" value="100" onKeyPress="return getkey('num', event)">&nbsp;ms(20-100)</b>
+	<br/>
+	<b>5GHz DTIM&nbsp;&nbsp;&nbsp;&nbsp;
+	<input type="text" name="dtim_5g" class="border_input w80" id="dtim_5g" size="3" maxlength="3" value="3" onKeyPress="return getkey('num', event)">&nbsp;(1-255)</b>
+	<br/>
+<div id="5g2Beacon">
+	<b>5GHz-2 Beacon Interval&nbsp;&nbsp;&nbsp;&nbsp;
+        <input type="text" name="beacon_int_5g2" class="border_input w80" id="beacon_int_5g2" size="3" maxlength="3" value="100" onKeyPress="return getkey('num', event)">&nbsp;ms(20-100)</b>
+        <br/>
+        <b>5GHz-2 DTIM&nbsp;&nbsp;&nbsp;&nbsp;
+        <input type="text" name="dtim_5g2" class="border_input w80" id="dtim_5g2" size="3" maxlength="3" value="3" onKeyPress="return getkey('num', event)">&nbsp;(1-255)</b>
+        <br/>
+</div>
+<input type='button' name='Apply' id="apply" class='common_bt' value='Apply' onclick='click_beacon_dtim();'/>
+</form>
+<br/>
+</div>
+
+</div>
+</body>
+</html>
+

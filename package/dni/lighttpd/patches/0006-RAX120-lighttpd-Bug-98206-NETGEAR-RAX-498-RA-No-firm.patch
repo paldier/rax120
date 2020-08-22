@@ -1,0 +1,42 @@
+From 47943d1f82e9effbad7bd785be9fc6506df29aa8 Mon Sep 17 00:00:00 2001
+From: qiaoling.huang <qiaoling.huang@dniserver.dnish.net>
+Date: Thu, 20 Jun 2019 16:27:37 +0800
+Subject: [PATCH] RAX120: [lighttpd] Bug 98206 - NETGEAR (RAX-498) [RA]No "firmwareUpgradeAnalytics" should send after DUT bootup
+
+Root cause:
+	NTGR requirement: No need to report "firmwareUpgradeAnalytics" RA log after Router bootup done from rebooting.
+
+Solution:
+	touch "/tmp/bootup_auto_check" when bootup fw check
+
+Test on:
+	RAX120
+
+Signed-off-by: qiaoling.huang <qiaoling.huang@dniserver.dnish.net>
+---
+ src/server.c |    2 ++
+ 1 files changed, 2 insertions(+), 0 deletions(-)
+
+diff --git a/src/server.c b/src/server.c
+index f0643b7..3ca5589 100644
+--- a/src/server.c
++++ b/src/server.c
+@@ -835,6 +835,7 @@ void fw_checking()
+ 			if(strcmp(config_get("dns_hijack"),"1")==0)
+ 			{
+ 				fprintf(stderr, "[lighttpd log] AUTO FW CHECK: power cycle\n");
++				system("cp /tmp/fwcheck_status /tmp/bootup_auto_check");
+ 				system("net-cgi -c");
+ 				fclose(fw_fp);
+ 				unlink("/tmp/fwcheck_status");
+@@ -845,6 +846,7 @@ void fw_checking()
+ 				if(net_c==1)
+ 				{
+ 					fprintf(stderr, "[lighttpd log] AUTO FW CHECK: power cycle\n");
++					system("cp /tmp/fwcheck_status /tmp/bootup_auto_check");
+ 					system("net-cgi -c");
+ 					fclose(fw_fp);
+ 					unlink("/tmp/fwcheck_status");
+-- 
+1.7.0.4
+

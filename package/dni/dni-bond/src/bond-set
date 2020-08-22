@@ -1,0 +1,148 @@
+#!/bin/sh
+
+prev=`cat /var/run/bond-mode`
+mode=
+
+prev_wan=`cat /var/run/bond-mode_wan`
+mode_wan=
+CONFIG=/bin/config
+
+member_list="p1,p2"
+member_list_wan="p1,p0"
+
+check_wanmac()
+{
+	local current_mac=$(cat /sys/class/net/$WAN_IF/address | tr 'a-z' 'A-Z')
+	local new_mac=$(echo $1 | tr 'a-z' 'A-Z')
+
+	[ "$current_mac" != "$new_mac" ] && return 0 || return 1
+}
+
+wanmac()
+{
+	local mac typesign
+	local wantype=$($CONFIG get wan_proto)
+
+	case "$wantype" in
+		dhcp|static) 	typesign="ether" ;;
+		pppoe) 		typesign="pppoe" ;;
+		pptp) 		typesign="pptp" ;;
+		bigpond)	typesign="bpa" ;;
+		l2tp) 		typesign="l2tp" ;;
+		*) 		typesign="ether" ;;
+	esac
+
+	case "$($CONFIG get wan_${typesign}_mac_assign)" in
+		1) mac="wan_remote_mac" ;;
+		2) mac="wan_${typesign}_this_mac" ;;
+		*) mac="wan_factory_mac" ;;
+	esac
+
+	echo $($CONFIG get $mac)
+}
+config_sta_aggregation(){
+
+	local enable_frorg_iptv=$($CONFIG get enable_orange)
+	local vlan_type=$($CONFIG get vlan_type)
+	local enable_iptv=$($CONFIG get enable_vlan)
+	local Enable_IPTV=0
+
+	[ "$prev" != "0" ] && bond-ctrl del 2; sleep 1
+	[ "$mode"  = "1" ] && bond-ctrl add 2 mode manual  $member_list
+	[ "$mode"  = "2" ] && bond-ctrl add 2 mode dynamic $member_list
+	
+	echo $mode > /var/run/bond-mode
+
+	if [ $enable_iptv -eq 1 ] && [ $vlan_type -eq 1 ]; then
+        for i in 0 1 2 3 4 5 6 7 8 9 10; do
+            tv=`config get vlan_tag_$i`
+            [ -n "$tv" ] || continue
+            set - $(echo $tv)
+            # $1: enable, $2: name, $3: vid, $4: pri, $5:wports, $6:wlports
+            [ "$1" = "1" ] || continue
+            vlan_id=$3
+            if [ "$enable_frorg_iptv" = "1" ] && [ "$vlan_id" = "838" -o "$vlan_id" = "840" ]; then
+                Enable_IPTV=1
+            else
+                Enable_IPTV=0
+            fi
+        done
+    fi
+
+
+    if [ "$Enable_IPTV" = "1" ] && [ "$mode" = "1"  -o "$mode" = "2" ]; then
+		/etc/init.d/mcsd stop
+	else
+		/etc/init.d/mcsd start
+	fi
+}
+
+config_wan_aggregation(){
+
+	[ "$prev_wan" != "0" ] && bond-ctrl del 3
+    sleep 3
+	[ "$mode_wan"  = "1" ] && bond-ctrl add 3 mode dynamic $member_list_wan
+	
+	echo $mode_wan > /var/run/bond-mode_wan
+}
+
+config_by_datalib()
+{
+	mode=`config get link_aggregation_sta`
+	mode_wan=`config get link_aggregation_wan`
+
+	mac_value=$(wanmac)
+	if [ "$mode" = "$prev" ] && [ "$mode_wan" = "$prev_wan" ]; then
+        if check_wanmac "$mac_value"; then
+            config_wan_aggregation
+        fi
+        exit 1
+    fi
+
+	brname=`cat /sys/class/net/eth3/master/uevent | grep INTERFACE | cut -d = -f 2`
+	[ "$mode_wan" != "$prev_wan" ] &&  [ "$mode_wan"  = "1" ] && [ "$brname" != "br0" ] && [ "$brname" != "bond2" ] && exit 1
+	
+#	[ "$prev" != "0" ] && bond-ctrl del 2
+#	[ "$mode"  = "1" ] && bond-ctrl add 2 mode manual  $member_list
+#	[ "$mode"  = "2" ] && bond-ctrl add 2 mode dynamic $member_list
+	
+#	echo $mode > /var/run/bond-mode
+	
+	[ "$mode_wan"  = "1" ] && $CONFIG set link_aggregation_sta=0 && mode=`config get link_aggregation_sta`
+	[ "$mode" != "$prev" ] &&  config_sta_aggregation
+	[ "$mode_wan" != "$prev_wan" ] && config_wan_aggregation
+	[ "$mode_wan"  = "1" ] && [ "$mode_wan" != "$prev_wan" ] && [ "$1" = "boot" ] && /etc/init.d/net-wan restart
+}
+
+config_by_command()
+{
+	mode_p=$1
+
+	[ "$mode_p" = "disable" ] && mode="0"
+	[ "$mode_p" = "manual"  ] && mode="1"
+	[ "$mode_p" = "dynamic" ] && mode="2"
+	
+	[ -z "$mode" ] && exit 0
+	
+	[ "$mode" = "prev" ] && exit 1
+	
+	[ "$prev" != "0" ] && bond-ctrl del 2
+	[ "$mode"  = "1" ] && bond-ctrl add 2 mode manual  $member_list
+	[ "$mode"  = "2" ] && bond-ctrl add 2 mode dynamic $member_list
+	
+	config set link_aggregation_sta=$mode
+	echo $mode > /var/run/bond-mode
+}
+
+if [ $# -lt 1 ]
+then
+	config_by_datalib 
+else
+	if [ "$1" = "boot" ]
+	then
+		config_by_datalib boot
+	else
+		config_by_command $1
+	fi
+fi
+

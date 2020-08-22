@@ -1,0 +1,628 @@
+<% cfg_set("set_vlan_tag", "0") %>
+<% http_header("style/form.css", "/funcs.js", "/vlan.js") %>
+<% body_header("_VLAN_IPTV", "VLAN_IPTV.htm", "apply_vlan") %>
+<div id="black_over_lay" class="black_overlay">
+</div>
+<div class="page_title">$vlan_head</div>
+<div class="fix_button">
+<TABLE width=100% border=0 cellpadding=0 cellspacing=2>
+<TR>
+	<script>
+	var multi_wan_type="<% cfg_get("multi_wan_type") %>";		
+	var master="<% cfg_get("http_loginname") %>";
+	var internet_type="<% cfg_get("internet_type") %>";
+	var internet_ppp_type="<% cfg_get("internet_ppp_type") %>";
+	if (multi_wan_type=="3g" || master == "guest" || (parent.enable_vlan_pppoe_support == 0 && internet_type == "0" && internet_ppp_type == "0"))
+		document.write('<TD nowrap colspan=2 align=center> <input class="cancel1_bt" type="button" name="Cancel" id="cancel" value="$cancel_mark" disabled>&nbsp;&nbsp;<input class="apply1_bt" type="submit" name="Apply" id="apply" value="$apply_mark" disabled></TD>');
+	else
+		document.write('<TD nowrap colspan=2 align=center> <input class="cancel_bt" type="button" name="Cancel" id="cancel" value="$cancel_mark" onClick="location.href=\'VLAN_IPTV.htm\';">&nbsp;&nbsp;<input class="apply_bt" type="submit" name="Apply" id="apply" value="$apply_mark" onClick="return click_apply(document.forms[0]);"></TD>');
+	</script>
+</TR>
+</TABLE>
+
+</div>
+<div id="main" class="main_top_button"> 
+<% pop_help_button() %>
+
+<% table_header() %>
+<% save_timestamp("apply_vlan","vlan_edit","apply_iptv_edit","disable_vlan_iptv","vlan_delete") %>
+
+<script>
+var is_for_RU=parent.is_ru_version;
+var enable_vlan="<% cfg_get("enable_vlan") %>";
+var vlan_or_bridge="<% cfg_get("vlan_type") %>";
+var iptv_mask="<% cfg_get("iptv_mask") %>";
+var iptv_mask2="<% cfg_get("iptv_mask2") %>"; //for wireless
+var wan_brig_ssid1="<% cfg_get("wan_brig_ssid1") %>";
+var wan_brig_ssid2="<% cfg_get("wan_brig_ssid2") %>";
+var wan_brig_guest_ssid1="<% cfg_get("wan_brig_guest_ssid1") %>";
+var wan_brig_guest_ssid2="<% cfg_get("wan_brig_guest_ssid2") %>";
+var con_endis_wl_radio="<% cfg_get("endis_wl_radio") %>";
+var con_endis_wla_radio="<% cfg_get("endis_wla_radio") %>";
+var con_endis_wla_2nd_radio="<% cfg_get("endis_wla_2nd_radio") %>";
+var get_endis_guestNet="<% cfg_get("wlg1_endis_guestNet") %>";
+var get_endis_guestNet_an="<% cfg_get("wla1_endis_guestNet") %>";
+var multi_wan_type="<% cfg_get("multi_wan_type") %>";
+var lan_ports_num = parent.lan_ports_num;
+var wan_agg_port = parent.wan_agg_port;
+var wired_ports_num = lan_ports_num+getTop(window).have_eth5g_flag;
+var wired_ports_len = wired_ports_num-1;
+var ad_router_flag = parent.ad_router_flag;
+var tri_router_flag = parent.tri_router_flag;
+var vlan_free_flag = parent.vlan_free_flag;
+if(vlan_free_flag == 1)
+{
+	var get_enable_vlan_id="<% cfg_get("iptv_vlan_enable") %>";
+	var get_vlan_id_input="<% cfg_get("iptv_vlan") %>";
+	var netgear_region=getTop(window).netgear_region;
+}
+if(parent.support_orange_flag ==1)
+var enable_orange="<% cfg_get("enable_orange") %>";
+var wan_preference="<% cfg_get("wan_preference") %>";
+var aggre_option = "<% cfg_get("link_aggregation_sta")%>";
+
+<% vlan_items_xss() %>
+
+var ts="<% cfg_get("apply_vlan") %>";
+
+function loadvalue()
+{
+	if( getTop(window).location.href.indexOf("adv_index.htm") != -1 )
+		getTop(window).menu_color_change('vlan');
+	
+	if(ad_router_flag == "0"){
+		document.getElementById("iptv_ports_14").style.display = "none";
+		document.getElementById("wifi60G").style.display = "none";
+		document.getElementById("label_14").style.display = "none";
+	}
+	if(parent.use_orbi_style_flag == "1")
+	{
+		document.getElementById("iptv_ports_12").style.display = "none";
+		document.getElementById("guest2g").style.display = "none";
+		document.getElementById("label_12").style.display = "none";
+		document.getElementById("iptv_ports_13").style.display = "none";
+		document.getElementById("guest5g").style.display = "none";
+		document.getElementById("label_13").style.display = "none";
+	}
+
+	if(tri_router_flag != "1"){
+		document.getElementById("iptv_ports_15").style.display = "none";
+		document.getElementById("label_15").style.display = "none";
+	}
+
+	var cf=document.forms[0];
+	if(multi_wan_type=="3g" || (parent.enable_vlan_pppoe_support == 0 && internet_type == "0" && internet_ppp_type == "0"))
+		cf.vlan_iptv_enable.disabled=true;
+	else 
+	{
+		cf.vlan_iptv_enable.disabled=false;
+		if( enable_vlan =="1" )
+			cf.vlan_iptv_enable.checked=true;
+		else
+			cf.vlan_iptv_enable.checked=false;
+	}		
+	
+	if(vlan_or_bridge == "1")
+		cf.vlan_iptv_select[1].checked=true;
+	else
+		cf.vlan_iptv_select[0].checked=true;
+	
+	var tmp_wired = parseInt(iptv_mask, 10).toString(2);
+	var tmp_wireless = parseInt(iptv_mask2, 10).toString(2);
+	var zero = "";
+	for(u=0; u<(wired_ports_num-tmp_wired.length); u++)
+		zero = zero + "0";
+	var wired_port = (zero + tmp_wired).split("");
+	zero = "";
+	for(u=0; u<(6-tmp_wireless.length); u++)
+		zero = zero + "0";
+	var wireless_port = (zero + tmp_wireless).split("");
+
+	for(i=0; i<wired_ports_num; i++)
+	{
+		if(!(parent.use_orbi_style_flag == "1" && wan_preference == "1" && i==wan_agg_port-1))
+		{
+		if(wired_port[wired_ports_len-i] == "1")
+			eval("cf."+"iptv_ports_"+i).checked = true;
+		else
+			eval("cf."+"iptv_ports_"+i).checked = false;
+		}
+	}
+
+	for(var j=0; j<6; j++)
+	{
+		if(wireless_port[j] == "1")
+			eval("cf."+"iptv_ports_"+(15-j)).checked = true;
+		else
+			eval("cf."+"iptv_ports_"+(15-j)).checked = false;
+	}
+
+	if(con_endis_wl_radio=="1")
+		cf.iptv_ports_10.disabled=false;
+	else
+		cf.iptv_ports_10.disabled=true;
+	if(con_endis_wla_radio=="1")
+		cf.iptv_ports_11.disabled=false;
+	else
+		cf.iptv_ports_11.disabled=true;
+	if(con_endis_wla_2nd_radio=="1")
+		cf.iptv_ports_15.disabled=false;
+	else
+		cf.iptv_ports_15.disabled=true;
+	if(get_endis_guestNet=="1")
+		cf.iptv_ports_12.disabled=false;
+	else
+		cf.iptv_ports_12.disabled=true;
+	if(get_endis_guestNet_an=="1")
+		cf.iptv_ports_13.disabled=false;
+	else
+		cf.iptv_ports_13.disabled=true;
+	
+	if(master == "guest"){
+		cf.Add.className = "add1_bt";
+		cf.Delete.className = "delete1_bt";
+		setDisabled("true", cf.Add, cf.Delete);
+	}
+	click_enable_vlan(cf);
+
+	if(vlan_free_flag == 1)
+	{
+		if(get_enable_vlan_id == "1")
+			cf.enable_vlan_id.checked = true;
+		cf.vlan_id_input.value = get_vlan_id_input;
+	}
+	if(aggre_option != "0")
+	{
+		change_lan_agg_show("vlan_tag");
+		syncAgg(cf.iptv_ports_0);
+	}
+}
+
+function click_enable_vlan(cf)
+{
+	if(cf.vlan_iptv_enable.checked==true)
+	{
+		document.getElementById("by_bridge").style.display="";
+		if(vlan_free_flag == 1)
+		{
+			if(netgear_region == "WW")
+			{
+				document.getElementById("bridge_vlan_id").style.display=""
+			}
+		}
+		document.getElementById("by_vlan").style.display="";
+		change_vlan_type(cf);
+	}
+	else
+	{
+		document.getElementById("by_bridge").style.display="none";
+		document.getElementById("by_bridge_checked").style.display="none";
+		document.getElementById("by_vlan").style.display="none";
+		document.getElementById("by_vlan_checked").style.display="none";
+	}
+}
+
+function change_vlan_type(cf)
+{
+	if(cf.vlan_iptv_select[0].checked)
+	{
+		document.getElementById("by_bridge_checked").style.display="";
+		document.getElementById("by_vlan_checked").style.display="none";
+	}
+	else
+	{
+		document.getElementById("by_bridge_checked").style.display="none";
+		document.getElementById("by_vlan_checked").style.display="";
+	}
+}
+
+</script>
+
+<input type="hidden" name="hid_enable_vlan" value="0" />
+<input type="hidden" name="hid_vlan_type" value="0" />
+<input type="hidden" name="select_edit_num" value="0" />
+<input type="hidden" name="select_del_num" value="0" />
+<input type="hidden" name="hid_sel_list" value="" />
+<input type="hidden" name="hid_enabled_num" value="0" />
+<input type="hidden" name="hid_iptv_mask" value="0" />
+<input type="hidden" name="hid_iptv_mask2" value="0" />
+<input type="hidden" name="hid_brig_ssid1" value="0" />
+<input type="hidden" name="hid_brig_ssid2" value="0" />
+<input type="hidden" name="hid_brig_ssid3" value="0" />
+<input type="hidden" name="hid_brig_guest_ssid1" value="0" />
+<input type="hidden" name="hid_brig_guest_ssid2" value="0" />
+<input type="hidden" name="hid_brig_ssid_ad" value="0" />
+<input type="hidden" name="hid_bri_lan1" value="0" />
+<input type="hidden" name="hid_bri_lan2" value="0" />
+<input type="hidden" name="hid_bri_lan3" value="0" />
+<input type="hidden" name="hid_bri_lan4" value="0" />
+<input type="hidden" name="hid_bri_lan5" value="0" />
+<input type="hidden" name="hid_bri_lan6" value="0" />
+<input type="hidden" name="hid_bri_lan7" value="0" />
+<input type="hidden" name="hid_bri_lan8" value="0" />
+<input type="hidden" name="hid_inter_lan1" value="0" />
+<input type="hidden" name="hid_inter_lan2" value="0" />
+<input type="hidden" name="hid_inter_lan3" value="0" />
+<input type="hidden" name="hid_inter_lan4" value="0" />
+<input type="hidden" name="hid_inter_lan5" value="0" />
+<input type="hidden" name="hid_inter_lan6" value="0" />
+<input type="hidden" name="hid_inter_lan7" value="0" />
+<input type="hidden" name="hid_inter_lan8" value="0" />
+<input type="hidden" name="hid_inter_wireless1" value="0" />
+<input type="hidden" name="hid_inter_wireless2" value="0" />
+<input type="hidden" name="hid_inter_wireless5" value="0" />
+<input type="hidden" name="hid_vlan_id_input" value="0" />
+<input type="hidden" name="hid_internet_group" value="" />
+<input type="hidden" name="hid_intranet_group" value="" />
+<TR>
+	<TD nowrap colspan=4><input type="checkbox" id="vlan_iptv_enable" name="vlan_iptv_enable" onClick="click_enable_vlan(document.forms[0]);"><label for="vlan_iptv_enable"><B>$enable_vlan_iptv</B></label></TD>
+</TR>
+</table>
+<div id="by_bridge" style="display:none">
+<table class="tables" cellspacing="0" width="100%">
+	<tr class='el-hide'><td>&nbsp;</td></tr>
+	<tr>
+		<td><input type="radio" id="iptv_select" name="vlan_iptv_select" value="iptv_enable" onclick="change_vlan_type(document.forms[0]);" /><label for="iptv_select"><b>$vlan_by_bridge</b></label></td>
+	</tr>
+	<tr class='el-hide'><td>&nbsp;</td></tr>
+</table>
+</div>
+<div id="by_bridge_checked" style="display:none">
+<table class="tables table1 table1-radio" cellpadding="2" cellspacing="0" width="100%">
+	<tr class="table_header">
+		<TD nowrap align=center><span class="subhead">$vlan_wired_port</span></TD>
+		<TD nowrap align=center><span class="subhead">$wireless</span></TD>
+	</tr>
+	<tr class="odd_line">
+		<TD nowrap align=center>
+			<script>
+				for(var even = 0; even < lan_ports_num; even += 2){
+					port_num = even + 1;
+					if(parent.use_orbi_style_flag == "1" && wan_preference === "1" && port_num == wan_agg_port)
+						continue;
+					else
+					{
+						if(aggre_option != "0" && port_num == 1)
+							document.write('<span id="lan_port'+port_num+'">&nbsp;&nbsp;<input type="checkbox" id="iptv_ports_'+even+'" name="iptv_ports_'+even+'" onClick="syncAgg(this);"><label id="lan_port_label'+port_num+'" for="iptv_ports_'+even+'">Port'+port_num+'</label></span>');
+						else
+							document.write('<span id="lan_port'+port_num+'">&nbsp;&nbsp;<input type="checkbox" id="iptv_ports_'+even+'" name="iptv_ports_'+even+'"><label id="lan_port_label'+port_num+'" for="iptv_ports_'+even+'">Port'+port_num+'</label></span>');
+					}
+				}
+				if (getTop(window).have_eth5g_flag == "1")
+				{
+					if(wan_preference == "2")
+						document.write('<span>&nbsp;&nbsp;<input type="checkbox" id="iptv_ports_'+even+'" name="iptv_ports_'+even+'" disabled><label for="iptv_ports_'+even+'">Multi-Giga (5G/2.5G/1G)</label></span>');
+					else
+						document.write('<span>&nbsp;&nbsp;<input type="checkbox" id="iptv_ports_'+even+'" name="iptv_ports_'+even+'"><label for="iptv_ports_'+even+'">Multi-Giga (5G/2.5G/1G)</label></span>');
+				}
+			</script>
+		</TD>
+		<TD nowrap align=center>
+			<input type="checkbox" id="iptv_ports_10" name="iptv_ports_10" onchange="uncheckVlanIDOption(this)"><label for="iptv_ports_10">WiFi-2.4G</label> &nbsp;&nbsp;
+			<input type="checkbox" id="iptv_ports_11" name="iptv_ports_11" onchange="uncheckVlanIDOption(this)"><label for="iptv_ports_11">WiFi-5G</label> &nbsp;&nbsp;
+			<input type="checkbox" id="iptv_ports_15" name="iptv_ports_15" onchange="uncheckVlanIDOption(this)"><label for="iptv_ports_15" id="label_15">WiFi-5G-2</label> &nbsp;&nbsp;
+			<input type="checkbox" id="iptv_ports_14" name="iptv_ports_14" onchange="uncheckVlanIDOption(this)"><label for="iptv_ports_14" id="label_14">&nbsp;<span id="wifi60G">WiFi-60G</span></label>
+		</TD>
+	</tr>
+	<tr class="odd_line">
+		<TD nowrap align=center>
+			<script>
+				for(var odd = 1; odd < lan_ports_num; odd += 2){
+					port_num = odd + 1;
+					if(parent.use_orbi_style_flag == "1" && wan_preference === "1" && port_num == wan_agg_port)
+						continue;
+					else
+						document.write('<span id="lan_port'+port_num+'">&nbsp;&nbsp;<input type="checkbox" id="iptv_ports_'+odd+'" name="iptv_ports_'+odd+'"><label id="lan_port_label'+port_num+'" for="iptv_ports_'+odd+'">Port'+port_num+'</label></span>');
+				}
+			</script>
+		</TD>
+		<TD style="display:none" nowrap align=center>
+			<input type="checkbox" id="iptv_ports_12" name="iptv_ports_12"><label for="iptv_ports_12" id="label_12"><span id="guest2g">Guest-2.4G </span></label >&nbsp;&nbsp;
+			<input type="checkbox" id="iptv_ports_13" name="iptv_ports_13"><label for="iptv_ports_13" id="label_13"><span id="guest5g">Guest-5G</span></label>
+		</TD>
+	</tr>
+	<tr id="bridge_vlan_id" style="display:none"><td colspan=2 style="padding-left:20px;"><input type="checkbox" id="enable_vlan_id" name="enable_vlan_id" onchange="uncheckWlanOption(this)"><label for="enable_vlan_id">$enable_vlan_id1</label> <input type="text" name="vlan_id_input" id="vlan_id_input" style="height:13px; width:45px;" onclange="clearNoNum(this)" oninput="clearNoNum(this)" maxlength="4"> $enable_vlan_id2<td></tr>
+</table>
+</div>
+<div id="by_vlan" style="display:none">
+<table class="tables" cellspacing="0" width="100%">
+	<tr class='el-hide'><td>&nbsp;</td></tr>
+	<tr>
+		<td><input type="radio"  id="vlan_select" name="vlan_iptv_select" value="vlan_enable" onclick="change_vlan_type(document.forms[0]);" /><label for="vlan_select"><b>$vlan_by_vlan</b></label></td>
+	</tr>
+	<tr class='el-hide'><td>&nbsp;</td></tr>
+</table>
+</div>
+<div id="by_vlan_checked" style="display:none">
+<table class="tables table1 table1-radio" cellpadding="6" cellspacing="0" width="100%">
+	<tr class="table_header">
+		<TD nowrap align=center width="6%">&nbsp;               </TD>
+		<TD nowrap align=center width="6%"><span class="subhead">$r_enable </span></TD>
+		<TD nowrap align=center><span class="subhead">$sta_routes_name</span></TD>
+		<TD nowrap align=center><span class="subhead">$vlan_id</span></TD>
+		<TD nowrap align=center><span class="subhead">$qos_priority</span></TD>
+		<TD nowrap align=center><span class="subhead">$vlan_wired_port</span></TD>
+		<TD nowrap align=center><span class="subhead">$wireless</span></TD>
+	</tr>
+	<script>
+	var orange_note=0;
+	if(parent.support_orange_flag ==1 && array_num == 2)
+	{
+		var temp_str=eval( 'vlanArray2' )
+		var temp_info=temp_str.split(' ');
+		if(temp_info[1] == "OrangeIPTV")
+			orange_note = 1;
+	}
+	if (array_num > 1 &&  orange_note != 1)
+	{	
+		var form = document.forms[0];
+		for((is_for_RU == 1)? i=0: i=1; i<=array_num; i++)
+		{
+			var port1_flag=port2_flag=port3_flag=port4_flag=port5_flag=port6_flag=port7_flag=port8_flag=port10_flag=port11_flag=port12_flag=port13_flag=port14_flag=port15_flag=0;
+			var sel_str=eval( 'vlanArray' + i )
+			var each_info_1=sel_str.split(' ');
+			var wired_port=parseInt(each_info_1[4],10);
+			var wlan_port=parseInt(each_info_1[5],10);
+			
+			var tmp_lan = parseInt(wired_port, 10).toString(2);
+			var tmp_wlan = parseInt(wlan_port, 10).toString(2);
+			var zero="";
+			for(u=0; u<(wired_ports_num-tmp_lan.length); u++)
+				zero = zero + "0";
+			var wired_ports = (zero + tmp_lan).split("");
+			zero = "";
+			for(u=0; u<(6-tmp_wlan.length); u++)
+				zero = zero + "0";
+			var wlan_ports = (zero + tmp_wlan).split("");
+
+			for(k=0; k<15; k++)
+			{
+				if(k<wired_ports_num)
+				{
+					if(wired_ports[wired_ports_len-k] == "1")
+					{
+						eval("port"+(k+1)+"_flag = 1");
+					}
+				}
+				else if(k>wired_ports_num && k<9)
+					continue;
+				else if(k >=9)
+				{
+					if(wlan_ports[14-k] == "1")
+					{
+						eval("port"+(k+1)+"_flag = 1");
+					}
+				}
+			}
+			
+			var str=eval( 'vlanArray' + i )
+			var each_info=str.split(' ');
+
+			if(getTop(window).support_orange_flag ==1)
+			{
+				if(each_info[1]=="OrangeIPTV")
+					each_info[1]="Orange France IPTV";
+				else if(each_info[1]=="SingTelSingaporeIPTV")
+					each_info[1]="SingTel Singapore IPTV";
+				else if(each_info[1]=="UnifiMalaysiaIPTV")
+					each_info[1]="Unifi Malaysia IPTV";
+				else if(each_info[1]=="MaxisMalaysiaIPTV")
+					each_info[1]="Maxis Malaysia IPTV";
+			}
+
+			if(each_info[1]=="Internet" || (each_info[1]=="Intranet" && is_for_RU==1 ) || (parent.support_orange_flag ==1 && each_info[1]=="OrangeIPTV"))
+			{
+				if( i%2 ==0)
+					document.write("<TR class=\"even_line\">");
+				else
+					document.write("<TR class=\"odd_line\">");				
+				document.write('<TD rowspan="2" nowrap align=center><input type="radio" id="ruleselect'+i+'" name="ruleSelect" value="'+i+'"><label for="ruleselect'+i+'"></label></TD>');
+				document.write('<TD rowspan="2" nowrap align=center><input type="checkbox" name="vlan_check'+i+'" id="vlan_check'+i+'" checked="true" disabled><label for="vlan_check'+i+'" ></label></TD>');
+				document.write('<TD rowspan="2" nowrap align=center>'+each_info[1]+'</TD>');
+				var vlan_id=parseInt(each_info[2],10);
+				if (vlan_id==0)
+				{
+					document.write('<TD rowspan="2" nowrap align=center> - </TD>');
+					document.write('<TD rowspan="2" nowrap align=center> - </TD>');
+				}
+				else
+				{
+					document.write('<TD rowspan="2" nowrap align=center>'+each_info[2]+'</TD>');
+					document.write('<TD rowspan="2" nowrap align=center>'+each_info[3]+'</TD>');
+				}
+				print_wired_ports("odd", "internet")
+				print_wireless_ports("internet")
+				
+				if( i%2 ==0)
+					document.write("<TR class=\"even_line\">");
+				else
+					document.write("<TR class=\"odd_line\">");	
+				
+				print_wired_ports("even", "internet");
+				document.write("<TD nowrap align=center></TD>");
+				document.write("</TR>");
+			}
+			else
+			{
+				var wired_port=parseInt(each_info[4],10).toString(2);
+				var wireless_port=parseInt(each_info[5],10).toString(2);
+				zero = "";
+				for(u=0; u<(wired_ports_num-wired_port.length); u++)
+					zero = zero + "0";
+				var wired_ports = (zero + wired_port).split("");
+
+				zero = "";
+				for(u=0; u<(6-wireless_port.length); u++)
+					zero = zero + "0";
+				var wireless_ports = (zero + wireless_port).split("");
+
+				if( i%2 ==0)
+					document.write("<TR class=\"even_line\">");
+				else
+					document.write("<TR class=\"odd_line\">");
+				document.write('<TD rowspan="2" nowrap align=center><input type="radio" id="ruleselect'+i+'" name="ruleSelect" value="'+i+'"><label for="ruleselect'+i+'"></label></TD>');
+				if(each_info[0]=="1")
+					document.write('<TD rowspan="2" nowrap align=center><input type="checkbox" name="vlan_check'+i+'" id="vlan_check'+i+'" checked><label for="vlan_check'+i+'"></label></TD>');
+				else
+					document.write('<TD rowspan="2" nowrap align=center><input type="checkbox" name="vlan_check'+i+'" id="vlan_check'+i+'"><label for="vlan_check'+i+'"></label></TD>');
+				document.write('<TD rowspan="2" nowrap align=center>'+each_info[1]+'</TD>');
+				document.write('<TD rowspan="2" nowrap align=center>'+each_info[2]+'</TD>');
+				document.write('<TD rowspan="2" nowrap align=center>'+each_info[3]+'</TD>');
+				
+				print_wired_ports("odd", "self_defined");
+				print_wireless_ports("self_defined");
+				if( i%2 ==0)
+					document.write("<TR class=\"even_line\">");
+				else
+					document.write("<TR class=\"odd_line\">");
+				print_wired_ports("even", "self_defined");
+				document.write("<TD nowrap align=center></TD>");
+				document.write('</TR>');
+			}
+		}
+
+	}
+	else
+	{
+		for((is_for_RU == 1 )? i=0: i=1; i<2; i++)
+		{
+			var str=eval( 'vlanArray' + i )
+			var each_info=str.split(' ');
+			if(each_info[1]=="Internet" || (each_info[1]=="Intranet" && is_for_RU==1 ))
+			{
+				if( i%2 ==0)
+					document.write("<TR class=\"even_line\">");
+				else
+					document.write("<TR class=\"odd_line\">");				
+				document.write('<TD nowrap align=center><input type="radio" id="ruleselect'+i+'" name="ruleSelect" value="'+i+'"><label for="ruleselect'+i+'"></label></TD>');
+				document.write('<TD nowrap align=center><input type="checkbox" name="vlan_check'+i+'" id="vlan_check'+i+'" checked="true" disabled><label for="vlan_check'+i+'"></label></TD>');
+				document.write('<TD nowrap align=center>'+each_info[1]+'</TD>');
+				var vlan_id=parseInt(each_info[2],10);
+				if (vlan_id==0)
+				{
+					document.write('<TD nowrap align=center> - </TD>');
+					document.write('<TD nowrap align=center> - </TD>');
+				}
+				else
+				{
+					document.write('<TD nowrap align=center>'+each_info[2]+'</TD>');
+					document.write('<TD nowrap align=center>'+each_info[3]+'</TD>');
+				}
+				document.write('<TD nowrap align=center>All</TD>');
+				document.write('<TD nowrap align=center>All</TD>');
+				document.write("</TR>");
+			}
+		}
+		if(parent.support_orange_flag ==1 && array_num == 2 && orange_note == 1)
+		{
+			var str=eval( 'vlanArray2' )
+			var each_info=str.split(' ');
+			document.write("<TR class=\"even_line\">");
+			document.write('<TD nowrap align=center><input type="radio" id="ruleselect'+i+'" name="ruleSelect" value="2"><label for="ruleselect'+i+'"></label></TD>');
+			document.write('<TD nowrap align=center><input type="checkbox" name="vlan_check2" id="vlan_check2" checked="true" disabled><label for="vlan_check2"></label></TD>');
+			document.write('<TD nowrap align=center>Orange France IPTV</TD>');
+			document.write('<TD nowrap align=center>'+each_info[2]+'</TD>');
+			document.write('<TD nowrap align=center>'+each_info[3]+'</TD>');
+			document.write('<TD nowrap align=center>All</TD>');
+			document.write('<TD nowrap align=center>All</TD>');
+			document.write("</TR>");
+		}
+
+	}
+	
+	function print_wired_ports(type1, type2){
+		if(type1 == "even")
+			start = 2;
+		else if(type1 == "odd")
+			start = 1;
+		for(var count =start; count <= wired_ports_num; count = count+2){
+			if(count == start)
+				document.write('<TD nowrap align=center>');
+			if(eval("port"+count+"_flag") == "1"){
+				if (getTop(window).have_eth5g_flag == "1" && count == wired_ports_num)
+					document.write('<span>&nbsp;&nbsp;<input type="checkbox" checked id="wire_pt_'+count+'" disabled style="color:green"><label for="wire_pt_'+count+'">Multi-Giga (5G/2.5G/1G)</label></span>');
+				else if(parent.use_orbi_style_flag == "1" && wan_preference === "1" && count == wan_agg_port)
+					continue;
+				else
+					document.write('<span class="vlan_tag_port'+count+'">&nbsp;&nbsp;<input type="checkbox" checked id="wire_pt_'+count+'" disabled style="color:green"><label class="vlan_tag_label'+count+'" for="wire_pt_'+count+'">Port'+count+'</label></span>');
+				if(type2 == "internet")
+					eval('form.hid_inter_lan'+count+'.value=1');
+			}else
+			{
+				if(getTop(window).have_eth5g_flag == "1" && count == wired_ports_num)
+					document.write('<span>&nbsp;&nbsp;<input type="checkbox" id="wire_pt_'+count+'" disabled><label class="vlan_tag_label'+count+'" for="wire_pt_'+count+'">Multi-Giga (5G/2.5G/1G)</label></span>');
+				else if(parent.use_orbi_style_flag == "1" && wan_preference === "1" && count == wan_agg_port)
+					continue;
+				else
+					document.write('<span class="vlan_tag_port'+count+'">&nbsp;&nbsp;<input type="checkbox" id="wire_pt_'+count+'" disabled><label class="vlan_tag_label'+count+'" for="wire_pt_'+count+'">Port'+count+'</label></span>');
+			}
+		}
+	}
+	
+	function print_wireless_ports(type)
+	{
+		if(port10_flag==1){
+			document.write('<TD nowrap align=center><input type="checkbox" checked disabled id="hid_che3"><label for="hid_che3">WiFi-2.4G</label> &nbsp;&nbsp;');
+			if(type == "internet")
+				form.hid_inter_wireless1.value="1";
+		}
+		else
+			document.write('<TD nowrap align=center><input type="checkbox" disabled id="hid_che3"><label for="hid_che3">WiFi-2.4G</label> &nbsp;&nbsp;');
+		if(port11_flag==1){
+			document.write('<input type="checkbox" checked disabled id="hid_che4"><label for="hid_che4">WiFi-5G</label>');
+			if(type == "internet")
+				form.hid_inter_wireless2.value="1";
+		}
+		else
+			document.write('<input type="checkbox" disabled id="hid_che4"><label for="hid_che4">WiFi-5G</label>');
+		if(tri_router_flag == "1"){
+			document.write("&nbsp;&nbsp;");
+			if(port15_flag==1){
+				document.write('<input type="checkbox" checked disabled id="hid_che5"><label for="hid_che5">WiFi-5G-2</label>');
+				if(type == "internet")
+					form.hid_inter_wireless2.value="1";
+			}
+			else
+				document.write('<input type="checkbox" disabled id="hid_che5"><label for="hid_che5">WiFi-5G-2</label>');
+		}
+		if(ad_router_flag == "1"){
+			document.write("&nbsp;&nbsp;");
+			if(port14_flag==1){
+				document.write('<input type="checkbox" id="wifi60_pt" checked disabled><label for="wifi60_pt">WiFi-60G</label></TD>');
+				if(type == "internet")
+					form.hid_inter_wireless5.value="1";
+			}
+			else
+				document.write('<input type="checkbox" id="wifi60_pt" disabled><label for="wifi60_pt">WiFi-60G</label></TD>');
+		}else
+			document.write("</TD>");
+		document.write('</TR>');
+	}
+	</script>
+
+</table>
+<table width="100%" border="0" cellpadding="0" cellspacing="3">
+<TR>
+	<TD nowrap colspan=6 align=center>
+		<input class="add_bt" type="button" id="add" name="Add" value="$add_mark" onClick="return click_add_btn(document.forms[0]);">
+		<input class="edit_bt" type="button" name="Edit" id="edit" value="$edit_mark" onClick="return click_edit_btn(document.forms[0]);">
+		<script>
+		if( master == "admin" )
+			document.write('<input class="delete_bt" type="button" name="Delete" id="delete" value="$delete_mark" onClick="return click_delete_btn(document.forms[0])">');
+		else
+			document.write('<input class="delete1_bt" type="button" name="Delete" id="delete" value="$delete_mark" disabled>');
+		</script>
+	</TD>
+</TR>
+</table>
+</div>
+
+<table width="100%" border="0" cellpadding="0" cellspacing="3">
+$bluebar
+</table>
+</div>
+<% help_box("0","_VLAN_iptv") %>
+</FORM>
+</BODY>
+</HTML>
+

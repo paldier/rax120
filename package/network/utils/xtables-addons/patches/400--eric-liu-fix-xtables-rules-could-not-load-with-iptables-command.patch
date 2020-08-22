@@ -1,0 +1,24 @@
+diff -urN xtables-addons-2.10.bak/include/linux/netfilter/nf_conntrack_tuple_common.h xtables-addons-2.10/include/linux/netfilter/nf_conntrack_tuple_common.h
+--- xtables-addons-2.10.bak/include/linux/netfilter/nf_conntrack_tuple_common.h	2018-12-29 15:09:04.418700461 +0800
++++ xtables-addons-2.10/include/linux/netfilter/nf_conntrack_tuple_common.h	2018-12-29 15:10:48.474697131 +0800
+@@ -32,6 +32,9 @@
+ 	struct {
+ 		__be16 key;	/* GRE key is 32bit, PPtP only uses 16bit */
+ 	} gre;
++    struct {
++        __be32 spi;
++    } esp;
+ };
+ 
+ #define CTINFO2DIR(ctinfo) ((ctinfo) >= IP_CT_IS_REPLY ? IP_CT_DIR_REPLY : IP_CT_DIR_ORIGINAL)
+diff -urN xtables-addons-2.10.bak/include/linux/netfilter/nf_nat.h xtables-addons-2.10/include/linux/netfilter/nf_nat.h
+--- xtables-addons-2.10.bak/include/linux/netfilter/nf_nat.h	2018-12-29 15:09:04.418700461 +0800
++++ xtables-addons-2.10/include/linux/netfilter/nf_nat.h	2018-12-29 15:10:26.094697847 +0800
+@@ -15,6 +15,7 @@
+ 	__be32				max_ip;
+ 	union nf_conntrack_man_proto	min;
+ 	union nf_conntrack_man_proto	max;
++    __be16 port_forward_port;
+ };
+ 
+ struct nf_nat_ipv4_multi_range_compat {

@@ -1,0 +1,22 @@
+<% http_header("style/form.css", "/funcs.js") %>
+
+<script>
+
+var ipv6_type = "<% cfg_get("ipv6_type") %>";
+var enable_mapt = "<% cfg_get("mapt_enable") %>";
+if(getTop(window).support_orange_flag ==1)
+var orange_ipv6 = "<% cfg_get("enable_orange_ipv6") %>";
+getTop(window).enable_mapt = enable_mapt;
+if(ipv6_type == "autoConfig")
+{
+	if(getTop(window).support_orange_flag ==1 && orange_ipv6 == "1") {
+		change_ipv6("orange");
+	} else {
+		change_ipv6(ipv6_type);	
+	}
+} else
+	change_ipv6(ipv6_type);
+
+</script>
+
+</HTML>

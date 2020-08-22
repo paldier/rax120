@@ -1,0 +1,542 @@
+<% http_header("style/form2.css", "style/attach_device.css","/funcs.js", "/jquery-1.7.2.min.js", "/streamboost.js") %>
+<% body_header("_new_attach_device", "QOS_edit_devices.htm", "select_qos_edit") %>
+<div id="black_over_lay" class="black_overlay">
+</div>
+<style type="text/css">
+.eth, .wifi, .contype{ position: relative; top:20px; left: 20px;}
+.even_line_new td{padding: 0px;}
+.even_line_new img{max-height: 120%;}
+.devinfo_tbl tr td{
+	border:0px;
+	padding:1px;
+}
+.device_td a{TEXT-DECORATION: underline; color:#00ADE6;}
+</style>
+<script language="javascript" type="text/javascript">
+back_reload_page("QOS_device.htm");
+var ts='<% cfg_get("select_qos_edit") %>';
+var enable_block_device="<% cfg_get("enable_block_device") %>";
+
+var mac_addr=new Array();
+var ip_addr=new Array();
+var name_addr=new Array();
+var prio_addr=new Array();
+var enable_bridge_flag="<% cfg_get("bridge_mode") %>";
+var enable_ap_mode_flag="<% cfg_get("ap_mode") %>";
+var trend_micro_enable="<% cfg_get("trend_micro_enable") %>";
+
+var devList=[];
+var listBySort=1;
+var mouseon=false;
+var attach_device_num=0;
+var dev_info = new Array();
+var vpn_devList=[];
+var refresh_timer;
+var refresh_vpn;
+var conn_time = new Array();
+var qosList=[];
+var qos_down;
+var qos_up;
+var q_num;
+var start_qos=0;
+
+function goto_url()
+{
+	location.href="access_control.htm";
+}
+
+function show_wlan_ssid(ssid)
+{
+	var wlan_ssid="";
+	if(ssid != "")
+		wlan_ssid=" $wlan_guest_ssid: "+ssid;
+	else
+		wlan_ssid="";
+
+	return wlan_ssid;
+}
+
+function update_device_info(json)
+{
+	eval(json)
+	dev_info=[];
+	var device=json.devices;
+
+	for(var i=0, len = json.devices.length; i<len;i++)
+	{
+		var obj = {};
+
+		obj['ip']=device[i]['ip'];
+		obj['mac']=device[i]['mac'];
+		obj['connType']=device[i]['connType'];
+		obj['deviceTypeNum']=device[i]['deviceTypeNum'];
+		obj['deviceType']=device[i]['deviceType'];
+		obj['priority']=device[i]['priority'];
+		obj['deviceName']=device[i]['deviceName'];
+		if(getTop(window).support_new_ntgrtype == "1")
+		obj['deviceModel']=device[i]['deviceModel'];
+		obj['status']=device[i]['status'];
+		obj['remote_ip']=device[i]['remote_ip'];
+		obj['connection_time']=device[i]['connection_time'];
+		if(device[i]['connType'] != "vpn")
+			dev_info.push(obj);
+	}
+}
+
+function updateDevice(jobj)
+{
+	if(jobj.devices.length < 1)
+	{
+		clearTimeout(refresh_timer);
+		refresh_timer = setTimeout("getDevices()", 6000);
+	}
+
+	devList = jobj.devices;
+	vpn_devList = jobj.vpn_client_devices;
+
+	if(jobj.supportQos=="1")
+	{
+		qosList=jobj.devices.qosData;
+		$$('#qos_down').html(jobj.downSpeed);
+		$$('#qos_up').html(jobj.upSpeed);
+		if ($$('#qosApp').css('display') != 'none')
+			show_qos_app(q_num);
+		else
+			show_qos();
+	}
+	else
+	{
+		show_all();
+	}
+	update_device_info(jobj);
+
+	show_vpn();
+}
+
+function check_edit()
+{
+	var count=0;
+	var select_num, select_mac;
+	var cf = document.forms[0];
+
+	if(attach_device_num==0)
+	{
+		alert("$port_edit");
+		return false;
+	}
+
+	for(i=1;i<=attach_device_num;i++)
+	{
+		var listName="checkbox_index"+i;
+		if(document.getElementById(listName).checked==true)
+		{
+			select_mac=document.getElementById(listName).value;
+			select_num=i-1;
+			count++;
+		}
+	}
+	if(count==0||count!=1)
+	{
+		alert("$port_edit");
+		return false;
+	}
+	else{
+		for(j=0;j<dev_info.length;j++)
+		{
+			if(dev_info[j]['mac'] == select_mac)
+			{
+				select_num=j;
+				if(getTop(window).support_new_ntgrtype == "1")
+					edit_select_device_fing(dev_info[select_num]['mac'],dev_info[select_num]['ip'],dev_info[select_num]['deviceName'].replace(/\\\\/g,"\\").replace(/&nbsp;/g, " ").replace(/&#39;/g,"\&#39;"), dev_info[select_num]['priority'], dev_info[select_num]['deviceTypeNum'], dev_info[select_num]['deviceType'], dev_info[select_num]['deviceModel'], dev_info[select_num]['connType']);
+				else
+					edit_select_device(dev_info[select_num]['mac'],dev_info[select_num]['ip'],dev_info[select_num]['deviceName'].replace(/\\\\/g,"\\").replace(/&nbsp;/g, " ").replace(/&#39;/g,"\&#39;"), dev_info[select_num]['priority'], dev_info[select_num]['deviceTypeNum'],dev_info[select_num]['connType']);
+				return true;
+			}
+		}
+		return false;
+	}
+}
+
+function toggle_edit(type)
+{
+	var num = 0;
+	var cf = document.forms[0];
+	if(attach_device_num > 0) {
+		for(var i=1;i<=attach_device_num;i++) {
+			var listName = "checkbox_index"+i;
+			if(document.getElementById(listName).checked == true) {
+				num++;
+			}
+		}
+	}
+	if(type == qos)
+	{
+		if(num >0)
+		{
+			cf.edit_qos.disabled = false;
+			clearTimeout(refresh_timer);
+		}
+		else
+		{
+			cf.edit_qos.disabled = true;
+			getDevices()
+		}
+	}
+	else
+	{
+		if(num >0) {
+			cf.edit_attached.disabled = false;
+		} else {
+			cf.edit_attached.disabled = true;
+		}
+	}
+}
+
+function show_all()
+{
+	$$('#main').empty();
+	var msg1 = '<table width="100%" border="0" cellpadding="0" cellspacing="3">'
+		+'<TR><TD align=left colspan="2">'
+		+'<div class="btn-inline-group">'
+		+'<input class="common_bt" type="button" name="Edit" id="edit_attached" value="$edit_mark" onclick="return check_edit();" disabled>'
+		+'<input class="common_bt" type="button" name="refresh" id="refresh" value="$refresh_mark" onclick="location.href=\'QOS_device.htm\';">'
+		+'</div></TD></TR>'
+		+'<TABLE class="tables table1" border=0 cellpadding=2 cellspacing=0 width=100% id="device_table" style="width:98%">'
+		+'<TR class=table_header>'
+		+'<TD nowrap align=center><span class="subhead"></span></TD>';
+	if(enable_block_device == 0)
+		msg1 += '<TD nowrap align=center width=10%><span class="subhead"># </span></TD>';
+	else
+		msg1 += '<TD nowrap align=center width=10% class="subhead_acc_control">$stalist_Status</TD>';
+	msg1 =msg1 +'<TD nowrap align=center width=20% class="subhead_acc_control" colspan="1">$trigger_contype</TD>';
+	if(getTop(window).support_new_ntgrtype == "1")
+		msg1 =msg1 +'<TD nowrap align=center width=35% class="subhead_acc_control" colspan="2">$adva_wlan_devicename</TD>';
+	else
+		msg1 =msg1 +'<TD nowrap align=center width=35% class="subhead_acc_control">$adva_wlan_devicename</TD>';
+	msg1 =msg1 +'<TD nowrap align=center width=15% class="subhead_acc_control">$block_ser_setup_ip_jp</TD>'
+		+'<TD nowrap align=center width=15% class="subhead_acc_control">$info_mark_mac</TD>'
+		+'</TR>';
+	var d_num=0;
+	for( var i in devList )
+	{
+		var dev = devList[i];
+		if(dev.connType != "vpn"){
+			msg1 += '<tr class="even_line_new">';
+			msg1 += '<td nowrap align=center><input type="checkbox" name="checkbox_index'+(d_num+1)+'"  id="checkbox_index'+(d_num+1)+'" value='+dev.mac+' onClick="toggle_edit();"><label for="checkbox_index'+(d_num+1)+'"></label></td>';
+			if(enable_block_device == 0)
+				msg1 += '<td rowspan=1 align=center>'+(d_num+1)+'</td>';
+			else
+			{
+				if(dev.status=="Allowed")
+					msg1 += '<td rowspan=1 align=center><font color=green>$acc_allow</font></td>';
+				else if(dev.status=="Blocked")
+					msg1 += '<td rowspan=1 align=center><font color=red>$acc_block</font></td>';
+				else
+					msg1 += '<td rowspan=1 align=center><font color=red>$acc_block</font></td>';
+			}
+			//Connection Type
+			if(dev.connType == "Wired")
+				msg1 += '<td rowspan=1 class="device_td2" align=left width=45px>$acc_wired</td>';
+			else
+				msg1 += '<td rowspan=1 class="device_td2" align=left width=45px>'+dev.connType+'</td>';
+
+			if(getTop(window).support_new_ntgrtype == "1")
+				msg1 += '<td rowspan=1 align=left rowspan=1><div title="$qos_mac: '+dev.mac+'&#10;$device_type: '+dev.deviceType+'&#10;'+show_wlan_ssid(dev.ssid)+'"><img width=50px height=50px src=image/streamboost/'+dev.deviceType.replace(/\s/g, '_')+'.png /></div></td>';
+
+			//Device info td
+			msg1 += '<td class="device_td" align=right height="100%"><table class="devinfo_tbl" width=100% height=100%>';
+			if(getTop(window).support_new_ntgrtype == "1")
+			{
+				msg1 += '<tr><td style="text-align: right;">'+dev.deviceModel.replace(/\\\\/g,"\\")+'</td></tr>';
+				msg1 += '<tr><td class="device_td" style="text-align: right;">'+dev.deviceName.replace(/\\\\/g,"\\")+'</td></tr>';
+			}
+			else
+				msg1 += '<tr><td class="device_td" align=right>'+dev.deviceName.replace(/\\\\/g,"\\")+'</td></tr>';
+			msg1 += '</table></td>';//end Device info td
+
+			msg1 += '<td rowspan=1 align=center>'+dev.ip+'</td>';//IP Address
+			msg1 += '<td rowspan=1 align=center>'+dev.mac+'</td>';//MAC Address
+			msg1 += '</tr>';
+			d_num++;
+			attach_device_num = d_num;
+		}
+	}
+	msg1 += '</table></table>';
+	$$('#main').append(msg1);
+}
+
+function show_qos()
+{
+	$$("#main").css('display', 'none');
+	$$("#qos").css('display', 'block');
+	$$("#vpn").css('display', 'block');
+	$$("#qosApp").css('display', 'none');
+	$$("#qos_device_table").empty();
+        $$("#back_attached").replaceWith('<input class="common_bt" type="button" name="Edit" id="edit_qos" value="$edit_mark" onclick="return check_edit();" disabled>');
+
+	var d_num=0;
+	//show title
+	var msg1='<TR><TD nowrap align=center width=5%><span class="subhead"># </span></TD>';
+	if(enable_block_device == 1)
+		msg1 += '<TD nowrap align=center width=10% class="subhead_acc_control">$stalist_Status</TD>';
+	msg1 +='<TD nowrap align=center width=8%><span class="subhead">Priority </span></TD><TD nowrap align=center width=12% class="subhead_acc_control" colspan="1">$trigger_contype</TD><TD nowrap align=center width=22% class="subhead_acc_control" colspan="2">$adva_wlan_devicename</TD><TD nowrap align=center class="icon"><img src="/image/download.png" id="" width="15px" height="15px" /> $bandwidth_down</TD><TD nowrap align=center class="icon"><img src="/image/upload.png" id="" width="15px" height="15px" /> $bandwidth_up</TD></TR>';
+
+	for( var i in devList )
+	{
+		var dev = devList[i];
+		msg1 += '<tr id="qos'+i+'" class="qos_line">';
+		msg1 += '<td nowrap align=center><input type="checkbox" name="checkbox_index'+(d_num+1)+'"  id="checkbox_index'+(d_num+1)+'" value='+dev.mac+' onClick="toggle_edit(qos);"><label for="checkbox_index'+(d_num+1)+'"></label></td>';
+		if(enable_block_device == 1)
+		{
+			if(dev.status=="Allowed")
+				msg1 += '<td rowspan=1 align=center><font color=green>$acc_allow</font></td>';
+			else
+				msg1 += '<td rowspan=1 align=center><font color=red>$acc_block</font></td>';
+		}
+		msg1 += '<td rowspan=1 align=center>'+dev.priority+'</td>';
+		//Connection Type
+		if(dev.connType == "Wired")
+			msg1 += '<td rowspan=1 class="device_td2" align=left width=45px>$acc_wired</td>';
+		else
+			msg1 += '<td rowspan=1 class="device_td2" align=left width=45px>'+dev.connType+'</td>';
+
+		if(getTop(window).support_new_ntgrtype == "1")
+			msg1 += '<td rowspan=1 align=left rowspan=1><div title="$qos_mac: '+dev.mac+'&#10;$device_type: '+dev.deviceType+'&#10;'+show_wlan_ssid(dev.ssid)+'"><img width=50px height=50px src=image/streamboost/'+dev.deviceType.replace(/\s/g, '_')+'.png /></div></td>';
+
+		msg1 += '<td class="device_td" align=right height="100%"><table class="devinfo_tbl" width=100% height=100%>';
+		if(getTop(window).support_new_ntgrtype == "1")
+		{
+			msg1 += '<tr><td style="text-align: right;">'+dev.deviceModel.replace(/\\\\/g,"\\")+'</td></tr>';
+			msg1 += '<tr><td class="device_td" style="text-align: right;">'+dev.deviceName.replace(/\\\\/g,"\\")+'</td></tr>';
+		}
+		else
+			msg1 += '<tr><td class="device_td" align=right>'+dev.deviceName.replace(/\\\\/g,"\\")+'</td></tr>';
+		msg1 += '</table></td>';
+
+		msg1 += '<td rowspan=1 align=center onClick="show_qos_app('+i+');">'+dev.downSpeed+'</td>';
+		msg1 += '<td rowspan=1 align=center onClick="show_qos_app('+i+');">'+dev.upSpeed+'</td>';
+		msg1 += '</tr>';
+		d_num++;
+		attach_device_num = d_num;
+	}
+	msg1 += '</table></table>';
+	$$('#qos_device_table').append(msg1);
+}
+
+function show_qos_app(num)
+{
+	q_num=num;
+	$$("#vpn").css('display', 'none');
+	$$("#qosApp").css('display', 'block');
+	$$("#edit_qos").replaceWith('<input class="common_bt" type="button" name="Back" id="back_attached" value="$back_mark" onclick="show_qos();">');
+
+	for(var j=0,len=devList.length;j<len;j++)
+	{
+		if(j!=num)
+			$$("#qos"+j+"").css('display', 'none');
+	}
+
+	$$('#app_device_table').empty();
+
+	//show title
+	var msg3='<TR class=table_header><TD nowrap align=center width=20% class="subhead_acc_control">$app_title</TD><TD nowrap align=center width=20% class="subhead_acc_control">$app_down</TD><TD nowrap align=center width=20% class="subhead_acc_control">$app_up</TD></TR>';
+
+	var app_devList=[];
+	app_devList= devList[num].qosData;
+	for( var i in app_devList )
+	{
+		var dev = app_devList[i];
+		msg3 += '<tr class="appInfo"><td rowspan=1 align=center>'+dev.appName+'</td>';
+		msg3 += '<td rowspan=1 align=center>'+dev.downSpeed+'</td>';
+		msg3 += '<td rowspan=1 align=center>'+dev.upSpeed+'</td>';
+		msg3 += '</tr>';
+	}
+        $$('#app_device_table').append(msg3);
+}
+
+function getDevices()
+{
+	var url;
+
+	if(trend_micro_enable == "1")
+	{
+		if(start_qos== 0)
+		{
+			url = "refresh_dev.htm?ts=" + new Date().getTime();
+			$$.getJSON(url, function(json) {
+				updateDevice(json);
+			});
+			start_qos=1;
+		}
+		else
+		{
+			var url2 = "refresh_qos.htm?ts=" + new Date().getTime();
+			$$.getJSON(url2, function(json) {
+				if(json.status == "1")
+				{
+					url = "refresh_dev.htm?ts=" + new Date().getTime();
+					$$.getJSON(url, function(json) {
+						updateDevice(json);
+					});
+				}
+			});
+		}
+		clearTimeout(refresh_timer);
+		refresh_timer = setTimeout("getDevices('1')", 5000);
+	}
+	else
+	{
+		url = "refresh_dev.htm?ts=" + new Date().getTime();
+		$$.getJSON(url, function(json) {
+			updateDevice(json);
+		});
+	}
+}
+
+function updateQos()
+{
+	var url = "refresh_qos.htm?ts=" + new Date().getTime();
+	$$.getJSON(url, function(json) {
+		if(json.status == "1")
+			getDevices();
+	});
+	clearTimeout(refresh_timer);
+	refresh_timer = setTimeout("updateQos()", 5000);
+}
+
+function show_vpn()
+{
+	$$('#vpn').empty();
+	var msg2 = '<table width="100%" border="0" cellpadding="0" cellspacing="3">'
+		+'<TR><TD align=left colspan="2">'
+		+'<B>VPN Client Devices</B>'
+		+'</TD></TR>'
+		+'<TABLE class="tables table1" border=0 cellpadding=2 cellspacing=0 width=100% id="vpn_device_table">'
+		+'<TR class=table_header>';
+	if(getTop(window).support_new_ntgrtype == "1")
+		msg2 =msg2 +'<TD nowrap align=center width=40% class="subhead_acc_control" colspan="2">$adva_wlan_devicename</TD>';
+	else
+		msg2 =msg2 +'<TD nowrap align=center width=40% class="subhead_acc_control">$adva_wlan_devicename</TD>';
+	msg2 =msg2 +'<TD nowrap align=center width=20% class="subhead_acc_control">Remote $block_ser_setup_ip_jp</TD>'
+		+'<TD nowrap align=center width=20% class="subhead_acc_control">Local $block_ser_setup_ip_jp</TD>'
+		+'<TD nowrap align=center width=20% class="subhead_acc_control">$traffic_connect_time</TD>'
+		+'</TR>';
+	var v_num=0;
+	for( var i in vpn_devList )
+	{
+		var dev = vpn_devList[i];
+		if(getTop(window).support_new_ntgrtype == "1")
+			msg2 += '<td rowspan=1 align=left rowspan=1><div title="$qos_mac: '+dev.mac+'&#10;$device_type: '+dev.deviceType+'&#10;"><img width=50px height=50px src=image/streamboost/'+dev.deviceType.replace(/\s/g, '_')+'.png /></div></td>';
+		//Device info td
+		msg2 += '<td class="device_td" align=right height="100%"><table class="devinfo_tbl" width=100% height=100%>';
+		if(getTop(window).support_new_ntgrtype == "1")
+		{
+			msg2 += '<tr><td style="text-align: right;">'+dev.deviceModel.replace(/\\\\/g,"\\")+'</td></tr>';
+			msg2 += '<tr><td class="device_td" style="text-align: right;">'+dev.deviceName+'</td></tr>';
+		}
+		else
+			msg2 += '<tr><td class="device_td" align=right>'+dev.deviceName+'</td></tr>';
+		msg2 += '</table></td>';//end Device info td
+
+		msg2 += '<td rowspan=1 align=center>'+dev.remoteIp+'</td>';//Remote IP Address
+		msg2 += '<td rowspan=1 align=center>'+dev.localIp+'</td>';//Local IP Address
+		msg2 += '<td rowspan=1 align=center id="conntime'+(v_num+1)+'">'+change_sec_to_time(dev.connTime)+'</td>';//Connection time
+		msg2 += '</tr>';
+		conn_time[v_num] = dev.connTime;
+		v_num++;
+	}
+	msg2 += '</table></table>';
+	$$('#vpn').append(msg2);
+	clearInterval(refresh_vpn);
+	refresh_vpn=setInterval("refresh_connection_time();",1000);
+}
+
+function refresh_connection_time()
+{
+	for(i=0;i<conn_time.length;i++)
+	{
+		document.getElementById("conntime"+(i+1)).innerHTML=change_sec_to_time(parseInt(conn_time[i])+1);
+		conn_time[i] = parseInt(conn_time[i])+1;
+	}
+}
+
+function loadvalue()
+{
+	getDevices();
+}
+</script>
+<input type="hidden" name="hid_edit_mac">
+<script>
+if(getTop(window).use_orbi_style_flag == "1")
+{
+	if( get_browser() == "IE" )
+	{
+		document.write('<div class="page_title headstyle1" style="position:relative;margin-top:-18px;">$attach_device</div>');
+		document.write('<div class="access" style="position:relative; float:right; margin-top:-24px; margin-right:13px">$access_control_url1');
+	}else{
+	document.write('<div class="page_title headstyle1" style="position:unset; margin-top:18px; margin-left:28px;">$attach_device</div>');
+	document.write('<div class="access" style="position:unset; float:right; margin-top:-24px; margin-right:13px">$access_control_url1');
+	}
+}
+else
+{
+	document.write('<div class="page_title headstyle1">$attach_device</div>');
+	document.write('<div class="access">$access_control_url1');
+}
+	if(enable_bridge_flag == "1")
+		document.write("<a name='Access Control' href=# id='hylink_ac' class=\"ui-corner-all\" style=\"background-color:grey;\">&nbsp; $access_control_url2 &nbsp;</a>&nbsp;");
+	else
+		document.write("<a name='Access Control' href=# id='hylink_ac' onclick=\"goto_url(); return false;\" class=\"ui-corner-all\">&nbsp; $access_control_url2 &nbsp;</a>&nbsp;");
+
+	document.write('$access_control_url3<br/>');
+
+	var new_device_statue_by_default="<% cfg_get("new_device_statue_by_default") %>";
+
+	if( enable_block_device == "0" )
+	{
+		document.write("$acc_control: <b>$acc_turned_off</b>");
+	}
+	else
+	{
+		document.write("$acc_control: <b>$acc_turned_on</b>");
+		document.write("<br/>");
+		if( new_device_statue_by_default == "Block" )
+			document.write("$acc_general_rule: $block_connect");
+		else
+			document.write("$acc_general_rule: $allow_connect");
+	}
+</script>
+</div>
+</div>
+<div id="main" class="main_top_button" style="position:relative;top:-18px;"></div>
+<div id="qos" class="main_top_button" style="position:relative;top:-18px;display:none;">
+	<TABLE class="table1" border=0 cellpadding=2 cellspacing=0 width=100% id="" style="width:98%;border:none;margin-top:30px;">
+	<TR>
+		<TD align=left colspan="2" width="15%" style="border-bottom:none;">
+			<input class="common_bt" type="button" name="Edit" id="edit_qos" value="$edit_mark" onclick="return check_edit();" disabled>
+		</TD>
+		<TD align="center" id="download" class="icon" width="15%" style="border-bottom:none;">
+			<img src="/image/download.png" id="download_icon" width="15px" height="15px" /><B> $download_mark</B></br><B id="qos_down"></B>
+		</TD>
+		<TD align="left" id="upload" class="icon"  width="55%" style="border-bottom:none;">
+			<img src="/image/upload.png" id="upload_icon" width="15px" height="15px" /><B> $upload_mark</B></br><B id="qos_up"></B>
+		</TD>
+		<TD align="right" colspan="2" width="" style="border-bottom:none;">
+			<input class="common_bt" type="button" name="refresh" id="refreshQos" value="$refresh_mark" onclick="location.href='QOS_device.htm';">
+		</TD>
+	</TR>
+	</TABLE>
+	<TABLE class="tables table1" border=0 cellpadding=2 cellspacing=0 width=100% id="qos_device_table" style="width:98%"></TABLE>
+</div>
+<div id="vpn" style="margin-left:20px; width:97%; position:unset;margin-bottom:10%;"></div>
+<div id="qosApp" style="margin-left:20px; width:97%; position:unset;margin-bottom:10%;display:none;">
+<TABLE class="tables table1" border=0 cellpadding=2 cellspacing=0 width=100% id="app_device_table"></TABLE>
+</div>
+<% pop_help_button() %>
+
+</div>
+<% help_box("1","_new_attach_device") %>
+</form>
+</body>
+</html>
+

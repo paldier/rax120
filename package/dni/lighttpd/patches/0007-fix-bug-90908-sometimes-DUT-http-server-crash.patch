@@ -1,0 +1,12 @@
+--- a/src/connections-glue.c
++++ b/src/connections-glue.c
+@@ -280,6 +280,9 @@ int connection_handle_read(server *srv,
+ 		switch (errno) {
+ 		case EAGAIN:
+ 			return 0;
++		case ENOSYS:
++			log_error_write(srv, __FILE__, __LINE__, "ssd", "Try again!!! - read failed: ", strerror(errno), errno);
++			return 0;
+ 		case EINTR:
+ 			/* we have been interrupted before we could read */
+ 			con->is_readable = 1;

@@ -1,0 +1,34 @@
+--- procd-2015-10-29.1.org/signal.c	2017-12-29 15:06:40.724803564 +0000
++++ procd-2015-10-29.1/signal.c	2017-12-29 15:07:51.128802674 +0000
+@@ -19,6 +19,13 @@
+ 
+ #include "procd.h"
+ 
++#define DNI_SNED_EMAIL_ALERT	1
++
++#if DNI_SNED_EMAIL_ALERT
++#define SIG_EMAIL_ALERT 24
++void sig_email_alert(int sig);
++#endif
++
+ static void do_reboot(void)
+ {
+ 	LOG("reboot\n");
+@@ -79,8 +86,17 @@
+ 	.sa_flags = SA_SIGINFO
+ };
+ 
++#if DNI_SNED_EMAIL_ALERT 
++void sig_email_alert(int sig)
++{
++	system("/etc/email/send_email_alert");
++}
++#endif
+ void procd_signal(void)
+ {
++#if DNI_SNED_EMAIL_ALERT 
++	signal(SIG_EMAIL_ALERT, sig_email_alert);
++#endif
+ 	signal(SIGPIPE, SIG_IGN);
+ 	if (getpid() != 1)
+ 		return;
